@@ -12,8 +12,13 @@ export { CHEVRON_STRIPES };
 // Never override the outline colour here.
 const BASE =
   'relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-none font-body font-semibold leading-none text-center transition-[background-color,border-color,color,filter] duration-200 [&:lang(ar)]:text-[1.0625rem]';
+/**
+ * Rendered height of a size="lg" button: 52 px, 56 px from md (typography §4). The hero sling reserves this
+ * room under the hook. Tailwind needs literal class names, so SIZES.lg spells the same values (a test checks).
+ */
+export const BUTTON_LG_HEIGHT = { base: '3.25rem', md: '3.5rem' } as const;
 const SIZES: Record<ButtonSize, string> = {
-  lg: 'min-h-[3.25rem] px-6 text-base md:min-h-14', // 52–56 px (typography §4)
+  lg: 'min-h-[3.25rem] px-6 text-base md:min-h-[3.5rem]', // BUTTON_LG_HEIGHT
   md: 'min-h-12 px-4 text-base', // 48 px, for the 64 px request bar
 };
 // Native buttons use enabled: plus not-aria-disabled: so hover and active never fire while disabled or loading;
