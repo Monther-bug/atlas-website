@@ -154,7 +154,7 @@ export type BuildTarget = 'staging' | 'production';
 declare const __BUILD_TARGET__: BuildTarget;          // injected by vite `define`
 export const env = {
   target: __BUILD_TARGET__,
-  siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) ?? 'http://localhost:4173',
+  siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) || 'http://localhost:4173', // '' counts as unset (amended after A1.3 review)
   whatsapp: (import.meta.env.VITE_WHATSAPP as string | undefined) || null, // digits only, e.g. 2189XXXXXXXX
   phone: (import.meta.env.VITE_PHONE as string | undefined) || null,       // e.g. +2189XXXXXXXX
   formEndpoint: (import.meta.env.VITE_FORM_ENDPOINT as string | undefined) || null,
@@ -836,7 +836,7 @@ export type BuildTarget = 'staging' | 'production';
 declare const __BUILD_TARGET__: BuildTarget;          // injected by vite `define`
 export const env = {
   target: __BUILD_TARGET__,
-  siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) ?? 'http://localhost:4173',
+  siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) || 'http://localhost:4173', // '' counts as unset (amended after A1.3 review)
   whatsapp: (import.meta.env.VITE_WHATSAPP as string | undefined) || null, // digits only, e.g. 2189XXXXXXXX
   phone: (import.meta.env.VITE_PHONE as string | undefined) || null,       // e.g. +2189XXXXXXXX
   formEndpoint: (import.meta.env.VITE_FORM_ENDPOINT as string | undefined) || null,
