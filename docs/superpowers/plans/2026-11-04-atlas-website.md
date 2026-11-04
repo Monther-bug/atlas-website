@@ -267,7 +267,7 @@ export interface Copy {
 ```ts
 // src/lib/numbers.ts
 export function formatNumber(n: number, lang: Lang, opts?: { maximumFractionDigits?: number }): string; // Western digits, '.' decimal, ',' grouping (EN) / '٬'-free ',' (AR)
-export function formatTonnes(n: number, lang: Lang): string;   // "350 t" | "350 طن" (narrow no-break space U+202F)
+export function formatTonnes(n: number, lang: Lang): string;   // "350 t" | "350 طن" (no-break space U+00A0; U+202F exists in none of the fonts — decided after A1.5 review)
 export function formatMetres(n: number, lang: Lang): string;   // "12 m" | "12 م"
 // src/lib/digits.ts
 export function toAsciiDigits(input: string): string;          // ٠-٩ ۰-۹ → 0-9, ٫ → '.', ٬ → ''
@@ -350,7 +350,7 @@ Each part's own "Proposed contract additions" section gives the details. All of 
   - `App` is exported both named and default.
   - The hero photo starts below the header.
   - Dark section roots carry `data-ground="dark"`.
-  - U+202F (narrow no-break space) is **added to the font subset ranges** in A1.5.
+  - Number–unit separator is U+00A0 (no-break space), not U+202F, which exists in none of the source fonts (A1.5 review). The font subsets add «» (U+00AB/U+00BB) and Eastern Arabic-Indic digits U+06F0–06F9.
 - **D:**
   1. The corrected `touch` query (C10 above).
   2. Motion may pre-hide `[data-split]`, `[data-sling-leg]` and `[data-sling-button]`, and pre-scale the hero photo and sling, **only under `.motion-ok`** and with the 3 s CSS fallback. The hero `<img>` itself is never hidden.
@@ -3183,7 +3183,7 @@ Create `src/lib/numbers.test.ts`:
 import { describe, expect, it } from 'vitest';
 import { formatMetres, formatNumber, formatTonnes } from './numbers';
 
-const NNBSP = ' ';
+const NBSP = '\u00A0'; // no-break space (U+202F is in none of the fonts)
 
 describe('formatNumber', () => {
   it('formats English with comma groups and a dot decimal', () => {
@@ -3217,11 +3217,11 @@ describe('formatNumber', () => {
 });
 
 describe('formatTonnes and formatMetres', () => {
-  it('joins number and unit with a narrow no-break space', () => {
-    expect(formatTonnes(350, 'en')).toBe(`350${NNBSP}t`);
-    expect(formatTonnes(350, 'ar')).toBe(`350${NNBSP}طن`);
-    expect(formatMetres(12, 'en')).toBe(`12${NNBSP}m`);
-    expect(formatMetres(12, 'ar')).toBe(`12${NNBSP}م`);
+  it('joins number and unit with a no-break space (U+00A0)', () => {
+    expect(formatTonnes(350, 'en')).toBe(`350${NBSP}t`);
+    expect(formatTonnes(350, 'ar')).toBe(`350${NBSP}طن`);
+    expect(formatMetres(12, 'en')).toBe(`12${NBSP}m`);
+    expect(formatMetres(12, 'ar')).toBe(`12${NBSP}م`);
   });
 
   it('keeps Arabic tonnage in Western digits', () => {
@@ -3252,7 +3252,7 @@ const UNITS = {
   tonnes: { ar: 'طن', en: 't' },
   metres: { ar: 'م', en: 'm' },
 } as const;
-const NNBSP = ' ';
+const NBSP = '\u00A0'; // no-break space (U+202F is in none of the fonts)
 const BIDI_MARKS = /[؜‎‏]/g;
 
 const formatters = new Map<string, Intl.NumberFormat>();
@@ -3281,11 +3281,11 @@ export function formatNumber(n: number, lang: Lang, opts: { maximumFractionDigit
 }
 
 export function formatTonnes(n: number, lang: Lang): string {
-  return `${formatNumber(n, lang)}${NNBSP}${UNITS.tonnes[lang]}`;
+  return `${formatNumber(n, lang)}${NBSP}${UNITS.tonnes[lang]}`;
 }
 
 export function formatMetres(n: number, lang: Lang): string {
-  return `${formatNumber(n, lang)}${NNBSP}${UNITS.metres[lang]}`;
+  return `${formatNumber(n, lang)}${NBSP}${UNITS.metres[lang]}`;
 }
 ```
 
@@ -3962,7 +3962,7 @@ git commit -m "feat(lib): add language context with copy and direction" -m "Co-A
 1. **`mailtoHref(subject: string, body: string): string`** exported from `src/lib/whatsapp.ts` (C8). Used by `whatsappHref`'s staging fallback, the form's "Send by email" and the documents' "Request by email". When there is no WhatsApp number, `whatsappHref` uses the message's first line as the mail subject.
 2. **`Copy.lang: Lang`**, so pure helpers that receive a `Copy` (Part C's form logic) can format numbers. Plus the exported helper types `ServiceId`, `CapacityBand`, `DurationId`, `DocumentSlot`, `SiteGalleryId`, `SiteGallery`, `ServiceCopy`, `CraneTypeCopy`, `FieldCopy` (re-exported from `src/content/index.ts`).
 3. **`src/generated/images.ts` stub**: now accepted as C11 (A1.7 writes it). B.1 only re-creates it if it is missing.
-4. **Font subsets must include U+202F** (narrow no-break space). `formatTonnes`/`formatMetres` use it per C8, but the Latin set in `05-typography.md` §5 lists only U+00A0. A1's `subset-fonts.mjs` should add U+202F, or the space falls back to a system font.
+4. ~~Font subsets must include U+202F~~ **Superseded (A1.5 review): the separator is U+00A0, which every font has.** `formatTonnes`/`formatMetres` use it per C8, but the Latin set in `05-typography.md` §5 lists only U+00A0. A1's `subset-fonts.mjs` should add U+202F, or the space falls back to a system font.
 5. **Copy keys renamed for spec §15.1:** the deck's eyebrows are `hero.servicesLine` and `form.lead`, and both render *below* their heading. The deck's Hoist section label «السعة» is not in `Copy`; the capacity data label inside each load tag is `hoist.capacity` («أقصى حمولة» / "Max capacity").
 6. **Hidden crane placeholders:** `cke2500` has `capacityT: 0` and casts its unprocessed Kobelco photo ids to `PhotoId`, because C7 makes those fields required. The cast is safe only because the crane is never rendered; `getImage()` would throw if it were.
 
@@ -6643,7 +6643,7 @@ import { getCopy, visibleCranes } from '@/content';
 import type { Crane } from '@/content/types';
 import { applyFilter, availableFilters, bandLabel, bandOf, resultCount } from './crane-filters';
 
-const NNBSP = ' ';
+const NBSP = '\u00A0'; // no-break space (U+202F is in none of the fonts)
 const verified = (cranes: readonly Crane[]) => cranes.map((c) => ({ ...c, verified: true }));
 const ids = (cranes: readonly Crane[]) => cranes.map((c) => c.id);
 
@@ -6701,10 +6701,10 @@ describe('labels', () => {
   });
 
   it('formats band chips through formatNumber/formatTonnes', () => {
-    expect(bandLabel('0-60', getCopy('ar'))).toBe(`حتى 60${NNBSP}طن`);
-    expect(bandLabel('61-200', getCopy('ar'))).toBe(`من 60 إلى 200${NNBSP}طن`);
-    expect(bandLabel('61-200', getCopy('en'))).toBe(`60–200${NNBSP}t`);
-    expect(bandLabel('201+', getCopy('en'))).toBe(`Over 200${NNBSP}t`);
+    expect(bandLabel('0-60', getCopy('ar'))).toBe(`حتى 60${NBSP}طن`);
+    expect(bandLabel('61-200', getCopy('ar'))).toBe(`من 60 إلى 200${NBSP}طن`);
+    expect(bandLabel('61-200', getCopy('en'))).toBe(`60–200${NBSP}t`);
+    expect(bandLabel('201+', getCopy('en'))).toBe(`Over 200${NBSP}t`);
   });
 });
 ```

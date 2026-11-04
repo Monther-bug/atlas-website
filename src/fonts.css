@@ -1,1 +1,115 @@
-/* The @font-face rules for the subset fonts are added in Task A1.5. */
+/* Self-hosted subset fonts, built by `npm run fonts` (scripts/subset-fonts.mjs).
+   The unicode-range lists below match the character sets in that script.
+   LATIN:  U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019,
+           U+201C-201D, U+2022, U+2026, U+2191, U+2193
+   ARABIC: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F */
+
+/* Display, Latin and every numeral: Archivo with both axes (wght 100–900, wdth 62–125). */
+@font-face {
+  font-family: 'Archivo Atlas';
+  src: url('./assets/fonts/archivo-wght-wdth.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+
+/* Display, Arabic letters only: Noto Kufi Arabic (wght 100–900). */
+@font-face {
+  font-family: 'Kufi Atlas';
+  src: url('./assets/fonts/kufi-wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F;
+}
+
+/* Body and UI in both scripts: IBM Plex Sans Arabic as ONE family, split by script. */
+@font-face {
+  font-family: 'Plex Atlas';
+  src: url('./assets/fonts/plex-ar-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F;
+}
+@font-face {
+  font-family: 'Plex Atlas';
+  src: url('./assets/fonts/plex-ar-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F;
+}
+@font-face {
+  font-family: 'Plex Atlas';
+  src: url('./assets/fonts/plex-la-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+@font-face {
+  font-family: 'Plex Atlas';
+  src: url('./assets/fonts/plex-la-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+
+/* Specs: IBM Plex Mono 500, Latin only (Arabic words fall through to Plex Atlas). */
+@font-face {
+  font-family: 'Plex Mono Atlas';
+  src: url('./assets/fonts/plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+
+/* ── Metric-matched fallbacks ───────────────────────────────────────────
+   While a web font loads (font-display: swap), text is drawn in a local system
+   font scaled to the web font's average advance width (size-adjust) and given
+   its ascent and descent, so lines keep their length and baseline when the web
+   font swaps in (CLS ≤ 0.05). Measured in Chrome (macOS) against Arial and
+   Geeza Pro; re-measure with the snippet in plan step A1.5 Step 7. */
+@font-face {
+  font-family: 'Archivo Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 100 900;
+  size-adjust: 102.97%;
+  ascent-override: 85.26%;
+  descent-override: 20.39%;
+  line-gap-override: 0%;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+@font-face {
+  font-family: 'Kufi Fallback';
+  src: local('Geeza Pro Bold'), local('GeezaPro-Bold');
+  font-weight: 100 900;
+  size-adjust: 123.63%;
+  ascent-override: 103.69%;
+  descent-override: 49.74%;
+  line-gap-override: 0%;
+  unicode-range: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F;
+}
+@font-face {
+  font-family: 'Plex Fallback';
+  src: local('Arial'), local('ArialMT');
+  size-adjust: 100.17%;
+  ascent-override: 108.32%;
+  descent-override: 41.43%;
+  line-gap-override: 0%;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7, U+00BB, U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2191, U+2193;
+}
+@font-face {
+  font-family: 'Plex Fallback';
+  src: local('Geeza Pro'), local('GeezaPro');
+  size-adjust: 108.38%;
+  ascent-override: 100.11%;
+  descent-override: 38.29%;
+  line-gap-override: 0%;
+  unicode-range: U+060C, U+061B, U+061F, U+0621-063A, U+0640-0655, U+0660-066D, U+0670-0671, U+06F0-06F9, U+200C-200F;
+}
