@@ -196,6 +196,7 @@ export const en: Copy = {
     optional: 'Optional',
     submit: 'Send request',
     busy: 'Sending…',
+    handoff: 'Opening your messaging app to send the request.',
     whatsappAlt: 'Or send the same details on WhatsApp',
     privacy: 'We use your details only to reply to your request. [[CONFIRM]]',
     errorSummary: 'Some fields need a fix. Check the messages below, then send again.',

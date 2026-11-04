@@ -193,6 +193,7 @@ export interface Copy {
     optional: string;
     submit: string;
     busy: string;
+    handoff: string; // no-endpoint hand-off, announced
     whatsappAlt: string;
     privacy: string;
     errorSummary: string;

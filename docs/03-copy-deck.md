@@ -336,6 +336,7 @@ Document slots. List only the files Atlas actually has:
 | Optional tag | اختياري | Optional |
 | Submit | أرسل الطلب | Send request |
 | Submit, busy | جارٍ الإرسال… | Sending… |
+| Hand-off (no endpoint, announced) | نفتح لك تطبيق المراسلة لإرسال الطلب. | Opening your messaging app to send the request. |
 | WhatsApp alternative → template D | أو أرسل التفاصيل نفسها عبر واتساب | Or send the same details on WhatsApp |
 | Privacy line | نستخدم بياناتك للرد على طلبك فقط. [[CONFIRM]] | We use your details only to reply to your request. [[CONFIRM]] |
 | Error summary (top of form) | بعض الحقول تحتاج إلى تصحيح. راجع الرسائل أدناه، ثم أرسل مرة أخرى. | Some fields need a fix. Check the messages below, then send again. |
