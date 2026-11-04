@@ -66,6 +66,12 @@ html[data-motion="desktop"] .progress-rope.is-live {
   will-change: transform;
 }
 
+/* The riding chip: its colours come from the bar (<aside>), which the ghost in <body> does not inherit. */
+.motion-ghost.motion-ghost--chip {
+  background-color: var(--color-navy-950);
+  color: var(--color-white);
+}
+
 /* 8. Reduced motion: belt and braces. */
 html[data-motion="reduced"] .progress-rope {
   display: none;
