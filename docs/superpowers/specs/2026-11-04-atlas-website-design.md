@@ -196,7 +196,7 @@ Sections in order. The Arabic layout is composed for RTL, not mirrored by defaul
    - **Pressing it:** the model chip flies along the hook path into the RequestBar. The bar then reads «على الخطّاف: GMK6350 ✕ · واتساب». The form's crane field and the WhatsApp text are pre-filled; ✕ clears it.
 6. **Two sites:** unnamed captions from the copy deck. Native horizontal scroll-snap strips that flow in the reading direction. Tapping opens a `<dialog>` lightbox with arrows and Esc.
 7. **Documents:** **not rendered** until `site.ts` lists real files (profile, inspection certificates, HSE, ISO, insurance, CR). Then a list of PDF rows with language and date.
-8. **Request form** (`navy-950`): eyebrow «تواصلوا معانا وخلي الباقي علينا», heading «شنو الرافعة اللي يحتاجها مشروعك؟», fields as §4.6. *Stretch, only if day 8 is on schedule:* a small "your lift" SVG sketch drawn from the weight, radius and height entered.
+8. **Request form** (`navy-950`): heading «شنو الرافعة اللي يحتاجها مشروعك؟», with «تواصلوا معانا وخلي الباقي علينا» as the **lead line below** it (never as an eyebrow above it, see §15). Fields as §4.6. *Stretch, only if day 8 is on schedule:* a small "your lift" SVG sketch drawn from the weight, radius and height entered.
 9. **Footer:**
    - The rope ends at an outrigger pad drawn in red/white chevrons.
    - Badge at 80 px; services; email; phone and address when supplied; Facebook; ©.
@@ -340,3 +340,36 @@ The agency receives real numbers, whether they pass or fail.
 | Atlas data arrives late | Truth gate plus the draft badge: the staging link stays useful, and production is blocked until the data is confirmed |
 | Arabic rendering bugs (bidi, digits) | `<bdi>`, explicit number formatting, digit conversion; tested in QA |
 | 10-day timeline | The "your lift" sketch is a stretch; the documents section is data-driven; no 3D |
+
+## 15. Impeccable craft-floor amendments (added 4 Nov 2026, after installing Impeccable 4.8.0)
+
+Checked against `.claude/skills/impeccable/reference/craft-floor.md`. Where this section conflicts with the sections above, this section wins.
+
+1. **No eyebrow or kicker above any heading** (an Impeccable ban). The copy-deck "Eyebrow" strings render **below** their heading as lead lines:
+   - hero services line → below the H1;
+   - contact dialect line → below the form heading.
+
+   The Hoist's "Section label (mono) «السعة / Capacity»" is **not** placed above the heading. It appears only as the data label inside each load tag. The `.t-label` style is for data labels, never for labels above headings.
+2. **No section numbers** (01/02/03).
+3. **Mono only for data:** model codes, capacities and measurements. Never as decoration.
+4. **One authored motion idea: the hook.** Section entrances are **not** all given the same generic fade-up. Motion is limited to:
+   - the hero intro, the sling and its dock;
+   - the Hoist (desktop) and the load stack (touch);
+   - the ride into the bar;
+   - service rows being "set down", the progress rope, and the footer pad.
+
+   Everything else is static and visible by default. `data-reveal` is used only where it carries the hook language, not on every heading.
+5. **Browser surfaces are themed:**
+   - `::selection`: navy with white text on light grounds, red-bright with navy-950 text on dark;
+   - `caret-color: red`;
+   - `scrollbar-color`: navy on concrete;
+   - links: `text-underline-offset: .22em`, `text-decoration-thickness: 1px`;
+   - form controls: `accent-color: var(--color-red)`;
+   - **all numerals in data use `tabular-nums`**.
+6. **Depth:** the only shadow, on the RequestBar, has an offset and a soft blur: `0 -8px 24px rgb(13 12 43 / .18)`. No zero-offset halos, no hard offset shadows.
+7. **Icons are authored SVG only.** No Unicode glyphs or emoji: the bar chip's clear control uses the `Close` SVG icon, not "✕".
+8. **States are designed:**
+   - hover, focus, disabled and loading on every button (the form's submit shows «جارٍ الإرسال… / Sending…» and is disabled while sending);
+   - error and success states on the form;
+   - an **empty state** for the crane filter: «لا توجد رافعة بهذا التصنيف. اعرض الكل» / "No cranes match this filter. Show all".
+9. **The display size exception is deliberate.** The tonnage readout may exceed Impeccable's 6 rem display guideline (max 12.5 rem). It is the brief's signature (a committed world overrides non-ban floor items). The H1 stays ≤ 6 rem.

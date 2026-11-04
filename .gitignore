@@ -6,3 +6,5 @@ dist/
 !.env.example
 .DS_Store
 qa/reports/
+.claude/settings.local.json
+.claude/skills/impeccable/scripts/bin/
