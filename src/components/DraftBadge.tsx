@@ -1,4 +1,4 @@
-import { CHEVRON_STRIPES } from '@/components/stripes';
+import { CHEVRON_CLASS } from '@/components/stripes';
 import { isDraft } from '@/env';
 import { useLang } from '@/lib/lang';
 
@@ -11,7 +11,7 @@ export function DraftBadge({ verified, className = '' }: { verified: boolean; cl
       data-testid="draft-badge"
       className={`inline-flex items-stretch border border-red bg-white text-[0.75rem] leading-none font-semibold text-red ${className}`}
     >
-      <span aria-hidden="true" className="w-3 shrink-0" style={CHEVRON_STRIPES} />
+      <span aria-hidden="true" className={`w-3 shrink-0 ${CHEVRON_CLASS}`} />
       <span className="px-2 py-1">{copy.misc.draftBadge}</span>
     </span>
   );

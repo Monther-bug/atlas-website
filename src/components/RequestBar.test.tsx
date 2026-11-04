@@ -78,4 +78,51 @@ describe('RequestBar', () => {
     expect(host.querySelector('[data-testid="bar-chip"]')).toBeNull();
     await unmount();
   });
+
+  describe('waits while the hero is on screen (Impeccable gate 1)', () => {
+    let observers: { cb: (e: { isIntersecting: boolean }[]) => void; disconnect: ReturnType<typeof vi.fn> }[];
+    beforeEach(() => {
+      observers = [];
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          disconnect = vi.fn();
+          observe = vi.fn();
+          constructor(cb: (e: { isIntersecting: boolean }[]) => void) {
+            observers.push({ cb, disconnect: this.disconnect });
+          }
+        },
+      );
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      document.getElementById('top')?.remove();
+    });
+
+    it('is marked over-hero in the prerendered HTML, so it never covers the first screen', () => {
+      expect(renderHtml(<RequestBar />).querySelector('[data-request-bar]')?.hasAttribute('data-over-hero')).toBe(true);
+    });
+
+    it('shows once the hero leaves the viewport and waits again when it returns', async () => {
+      const hero = document.createElement('section');
+      hero.id = 'top';
+      document.body.append(hero);
+      const { host, unmount } = await mount(<RequestBar />, 'en');
+      const bar = () => host.querySelector('[data-request-bar]');
+      expect(observers).toHaveLength(1);
+      expect(bar()?.hasAttribute('data-over-hero')).toBe(true);
+      await act(async () => observers[0].cb([{ isIntersecting: false }]));
+      expect(bar()?.hasAttribute('data-over-hero')).toBe(false);
+      await act(async () => observers[0].cb([{ isIntersecting: true }]));
+      expect(bar()?.hasAttribute('data-over-hero')).toBe(true);
+      await unmount();
+      expect(observers[0].disconnect).toHaveBeenCalled();
+    });
+
+    it('shows straight away on a page without a hero', async () => {
+      const { host, unmount } = await mount(<RequestBar />, 'en');
+      expect(host.querySelector('[data-request-bar]')?.hasAttribute('data-over-hero')).toBe(false);
+      await unmount();
+    });
+  });
 });

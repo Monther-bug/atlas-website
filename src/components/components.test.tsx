@@ -73,14 +73,16 @@ describe('Button states (review fixes)', () => {
   });
 
   it('stacks idle and loading labels so the width is stable', () => {
+    // One shared grid cell via plain col/row-start classes: the old `[grid-area:1/1]${…}` template was never compiled
+    // by Tailwind, so the labels sat in two rows (Impeccable gate 1).
     const idle = renderHtml(<Button loadingLabel="Sending…">Send request</Button>).querySelector('button');
-    const spans = idle?.querySelectorAll('span.\\[grid-area\\:1\\/1\\]');
+    const spans = idle?.querySelectorAll('span.col-start-1.row-start-1');
     expect(idle?.querySelector(':scope > span.inline-grid')).not.toBeNull();
     expect(spans?.length).toBe(2);
     expect(spans?.[0].className).not.toContain('invisible');
     expect(spans?.[1].className).toContain('invisible');
     const busy = renderHtml(<Button loading loadingLabel="Sending…">Send request</Button>).querySelector('button');
-    const s2 = busy?.querySelectorAll('span.\\[grid-area\\:1\\/1\\]');
+    const s2 = busy?.querySelectorAll('span.col-start-1.row-start-1');
     expect(s2?.[0].className).toContain('invisible');
     expect(s2?.[1].className).not.toContain('invisible');
     expect(busy?.textContent).toContain('Send request');
@@ -96,7 +98,7 @@ describe('Button states (review fixes)', () => {
     expect(button?.className).toContain('inline-flex');
     expect(button?.className).not.toMatch(/(^|\s)grid(\s|$)/);
     const grid = button?.querySelector('span.inline-grid');
-    expect(grid?.querySelectorAll('span.\\[grid-area\\:1\\/1\\]').length).toBe(2);
+    expect(grid?.querySelectorAll('span.col-start-1.row-start-1').length).toBe(2);
     expect(grid?.querySelector('[data-testid="lead"]')).toBeNull();
     expect(grid?.querySelector('[data-testid="trail"]')).toBeNull();
     expect(button?.firstElementChild?.getAttribute('data-testid')).toBe('lead');

@@ -71,7 +71,7 @@ function ContactPanel() {
     <div className="mt-12 border-t border-line-dark pt-8">
       <dl className="grid gap-5">
         <ContactRow label={c.email}>
-          <a href={`mailto:${siteInfo.email}`} className="break-all underline hover:decoration-2">
+          <a href={`mailto:${siteInfo.email}`} className="inline-flex min-h-11 items-center break-all underline hover:decoration-2">
             <bdi>{siteInfo.email}</bdi>
           </a>
         </ContactRow>

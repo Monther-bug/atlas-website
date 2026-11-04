@@ -4,7 +4,7 @@ import { useLang } from '@/lib/lang';
 export type ButtonVariant = 'primary-red' | 'outline-on-dark' | 'outline-on-light';
 export type ButtonSize = 'lg' | 'md';
 
-import { CHEVRON_STRIPES } from '@/components/stripes';
+import { CHEVRON_CLASS, CHEVRON_STRIPES } from '@/components/stripes';
 
 export { CHEVRON_STRIPES };
 
@@ -130,15 +130,17 @@ export function Button(props: ButtonProps) {
     >
       {icon}
       {stacked ? (
+        // Both labels share one grid cell (col/row 1). Class names stay whole words: Tailwind's scanner missed the
+        // earlier `[grid-area:1/1]${…}` template, so the labels stacked in two rows and the label sat off-centre.
         <span className="inline-grid">
-          <span className={`[grid-area:1/1]${loading ? ' invisible' : ''}`}>{children}</span>
-          <span className={`[grid-area:1/1]${loading ? '' : ' invisible'}`}>{loadingLabel}</span>
+          <span className={loading ? 'col-start-1 row-start-1 invisible' : 'col-start-1 row-start-1'}>{children}</span>
+          <span className={loading ? 'col-start-1 row-start-1' : 'col-start-1 row-start-1 invisible'}>{loadingLabel}</span>
         </span>
       ) : (
         <span>{children}</span>
       )}
       {iconEnd}
-      {loading && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1" style={CHEVRON_STRIPES} />}
+      {loading && <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-1 ${CHEVRON_CLASS}`} />}
     </button>
   );
 }

@@ -75,6 +75,12 @@
     text-underline-offset: 0.22em;
     text-decoration-thickness: 1px;
   }
+  /* Body copy: no one-word last lines where the browser can avoid them (Impeccable "straggler"). */
+  p,
+  dd,
+  li {
+    text-wrap: pretty;
+  }
   /* All numerals in data are tabular (spec §15.5). */
   .t-spec,
   [data-counter],
@@ -242,6 +248,19 @@
   }
   .measure:lang(ar) {
     max-width: 38rem;
+  }
+
+  /* The red/white chevron motif (spec §6): draft badges and loading states. A class, not an inline style, so the
+     gradient never sits next to a photo's inline blur placeholder in the HTML (Impeccable buried-raster false hit). */
+  .chevron-stripes {
+    background-image: repeating-linear-gradient(135deg, var(--color-red) 0 4px, var(--color-white) 4px 8px);
+  }
+
+  /* RequestBar waits while the hero is on screen (RequestBar.tsx useOverHero): invisible but still laid out, so the
+     sling can dock into it (Part D). Needs `html.js`: without scripts the bar is always shown. */
+  .js [data-request-bar][data-over-hero] {
+    visibility: hidden;
+    opacity: 0;
   }
 
   /* Rendered by App (C9); Part D's motion.css shows it on desktop motion only. */

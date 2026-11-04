@@ -20,7 +20,7 @@ export const ar: Copy = {
   // §2
   header: {
     skipLink: 'انتقل إلى المحتوى',
-    homeLabel: 'أطلس الصحراء، العودة إلى أعلى الصفحة',
+    homeLabel: 'أطلس الصحراء Atlas Alshraa، العودة إلى أعلى الصفحة',
     name: 'أطلس الصحراء',
     nameAlt: 'Atlas Alshraa',
     nav: { services: 'الخدمات', cranes: 'الرافعات', sites: 'مواقع العمل', contact: 'تواصل معنا' },
