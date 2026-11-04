@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Atlas Alshraa</title>
+    <meta name="theme-color" content="#0D0C2B" />
+    <script>
+      // Before first paint: `js` = scripts run; `motion-ok` = the visitor allows motion.
+      (function (d) {
+        var c = d.documentElement.classList;
+        c.add('js');
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) c.add('motion-ok');
+      })(document);
+    </script>
+  </head>
+  <body>
+    <div id="root"><!--app--></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
