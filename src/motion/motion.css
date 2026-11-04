@@ -1,0 +1,81 @@
+/* Motion layer (Part D).
+   Hidden states exist only under html.motion-ok. The inline <head> script (A1) adds it
+   when JS runs and prefers-reduced-motion is not "reduce". No JS → nothing is hidden.
+   The hero <img> is never hidden (LCP). */
+
+/* 1. Before core.ts sets html[data-motion]: pre-hide the hero's intro targets.
+      If motion never starts, the keyframe un-hides them after 3 s. */
+html.motion-ok:not([data-motion]) :is([data-intro], [data-split], [data-sling-button], [data-sling-leg]) {
+  opacity: 0;
+  animation: atlas-motion-failsafe 0.01s linear 3s forwards;
+}
+/* Hero links stay usable while transparent, and are never invisible while focused. [data-intro] is a
+   wrapper around links, so it is the wrapper that must show when focus is anywhere inside it. */
+html.motion-ok :is([data-intro], [data-sling-button]):focus-within {
+  opacity: 1 !important;
+}
+@keyframes atlas-motion-failsafe {
+  to {
+    opacity: 1;
+  }
+}
+
+/* 2. Lenis (desktop only; rules from lenis/dist/lenis.css, v1.3). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* 3. Progress rope: hidden by Part C's CSS; shown on desktop only. rope.ts drives scaleY and .is-live. */
+html[data-motion="desktop"] .progress-rope {
+  display: block;
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: clamp(0.375rem, 1vw, 1rem);
+  inline-size: 1px;
+  background: var(--color-red);
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 30;
+}
+html[data-motion="desktop"] .progress-rope.is-live {
+  opacity: 1;
+}
+
+/* 7. Ghosts (clones that fly; created by ghost.ts, removed after landing). */
+.motion-ghost {
+  position: fixed;
+  margin: 0;
+  pointer-events: none;
+  z-index: 70;
+  will-change: transform;
+}
+
+/* 8. Reduced motion: belt and braces. */
+html[data-motion="reduced"] .progress-rope {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-ghost,
+  .service-sling,
+  .hoist-rig {
+    display: none !important;
+  }
+}
+
+/* ---- sections appended by later tasks go below this line ---- */

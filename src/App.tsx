@@ -11,11 +11,13 @@ import { Hoist } from '@/sections/Hoist';
 import { RequestForm } from '@/sections/RequestForm';
 import { Services } from '@/sections/Services';
 import { Sites } from '@/sections/Sites';
+import { useSiteMotion } from '@/motion';
+import '@/motion/motion.css';
 
 export function App() {
   const { copy } = useLang();
 
-  // PART D: add `useSiteMotion();` on this line (import { useSiteMotion } from '@/motion'). Part C must not.
+  useSiteMotion();
 
   useEffect(() => {
     loadAnalytics();
