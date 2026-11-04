@@ -33,6 +33,10 @@
 
 /* ── Base ─────────────────────────────────────────────────────────────── */
 @layer base {
+  /* Scroll lock while any modal dialog (menu, lightbox) is open. */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
   /* Themed browser surfaces (spec §15.5). */
   :root {
     caret-color: var(--color-red);
