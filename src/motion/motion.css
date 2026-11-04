@@ -86,6 +86,32 @@ html[data-motion="reduced"] .progress-rope {
 
 /* ---- sections appended by later tasks go below this line ---- */
 
+/* ---- Hero (D.3) ----
+   Before core.ts sets html[data-motion], the photo and its sling overlay start 5 % large, so the intro
+   settles them without a jump when JS arrives. The <picture> scales inside the photo box's own overflow
+   clip (the frame never moves); the <img> is never hidden, so the LCP image paints at once.
+   The 3 s fallback puts them at rest if motion never starts. */
+html.motion-ok:not([data-motion]) :is([data-hero-photo] > *, svg[data-sling]) {
+  transform: scale(1.05);
+  transform-origin: 50% 100%;
+  animation: atlas-motion-settle 0.01s linear 3s forwards;
+}
+@keyframes atlas-motion-settle {
+  to {
+    transform: none;
+  }
+}
+/* The scaled sling overlay must not add a horizontal scrollbar. clip, not hidden: no scroll container. */
+html.motion-ok [data-hero] {
+  overflow-x: clip;
+}
+/* SplitText line masks (overflow: clip, set by SplitText): room for Arabic marks above and below the
+   line box while lines rise. overflow-clip-margin moves the clip edge without touching layout; padding
+   plus negative margins would not, because adjacent masks' margins collapse and the H1 grows. */
+.split-line-mask {
+  overflow-clip-margin: 0.15em;
+}
+
 /* ==== D.8: services sling (hover/focus, desktop only) ==== */
 html[data-motion="desktop"] [data-service-row] {
   position: relative;

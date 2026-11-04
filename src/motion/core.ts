@@ -8,6 +8,7 @@ import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mod
 import { startServiceSetDown, startServiceSlings } from './reveal';
 import { startBackToTop, startFooterPad, startProgressRope } from './rope';
 import { lenisRef, runAll, safely, type Dispose, type MotionEnv, type MotionModule } from './shared';
+import { heroDock, heroIntro } from './hero';
 
 /** Motion that starts later than this (ms after navigation) finds the hero already revealed by the CSS failsafe. */
 const LATE_MS = 2800;
@@ -73,6 +74,8 @@ const startLenis: MotionModule = () => {
 /** Desktop context. Order matters: Lenis first, then the hero intro (it must set its from-states in this same task). */
 const DESKTOP: MotionModule[] = [
   startLenis,
+  heroIntro,
+  heroDock,
   startProgressRope,
   startServiceSetDown,
   startServiceSlings,
@@ -82,7 +85,7 @@ const DESKTOP: MotionModule[] = [
 ];
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
-const TOUCH: MotionModule[] = [startServiceSetDown, startFooterPad, startBackToTop, startRide];
+const TOUCH: MotionModule[] = [heroIntro, heroDock, startServiceSetDown, startFooterPad, startBackToTop, startRide];
 
 function setMode(mode: MotionMode): void {
   document.documentElement.dataset.motion = mode;
