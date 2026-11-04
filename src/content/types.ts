@@ -1,0 +1,257 @@
+import type { PhotoId } from '@/generated/images';
+
+/* ------------------------------------------------------------------ */
+/* Fixed by contract C7                                                */
+/* ------------------------------------------------------------------ */
+
+export type Lang = 'ar' | 'en';
+export type CraneId = 'rt700e' | 'atf60-3' | 'ac200-1' | 'quy250' | 'gmk6350' | 'cke2500';
+export type CraneType = 'rough-terrain' | 'all-terrain' | 'crawler';
+
+export interface Crane {
+  id: CraneId;
+  make: string;
+  model: string;
+  type: CraneType;
+  capacityT: number; // manufacturer max rating used on the site
+  hoistPhoto: PhotoId;
+  cardPhoto: PhotoId;
+  verified: boolean; // Atlas confirmed ownership + capacity
+  hidden: boolean; // never rendered (cke2500)
+}
+
+export interface DocumentFile {
+  id: string; // one of DocumentSlot below
+  href: string;
+  lang: 'ar' | 'en' | 'both';
+  date: string; // YYYY-MM-DD
+}
+
+export interface SiteInfo {
+  email: string; // 'atlasalsahralibya@gmail.com'
+  facebook: string; // the share URL from the brief
+  address: { ar: string; en: string } | null;
+  documents: DocumentFile[]; // [] until real files exist
+}
+
+/* ------------------------------------------------------------------ */
+/* Part B additions                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Service rows, form options and footer links share these ids (copy deck §5). */
+export type ServiceId = 'crane-hire' | 'heavy-transport' | 'handling' | 'oil-services';
+
+/** Capacity bands (copy deck §6). C9 filter values are `band:${CapacityBand}`. */
+export type CapacityBand = '0-60' | '61-200' | '201+';
+
+/** Duration choices in the request form. No choice (value '') shows `unsure`. */
+export type DurationId = 'day' | 'week' | 'month' | 'long';
+
+/** Document slots (copy deck §8b). `DocumentFile.id` uses these values. */
+export type DocumentSlot = 'profile' | 'fleet-list' | 'inspection' | 'hse' | 'iso' | 'insurance' | 'cr';
+
+/**
+ * The 12 photos in the spec §4.2 galleries (construction: 6374, 6376, 6379, 6380, 6382, 6388, 6393;
+ * coast: 6360, 6364, 6396, 6397, 6398). Must equal the photos listed in src/content/sites.ts.
+ * Kobelco photos are excluded.
+ */
+export type GalleryPhotoId = '6374' | '6376' | '6379' | '6380' | '6382' | '6388' | '6393' | '6360' | '6364' | '6396' | '6397' | '6398';
+
+export type SiteGalleryId = 'construction' | 'coast';
+export interface SiteGallery {
+  id: SiteGalleryId;
+  photos: readonly GalleryPhotoId[];
+}
+
+export interface ServiceCopy {
+  id: ServiceId;
+  title: string;
+  body: string;
+  /** A whole sentence that ships only once Atlas confirms it (deck "Add if confirmed"). Render only when non-null; null = withheld. */
+  confirm: string | null;
+}
+
+export interface CraneTypeCopy {
+  full: string; // "Rough-terrain crane"
+  chip: string; // "Rough-terrain"
+  explainer: string; // one line
+}
+
+export interface FieldCopy {
+  label: string;
+  hint: string;
+}
+
+/**
+ * Every string the site renders. `ar.ts` and `en.ts` both satisfy this type,
+ * so a missing line fails type-checking. `{x}` = runtime variable (fillTemplate),
+ * `[[X]]` = fact Atlas has not supplied (blocked by the truth gate).
+ */
+export interface Copy {
+  lang: Lang;
+
+  /** Fixed by C7. Copy deck §1. */
+  meta: { title: string; description: string; ogTitle: string; ogDescription: string; ogImageAlt: string };
+
+  /** Copy deck §2. */
+  header: {
+    skipLink: string;
+    homeLabel: string; // logo link aria-label
+    name: string; // typeset name beside the badge
+    nameAlt: string; // the same name in the other language (second line of the lockup)
+    nav: { services: string; cranes: string; sites: string; contact: string };
+    langSwitch: { text: string; label: string }; // both in the OTHER language
+    request: string;
+    call: { text: string; label: string }; // label has {phone}
+    menu: { open: string; close: string; whatsapp: string };
+  };
+
+  /** Copy deck §3 + spec §5.2 and §15.1. */
+  hero: {
+    h1Lead: string; // first clause, set smaller
+    h1Main: string; // second clause, set large
+    servicesLine: string; // renders BELOW the H1 (deck "Eyebrow"; spec §15.1)
+    whatsapp: string; // the button on the sling
+    browse: string; // secondary button → #cranes (spec §5.2)
+  };
+
+  /** Copy deck §4 "Class names". Used by the Hoist, the grid, the form and template B. */
+  craneTypes: Record<CraneType, CraneTypeCopy>;
+
+  /** Copy deck §4 (the Capacity Scale is the Hoist). */
+  hoist: {
+    title: string;
+    intro: string;
+    listHeading: string; // visually hidden heading of the <ol>
+    skipToList: string; // "See all cranes" skip link → #crane-list (spec §14)
+    capacity: string; // data label inside each load tag
+    model: string;
+    type: string;
+    unit: string; // 'طن' | 't'
+    footnote: string;
+    closing: string;
+    closingButton: string;
+  };
+
+  /** Copy deck §5. */
+  services: {
+    title: string;
+    intro: string;
+    ask: string; // link → WhatsApp template C
+    items: readonly [ServiceCopy, ServiceCopy, ServiceCopy, ServiceCopy];
+  };
+
+  /** Copy deck §6 + spec §15.8 (empty state). */
+  grid: {
+    title: string;
+    intro: string;
+    availability: string;
+    typeLabel: string;
+    bandLabel: string;
+    all: string;
+    bands: Record<CapacityBand, string>; // {min} / {max} are formatted numbers
+    count: { one: string; two: string; few: string; many: string }; // few = 3–10, many = 11+
+    empty: string;
+    showAll: string;
+    card: { type: string; capacity: string; request: string; formLink: string }; // the model code is the card's heading
+  };
+
+  /** Copy deck §7. */
+  sites: {
+    title: string;
+    intro: string;
+    galleries: Record<SiteGalleryId, string>;
+    swipeHint: string;
+    open: string;
+    prev: string;
+    next: string;
+    counter: string; // {i} / {n}
+    close: string;
+    captions: Record<GalleryPhotoId, string>;
+  };
+
+  /** Copy deck §8b. Rendered only when siteInfo.documents is not empty. */
+  documents: {
+    title: string;
+    intro: string;
+    meta: string; // {language} {date}
+    languages: { ar: string; en: string; both: string };
+    download: string;
+    emailRequest: string;
+    emailSubject: string; // {document}
+    names: Record<DocumentSlot, string>;
+  };
+
+  /** Copy deck §9 + spec §5.8 and §15.1. */
+  form: {
+    title: string; // the dialect question (spec §5.8)
+    lead: string; // the dialect line, BELOW the title (deck "Eyebrow"; spec §15.1)
+    intro: string;
+    contact: { email: string; phone: string; whatsapp: string; address: string; facebook: string };
+    groups: { details: string; lift: string; site: string };
+    required: string;
+    optional: string;
+    submit: string;
+    busy: string;
+    whatsappAlt: string;
+    privacy: string;
+    errorSummary: string;
+    fields: {
+      name: FieldCopy & { tooLong: string };
+      company: FieldCopy & { tooLong: string };
+      phone: FieldCopy & { empty: string; format: string };
+      crane: FieldCopy & { unsure: string; servicesGroup: string; cranesGroup: string };
+      weight: FieldCopy & { unit: string; empty: string; format: string };
+      radius: FieldCopy & { unit: string; format: string };
+      height: FieldCopy & { unit: string; format: string };
+      site: FieldCopy & { tooLong: string };
+      start: FieldCopy & { past: string };
+      duration: FieldCopy & { unsure: string; options: Record<DurationId, string> };
+      message: FieldCopy & { counter: string; tooLong: string }; // counter: {n} / {max}
+    };
+    success: { title: string; text: string; nudge: string; button: string }; // text has {phone}
+    failure: { title: string; text: string; retry: string; whatsapp: string; email: string; offline: string };
+    emailSubject: string; // {crane}
+  };
+
+  /** Copy deck §10. Multi-line templates joined with '\n'. */
+  whatsapp: {
+    general: string; // A
+    crane: string; // B: {model} {class}
+    service: string; // C: {service}
+    request: string; // D: one line per form field; lines with an empty field are dropped
+    followUp: string; // E: {name} {phone}
+  };
+
+  /** Copy deck §10 "Floating WhatsApp button" + spec §5 RequestBar. */
+  bar: {
+    onHook: string;
+    clear: string; // aria-label of the chip's Close icon button
+    whatsapp: string; // visible
+    whatsappLabel: string; // accessible name (contains the visible text)
+    tooltip: string; // shown as a line of text on desktop
+  };
+
+  /** Copy deck §11. */
+  footer: {
+    name: string;
+    legalName: string;
+    tagline: string;
+    servicesHeading: string;
+    pageHeading: string;
+    pageLinks: { cranes: string; sites: string; request: string };
+    contactHeading: string;
+    followHeading: string;
+    facebook: string;
+    copyright: string; // {year}
+    backToTop: string;
+  };
+
+  /** Copy deck §12. Kobelco photos are not PhotoIds, so they cannot appear here. */
+  alt: Record<PhotoId, string>;
+
+  misc: {
+    draftBadge: string; // spec §4.3
+    newTab: string;
+  };
+}
