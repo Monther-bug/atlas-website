@@ -2504,7 +2504,7 @@ export const ar: Copy = {
     service: ['السلام عليكم، أطلس الصحراء.', 'أريد الاستفسار عن خدمة {service}.', 'التفاصيل: ___'].join('\n'),
     request: [
       'السلام عليكم، أطلس الصحراء.',
-      'طلب رافعة من الموقع الإلكتروني:',
+      'طلب من الموقع الإلكتروني:',
       'الاسم: {name}',
       'الشركة: {company}',
       'الهاتف: {phone}',
@@ -2890,7 +2890,7 @@ export const en: Copy = {
       'Duration: {duration}',
       'Notes: {message}',
     ].join('\n'),
-    followUp: ['Hello Atlas Alshraa,', 'I just sent a crane request on your website. Name: {name}, phone: {phone}.'].join('\n'),
+    followUp: ['Hello Atlas Alshraa,', 'I just sent a request through your website. Name: {name}, phone: {phone}.'].join('\n'),
   },
 
   // §10 floating button + spec §5.5
@@ -7570,7 +7570,7 @@ describe('buildRequestMessage', () => {
     expect(message).toBe(
       [
         'السلام عليكم، أطلس الصحراء.',
-        'طلب رافعة من الموقع الإلكتروني:',
+        'طلب من الموقع الإلكتروني:',
         'الهاتف: 0912345678',
         'الرافعة أو الخدمة: Grove GMK6350',
         'وزن الحمولة: 350 طن',
@@ -7586,7 +7586,7 @@ describe('buildRequestMessage', () => {
     expect(message).toContain('Crane or service: Oil services');
     expect(message).toContain('Load weight: 1,250.5 t');
     expect(message).toContain('Lift radius: 12.5 m');
-    expect(message).toContain('Duration: 2 days to a week');
+    expect(message).toContain('Duration: Two days to a week');
     expect(message).toContain('Start date: 2026-11-20');
     expect(message).not.toContain('Lift height:');
     expect(message).not.toContain('{');
@@ -7596,21 +7596,21 @@ describe('buildRequestMessage', () => {
 describe('follow-up, email subject and payload', () => {
   it('uses template E when there is a name, else the general message', () => {
     expect(buildFollowUpMessage(values({ ...valid, name: 'Salem' }), en)).toBe(
-      'Hello Atlas Alshraa,\nI just sent a crane request on your website. Name: Salem, phone: 0912345678.',
+      'Hello Atlas Alshraa,\nI just sent a request through your website. Name: Salem, phone: 0912345678.',
     );
     expect(buildFollowUpMessage(valid, en)).toBe(en.whatsapp.general);
   });
 
   it('names the crane or service in the email subject', () => {
-    expect(emailSubject(values({ crane: 'crane:quy250' }), en)).toBe('Crane request: Fuwa (FW.China) QUY250');
-    expect(emailSubject(emptyRequest(), ar)).toBe('طلب رافعة: لست متأكداً، ساعدوني في الاختيار');
+    expect(emailSubject(values({ crane: 'crane:quy250' }), en)).toBe('Website request: Fuwa (FW.China) QUY250');
+    expect(emailSubject(emptyRequest(), ar)).toBe('طلب من الموقع: لست متأكداً، ساعدوني في الاختيار');
   });
 
   it('posts normalised values, the language and the message', () => {
     const payload = requestPayload(values({ weight: '٣٥٠', phone: '٠٩١٢٣٤٥٦٧٨' }), ar);
     expect(payload).toMatchObject({ lang: 'ar', weight: '350', phone: '0912345678', crane: '' });
     expect(payload.summary).toBe(buildRequestMessage(values({ weight: '٣٥٠', phone: '٠٩١٢٣٤٥٦٧٨' }), ar));
-    expect(payload._subject).toBe('طلب رافعة: لست متأكداً، ساعدوني في الاختيار');
+    expect(payload._subject).toBe('طلب من الموقع: لست متأكداً، ساعدوني في الاختيار');
   });
 });
 ```
