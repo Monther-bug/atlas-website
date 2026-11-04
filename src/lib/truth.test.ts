@@ -57,3 +57,17 @@ describe('findTruthProblems', () => {
     expect(check({ env: {} })).toHaveLength(3);
   });
 });
+
+describe('SITE_URL must be a public https URL', () => {
+  const siteProblems = (siteUrl: string) =>
+    check({ env: { ...READY_ENV, siteUrl } }).filter((p) => p.startsWith('SITE_URL'));
+  it.each(['localhost:4173', 'http://atlas.ly', 'https://127.0.0.1', 'https://localhost', 'https://a.localhost', 'https://x.local', 'https://0.0.0.0', 'https://[::1]'])(
+    'flags %s',
+    (value) => {
+      expect(siteProblems(value)).toEqual([`SITE_URL "${value}" is not a public https URL`]);
+    },
+  );
+  it('accepts a public https URL', () => {
+    expect(siteProblems('https://atlas-alsahraa.ly')).toEqual([]);
+  });
+});

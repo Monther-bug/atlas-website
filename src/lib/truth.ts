@@ -21,6 +21,27 @@ function findTokens(value: unknown, path: string, out: string[]): void {
   }
 }
 
+/** True when `value` parses as an https URL whose host is not a local address. */
+function isPublicHttps(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  const host = url.hostname.toLowerCase();
+  return !(
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.local') ||
+    host.startsWith('127.') ||
+    host === '0.0.0.0' ||
+    host === '::1' ||
+    host === '[::1]'
+  );
+}
+
 const missing = (v: string | null | undefined) => !v || v.trim() === '';
 
 /** Lists everything that must not reach production. Empty array = ready to ship. */
@@ -33,6 +54,7 @@ export function findTruthProblems(input: TruthInput): string[] {
     }
   }
   if (missing(input.env.siteUrl)) problems.push('SITE_URL is not set');
+  else if (!isPublicHttps(input.env.siteUrl!)) problems.push(`SITE_URL "${input.env.siteUrl}" is not a public https URL`);
   if (missing(input.env.whatsapp)) problems.push('VITE_WHATSAPP is not set');
   if (missing(input.env.phone)) problems.push('VITE_PHONE is not set');
   return problems;

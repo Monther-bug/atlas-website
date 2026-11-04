@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fontPreload } from './vite/font-preload.ts';
+import { truthGate } from './vite/truth-gate.ts';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -22,9 +23,21 @@ function syncEnv(mode: string) {
 
 export default defineConfig(({ mode }) => {
   syncEnv(mode);
-  const target = process.env.BUILD_TARGET === 'production' ? 'production' : 'staging';
+  const raw = process.env.BUILD_TARGET;
+  if (raw && raw !== 'staging' && raw !== 'production') {
+    console.warn(`[atlas] BUILD_TARGET="${raw}" is not 'staging' or 'production'; treating it as 'staging'.`);
+  }
+  const target = raw === 'production' ? 'production' : 'staging';
   return {
-    plugins: [react(), tailwindcss(), fontPreload()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      fontPreload(),
+      truthGate({
+        target,
+        env: { siteUrl: process.env.VITE_SITE_URL, whatsapp: process.env.VITE_WHATSAPP, phone: process.env.VITE_PHONE },
+      }),
+    ],
     resolve: { alias: { '@': path('./src') } },
     define: { __BUILD_TARGET__: JSON.stringify(target) },
     build: {
