@@ -12,7 +12,6 @@ describe('hookPosition', () => {
       rect: { left: 0, top: 100, width: 4240, height: 2385 },
       avif: [],
       webp: [],
-      placeholder: '',
       hook: { x: 2120, y: 577 },
     };
     expect(hookPosition(image)).toEqual({ left: '50%', top: '20%' });

@@ -210,7 +210,6 @@ export interface CropImage {
   photo: PhotoId; crop: CropName;
   rect: { left: number; top: number; width: number; height: number }; // in source pixels
   avif: ImageSource[]; webp: ImageSource[];                          // ascending width
-  placeholder: string;                                              // data:image/webp;base64 (24 px wide)
   hook: { x: number; y: number } | null;                            // source-pixel hook point, if any
 }
 export const images: Partial<Record<`${PhotoId}:${CropName}`, CropImage>>;
@@ -232,7 +231,8 @@ export interface PictureProps {
 }
 export function Picture(props: PictureProps): JSX.Element
 ```
-It renders `<picture>` with AVIF and WebP `<source>`s (with a media query when `mobileCrop` is set) and an `<img>` with `width`/`height` from `rect`, `style={{ backgroundImage: url(placeholder), backgroundSize: 'cover' }}`, `object-fit: cover` and `object-position: 50% 0`.
+It renders `<picture>` with AVIF and WebP `<source>`s (with a media query when `mobileCrop` is set) and an `<img>` with `width`/`height` from `rect`, `object-fit: cover` and `object-position: 50% 0`.
+The 24 px blur placeholders live in `src/generated/placeholders.ts` (`placeholders["<photo>:<crop>"]`), not in the manifest. On the server (`import.meta.env.SSR`) the `<img>` gets them as an inline `background-image` (+ `background-size: cover`, `background-position: 50% 0`); the client bundle omits them and the `<img>` has `suppressHydrationWarning`.
 
 ### C7. Content types (B, `src/content/types.ts`)
 B owns the full `Copy` interface. These pieces are fixed:
@@ -1713,7 +1713,6 @@ export interface CropImage {
   photo: PhotoId; crop: CropName;
   rect: { left: number; top: number; width: number; height: number }; // in source pixels
   avif: ImageSource[]; webp: ImageSource[];                          // ascending width
-  placeholder: string;                                              // data:image/webp;base64 (24 px wide)
   hook: { x: number; y: number } | null;                            // source-pixel hook point, if any
 }
 
@@ -4580,7 +4579,6 @@ export interface CropImage {
   photo: PhotoId; crop: CropName;
   rect: { left: number; top: number; width: number; height: number }; // in source pixels
   avif: ImageSource[]; webp: ImageSource[];                          // ascending width
-  placeholder: string;                                              // data:image/webp;base64 (24 px wide)
   hook: { x: number; y: number } | null;                            // source-pixel hook point, if any
 }
 

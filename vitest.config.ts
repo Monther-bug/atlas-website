@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    // App tests live in src/; the Vite plugins (vite/) and build scripts (scripts/) have pure helpers with tests too.
-    include: ['src/**/*.test.{ts,tsx}', 'vite/**/*.test.ts', 'scripts/**/*.test.mjs'],
+    // App tests live in src/; the Vite plugins (vite/), build scripts (scripts/) and QA scripts (qa/) have pure helpers with tests too.
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs', 'qa/**/*.test.mjs', 'vite/**/*.test.ts'],
   },
 });

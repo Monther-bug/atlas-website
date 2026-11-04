@@ -15,6 +15,15 @@ describe('Sites', () => {
     expect(strips.map((strip) => strip.querySelectorAll('button[data-testid="site-photo"]').length)).toEqual([7, 5]);
   });
 
+  it('keeps every sr-only label inside the scrolling strip (position: relative ancestor)', () => {
+    const labels = [...html.querySelectorAll('[data-sites-strip] .sr-only')];
+    expect(labels).toHaveLength(12);
+    for (const label of labels) {
+      const button = label.closest('button[data-testid="site-photo"]');
+      expect(button?.classList.contains('relative')).toBe(true);
+    }
+  });
+
   it('never loads a Kobelco photo', () => {
     expect(html.innerHTML).not.toMatch(/\/img\/(6367|6370|6371)-/);
   });

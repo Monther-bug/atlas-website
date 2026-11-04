@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { placeholders } from '@/generated/placeholders';
 import { getImage, type CropName, type ImageSource, type PhotoId } from '@/generated/images';
 
 export interface PictureProps {
@@ -26,6 +27,9 @@ export function Picture({ photo, crop, mobileCrop, alt, sizes, priority = false,
     const bd = Math.abs(best.width - 1280);
     return d < bd || (d === bd && s.width > best.width) ? s : best;
   });
+  // Blur placeholder: prerendered HTML only. The client renders none, and suppressHydrationWarning
+  // below keeps the server's inline style (React does not patch attribute mismatches on hydration).
+  const ph = import.meta.env.SSR ? placeholders[`${photo}:${crop}`] : undefined;
   return (
     <picture className={pictureClassName}>
       {mobile && (
@@ -45,10 +49,9 @@ export function Picture({ photo, crop, mobileCrop, alt, sizes, priority = false,
         decoding={priority ? undefined : 'async'}
         fetchPriority={priority ? 'high' : undefined}
         className={className}
+        suppressHydrationWarning
         style={{
-          backgroundImage: `url(${main.placeholder})`,
-          backgroundSize: 'cover',
-          backgroundPosition: '50% 0',
+          ...(ph ? { backgroundImage: `url(${ph})`, backgroundSize: 'cover', backgroundPosition: '50% 0' } : null),
           objectFit: 'cover',
           objectPosition: '50% 0',
         }}

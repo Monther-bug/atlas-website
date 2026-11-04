@@ -49,7 +49,7 @@ export function Sites() {
                         opener.current = event.currentTarget;
                         setOpen({ gallery, index });
                       }}
-                      className="group block w-full text-start"
+                      className="group relative block w-full text-start"
                     >
                       <Picture
                         photo={photo}

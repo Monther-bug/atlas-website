@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getImage } from '@/generated/images';
 import { Picture } from './Picture';
 
@@ -15,6 +15,7 @@ function render(ui: React.ReactElement) {
 const srcset = (list: { url: string; width: number }[]) => list.map((s) => `${s.url} ${s.width}w`).join(', ');
 
 describe('Picture', () => {
+  afterEach(() => vi.unstubAllEnvs());
   const desktop = getImage('6398', 'desktop_16x9');
   const mobile = getImage('6398', 'mobile_9x16');
 
@@ -48,12 +49,27 @@ describe('Picture', () => {
     expect(img.getAttribute('height')).toBe(String(desktop.rect.height));
     expect(img.getAttribute('alt')).toBe('Two cranes');
     expect(img.getAttribute('src')).toMatch(/^\/img\/6398-desktop_16x9-\d+\.[0-9a-f]{8}\.webp$/);
-    expect(img.style.backgroundImage).toContain('data:image/webp;base64,');
-    expect(img.style.backgroundSize).toBe('cover');
     expect(img.style.objectFit).toBe('cover');
     expect(img.style.objectPosition).toBe('50% 0');
-    expect(img.getAttribute('style')).toContain('background-position:50% 0');
     expect(img.hasAttribute('sizes')).toBe(false);
+  });
+
+  it('includes the blur placeholder in the <img> style on the server (SSR)', () => {
+    vi.stubEnv('SSR', true);
+    const { img } = render(<Picture photo="6398" crop="desktop_16x9" alt="" sizes="100vw" />);
+    expect(img.style.backgroundImage).toContain('data:image/webp;base64,');
+    expect(img.style.backgroundSize).toBe('cover');
+    expect(img.getAttribute('style')).toContain('background-position:50% 0');
+    expect(img.style.objectFit).toBe('cover');
+  });
+
+  it('renders no placeholder on the client (it keeps the server style via suppressHydrationWarning)', () => {
+    vi.stubEnv('SSR', false);
+    const { html, img } = render(<Picture photo="6398" crop="desktop_16x9" alt="" sizes="100vw" />);
+    expect(html).not.toContain('data:image');
+    expect(img.style.backgroundImage).toBe('');
+    expect(img.style.objectFit).toBe('cover');
+    expect(img.style.objectPosition).toBe('50% 0');
   });
 
   it('uses the WebP closest to 1280 px as the <img> src (ties go larger)', () => {
