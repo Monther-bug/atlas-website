@@ -85,3 +85,30 @@ html[data-motion="reduced"] .progress-rope {
 }
 
 /* ---- sections appended by later tasks go below this line ---- */
+
+/* ==== D.8: services sling (hover/focus, desktop only) ==== */
+html[data-motion="desktop"] [data-service-row] {
+  position: relative;
+}
+.service-sling {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(-1 * var(--sling-reach, 0px));
+  inline-size: var(--sling-reach, 0px);
+  block-size: 1.5rem;
+  margin-block-start: -0.75rem;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--color-red-bright);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+}
+.service-sling path {
+  vector-effect: non-scaling-stroke;
+}
+/* The path is drawn rope-side first; in RTL the rope is on the right. */
+[dir="rtl"] .service-sling {
+  transform: scaleX(-1);
+}
+/* ==== end D.8 ==== */

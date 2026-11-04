@@ -5,6 +5,8 @@ import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import Lenis from 'lenis';
 import { startRide } from './ride';
 import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mode';
+import { startServiceSetDown, startServiceSlings } from './reveal';
+import { startBackToTop, startFooterPad, startProgressRope } from './rope';
 import { lenisRef, runAll, safely, type Dispose, type MotionEnv, type MotionModule } from './shared';
 
 /** Motion that starts later than this (ms after navigation) finds the hero already revealed by the CSS failsafe. */
@@ -69,10 +71,18 @@ const startLenis: MotionModule = () => {
 };
 
 /** Desktop context. Order matters: Lenis first, then the hero intro (it must set its from-states in this same task). */
-const DESKTOP: MotionModule[] = [startLenis, startRide];
+const DESKTOP: MotionModule[] = [
+  startLenis,
+  startProgressRope,
+  startServiceSetDown,
+  startServiceSlings,
+  startFooterPad,
+  startBackToTop,
+  startRide,
+];
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
-const TOUCH: MotionModule[] = [startRide];
+const TOUCH: MotionModule[] = [startServiceSetDown, startFooterPad, startBackToTop, startRide];
 
 function setMode(mode: MotionMode): void {
   document.documentElement.dataset.motion = mode;
