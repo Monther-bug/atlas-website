@@ -296,7 +296,7 @@ Hashed assets are served `immutable`; HTML is served `no-cache`.
 ## 10. SEO
 - **Per-page tags:** title, meta description and Open Graph/Twitter tags from the copy deck §1. Canonical, `hreflang` ar/en/x-default.
 - **Files:** `sitemap.xml`, `robots.txt`.
-- **Structured data:** JSON-LD `Organization` + `LocalBusiness` with confirmed fields only (name in both languages, email, Facebook `sameAs`). Phone, address and geo are added when verified.
+- **Structured data:** JSON-LD `Organization`, plus `LocalBusiness` only once a verified address exists (Google requires an address for LocalBusiness; decision E.2: truth over polish). Confirmed fields only (name in both languages, email, Facebook `sameAs`). Phone, address and geo are added when verified.
 - **Search terms:** both «رافعة» and «كرين» appear in the copy and meta tags.
 
 ## 11. Testing and acceptance

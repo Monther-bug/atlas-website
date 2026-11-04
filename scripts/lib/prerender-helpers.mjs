@@ -52,3 +52,15 @@ export function countFontPreloads(html) {
   const links = html.match(/<link\b[^>]*>/gi) ?? [];
   return links.filter((tag) => /\brel\s*=\s*["']?preload["'\s/>]/i.test(tag) && /\bas\s*=\s*["']?font["'\s/>]/i.test(tag)).length;
 }
+
+const linkKey = (tag) => {
+  const attr = (n) => (tag.match(new RegExp(`\\b${n}\\s*=\\s*"([^"]*)"`, 'i'))?.[1] ?? '').replace(/&amp;/g, '&');
+  return `${attr('rel')}|${attr('as')}|${attr('href')}`;
+};
+
+/** Hoisted <link> tags (from extractLeadingLinks) that the built page does not already carry.
+ *  Matches on rel + as + href together: the favicon and an image preload may share a href. */
+export function dropDuplicateLinks(links, html) {
+  const have = new Set((html.match(/<link\b[^>]*>/gi) ?? []).map(linkKey));
+  return (links.match(/<link\b[^>]*>/gi) ?? []).filter((tag) => !have.has(linkKey(tag)));
+}

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   countFontPreloads,
+  dropDuplicateLinks,
   extractLeadingLinks,
   findTokens,
   injectApp,
@@ -111,5 +112,25 @@ describe('countFontPreloads', () => {
       '<link rel="stylesheet" href="/assets/main.css">' +
       '<link rel="modulepreload" href="/assets/x.js">';
     expect(countFontPreloads(head)).toBe(0);
+  });
+});
+
+describe('dropDuplicateLinks', () => {
+  const page = '<head><link rel="preload" as="font" href="/a.woff2"><link rel="icon" href="/brand/badge.png"><link rel="x" href="/q?a=1&amp;b=2"></head>';
+  it('drops a hoisted link already in the page (same rel, as and href)', () => {
+    expect(dropDuplicateLinks('<link rel="preload" as="font" href="/a.woff2">', page)).toEqual([]);
+  });
+  it('keeps an image preload that only shares its href with the favicon', () => {
+    const tag = '<link rel="preload" as="image" href="/brand/badge.png">';
+    expect(dropDuplicateLinks(tag, page)).toEqual([tag]);
+  });
+  it('handles & in href', () => {
+    expect(dropDuplicateLinks('<link rel="x" href="/q?a=1&amp;b=2">', page)).toEqual([]);
+    expect(dropDuplicateLinks('<link rel="x" href="/q?a=1&b=2">', page)).toEqual([]);
+  });
+  it('keeps new links in order', () => {
+    const a = '<link rel="preload" as="image" href="/n1.jpg">';
+    const b = '<link rel="preload" as="image" href="/n2.jpg">';
+    expect(dropDuplicateLinks(a + '\n' + b, page)).toEqual([a, b]);
   });
 });

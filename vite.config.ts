@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fontPreload } from './vite/font-preload.ts';
+import { siteUrl } from './vite/site-url.ts';
 import { truthGate } from './vite/truth-gate.ts';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
@@ -30,6 +31,7 @@ export default defineConfig(({ mode }) => {
   const target = raw === 'production' ? 'production' : 'staging';
   return {
     plugins: [
+      siteUrl(),
       react(),
       tailwindcss(),
       fontPreload(),

@@ -15,7 +15,7 @@ export const en: Copy = {
     ogTitle: 'Atlas Alshraa: Every project has the right crane',
     ogDescription:
       'Crane hire, heavy transport, handling and oil services. Tell us about your load and we will tell you which crane fits.',
-    ogImageAlt: 'Two yellow cranes set up side by side on a beach, booms raised against a blue sky.',
+    ogImageAlt: "A yellow mobile crane seen from below: the operator's cab, the telescopic boom and the hook against a blue sky with white clouds.",
   },
 
   // §2
