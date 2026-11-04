@@ -1,5 +1,23 @@
+// @vitest-environment jsdom
+import { createElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { stepFor, wrapIndex } from './Lightbox';
+import { renderHtml } from '@/test/render';
+import { Lightbox, stepFor, wrapIndex } from './Lightbox';
+
+describe('Lightbox markup', () => {
+  const photos = ['6374', '6376'] as never;
+  const render = () =>
+    renderHtml(createElement(Lightbox, { photos, index: 0, title: 'Sites', onIndexChange: () => {}, onClose: () => {} }), 'en');
+
+  it('contains overscroll on the dialog', () => {
+    expect(render().querySelector('dialog')?.className).toContain('overscroll-contain');
+  });
+
+  it('announces the position and the caption in the live region', () => {
+    const live = render().querySelector('[aria-live="polite"]');
+    expect(live?.textContent).toMatch(/^1 of 2 \u2014 \S/);
+  });
+});
 
 describe('stepFor', () => {
   it('moves forward with the arrow that points the reading direction', () => {

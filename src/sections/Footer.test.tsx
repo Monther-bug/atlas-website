@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mockEnv = vi.hoisted(() => ({
   target: 'staging' as 'staging' | 'production',
@@ -11,11 +11,15 @@ const mockEnv = vi.hoisted(() => ({
 }));
 vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified && mockEnv.target !== 'production' }));
 
-import { afterEach } from 'vitest';
 import { renderHtml } from '@/test/render';
 import { Footer } from './Footer';
 
 describe('Footer', () => {
+  afterEach(() => {
+    mockEnv.phone = null;
+    mockEnv.whatsapp = null;
+  });
+
   const html = renderHtml(<Footer />, 'ar');
 
   it('is the C9 footer with a back-to-top link and the outrigger pad', () => {
@@ -45,9 +49,5 @@ describe('Footer', () => {
     expect(tel?.textContent).toBe('+218 91 123 4567');
     const wa = withContact.querySelector('a[href^="https://wa.me/"] bdi[dir="ltr"]');
     expect(wa?.textContent).toBe('+218911234567');
-  });
-  afterEach(() => {
-    mockEnv.phone = null;
-    mockEnv.whatsapp = null;
   });
 });

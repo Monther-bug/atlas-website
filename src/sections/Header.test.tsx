@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockEnv = vi.hoisted(() => ({
@@ -65,9 +66,13 @@ describe('Header', () => {
 
 describe('Header behaviour', () => {
   let observers: { cb: (e: { isIntersecting: boolean }[]) => void; disconnect: ReturnType<typeof vi.fn> }[];
+  let mqListeners: ((e: { matches: boolean }) => void)[];
+  const realShowModal = HTMLDialogElement.prototype.showModal;
+  const realClose = HTMLDialogElement.prototype.close;
 
   beforeEach(() => {
     observers = [];
+    mqListeners = [];
     vi.stubGlobal(
       'IntersectionObserver',
       class {
@@ -78,7 +83,11 @@ describe('Header behaviour', () => {
         }
       },
     );
-    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: (_: string, cb: (e: { matches: boolean }) => void) => mqListeners.push(cb),
+      removeEventListener: vi.fn(),
+    }));
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
       this.setAttribute('open', '');
     });
@@ -90,6 +99,8 @@ describe('Header behaviour', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    HTMLDialogElement.prototype.showModal = realShowModal;
+    HTMLDialogElement.prototype.close = realClose;
     document.getElementById('top')?.remove();
   });
 
@@ -113,8 +124,17 @@ describe('Header behaviour', () => {
     await click(toggle);
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
     expect(toggle?.getAttribute('aria-expanded')).toBe('true');
-    const { act } = await import('react');
     await act(async () => host.querySelector('dialog')?.dispatchEvent(new Event('close')));
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the menu when the viewport becomes desktop width', async () => {
+    const { host } = await mount(<Header />, 'en');
+    const toggle = host.querySelector('[data-testid="menu-open"]');
+    await click(toggle);
+    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
+    await act(async () => mqListeners.forEach((cb) => cb({ matches: true })));
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -127,7 +147,6 @@ describe('Header behaviour', () => {
   it('sets data-top only while the hero intersects, and disconnects on unmount', async () => {
     addHero();
     const { host, unmount } = await mount(<Header />, 'en');
-    const { act } = await import('react');
     const header = host.querySelector('header');
     await act(async () => observers[0]?.cb([{ isIntersecting: true }]));
     expect(header?.hasAttribute('data-top')).toBe(true);

@@ -58,13 +58,14 @@ export function Lightbox({ photos, index, title, onIndexChange, onClose }: Light
       onClose={onClose}
       onKeyDown={onKeyDown}
       data-lenis-prevent=""
-      className="m-0 h-dvh max-h-none w-full max-w-none bg-navy-950 p-0 text-white backdrop:bg-navy-950"
+      className="m-0 h-dvh max-h-none w-full max-w-none overscroll-contain bg-navy-950 p-0 text-white backdrop:bg-navy-950"
     >
       {photo !== undefined && index !== null && (
         <div className="flex h-full flex-col">
           <div className="shell flex h-[4.5rem] w-full shrink-0 items-center justify-between gap-4">
             <p className="t-small tabular-nums text-steel" aria-live="polite">
               {fillTemplate(copy.sites.counter, { i: formatNumber(index + 1, lang), n: formatNumber(photos.length, lang) })}
+              <span className="sr-only">{` \u2014 ${copy.sites.captions[photo]}`}</span>
             </p>
             <button
               type="button"

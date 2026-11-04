@@ -16,7 +16,7 @@ export function Footer() {
   const whatsapp = env.whatsapp ? whatsappHref(copy.whatsapp.general) : null;
 
   return (
-    <footer data-footer="" data-ground="dark" className="bg-navy-950 pb-28 text-white lg:pb-28">
+    <footer data-footer="" data-ground="dark" className="bg-navy-950 pb-28 text-white">
       <OutriggerPad />
       <div className="shell grid gap-12 pt-14 md:grid-cols-12">
         <div className="md:col-span-4">
