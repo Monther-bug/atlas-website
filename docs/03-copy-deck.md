@@ -154,7 +154,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | | العربية | English |
 |---|---|---|
 | Title | المناولة | Handling and rigging |
-| Text | نرفع الأحمال ونربطها ونحرّكها داخل موقع العمل [[CONFIRM: فريق ربط، ومعدات الربط والرفع، وخطة رفع]]. اطلب المناولة وحدها، أو مع تأجير الرافعة والنقل في طلب واحد. | We lift, rig and move loads on site [[CONFIRM: rigging crew, slings and lifting gear, lift plans]]. Book handling on its own, or with crane hire and transport in one request. |
+| Text | نرفع الأحمال ونربطها ونحرّكها داخل موقع العمل [[CONFIRM: مع فريق ربط ومعدات الربط والرفع وخطة رفع]]. اطلب المناولة وحدها، أو مع تأجير الرافعة والنقل في طلب واحد. | We lift, rig and move loads on site [[CONFIRM: with a rigging crew, slings and lifting gear, and a lift plan]]. Book handling on its own, or with crane hire and transport in one request. |
 
 **04. Oil services**
 
@@ -172,7 +172,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Element | العربية | English |
 |---|---|---|
 | Title | اعثر على رافعتك *(switch to «أسطولنا» once ownership is confirmed)* | Find your crane *(switch to "Our fleet" once ownership is confirmed)* |
-| Intro | صنّف الرافعات حسب النوع أو السعة، ثم اطلب الرافعة التي تناسبك عبر واتساب بضغطة واحدة. | Filter by type or capacity. Then request the crane you need on WhatsApp in one tap. |
+| Intro | اعرض الرافعات حسب النوع أو السعة، ثم اطلب الرافعة التي تناسبك عبر واتساب. | Filter by type or capacity, then request the crane you need on WhatsApp. |
 | Availability line | أخبرنا بالتاريخ، ونؤكد لك التوفر. | Tell us your dates and we will confirm availability. |
 | Filter group 1 label | النوع | Type |
 | Chip | الكل | All |
@@ -243,15 +243,19 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | 6398 | موقع ساحلي · رافعتان على مساندهما فوق الرمل | Coastal site · Two cranes set up on the sand |
 | 6364 | موقع ساحلي · المساند ممدودة وحزام الرفع على الخطاف | Coastal site · Outriggers out, sling on the hook |
 | 6360 | موقع ساحلي · ثقلا الموازنة لرافعتين جنباً إلى جنب | Coastal site · Two counterweights side by side |
-| 6395 | موقع ساحلي · رافعة لكل التضاريس بجانب مقطورة قلّابة | Coastal site · All-terrain crane beside a tipper trailer |
+| 6395 | موقع ساحلي · رافعة لكل التضاريس بجانب مقطورة قلّابة | Coastal site · All-terrain crane beside a tipper trailer (not in gallery, spec §4.2) |
 | 6396 | موقع ساحلي · رافعة لكل التضاريس والبحر خلفها | Coastal site · All-terrain crane with the sea behind |
 | 6397 | موقع ساحلي · المساند على قواعدها قرب البحر | Coastal site · Outriggers on pads near the water |
 | 6380 | موقع إنشاءات · رافعة مجنزرة بجانب مبنى من عدة طوابق | Building site · Crawler crane beside a multi-storey frame |
-| 6385 | موقع إنشاءات · رافعة مجنزرة وكتل الموازنة مركّبة | Building site · Crawler crane with its counterweight in place |
+| 6385 | موقع إنشاءات · رافعة مجنزرة وكتل الموازنة مركّبة | Building site · Crawler crane with its counterweight in place (not in gallery, spec §4.2) |
 | 6388 | موقع إنشاءات · رافعة لكل التضاريس على قواعد المساند بجانب السقالات | Building site · All-terrain crane on outrigger pads by the scaffolding |
-| 6389 | موقع إنشاءات · الذراع مرفوع والخطاف جاهز | Building site · Boom up, hook ready |
-| 6375 | موقع إنشاءات · المساند على ألواح فولاذية | Building site · Outriggers on steel pads |
+| 6389 | موقع إنشاءات · الذراع مرفوع والخطاف جاهز | Building site · Boom up, hook ready (not in gallery, spec §4.2) |
+| 6375 | موقع إنشاءات · المساند على ألواح فولاذية | Building site · Outriggers on steel pads (not in gallery, spec §4.2) |
 | 6376 | موقع إنشاءات · كابينة المشغّل وبابها مفتوح | Building site · The operator's cab, door open |
+| 6374 | موقع إنشاءات · ثقل موازنة أبيض بخطوط حمراء والذراع يرتفع نحو سماء زرقاء | Building site · White counterweight with red chevrons, boom rising into a blue sky |
+| 6379 | موقع إنشاءات · كابينة المشغّل من الأسفل بدرجتها المعدنية | Building site · The operator's cab from below, with its steel step |
+| 6382 | موقع إنشاءات · جسم رافعة مجنزرة حمراء تحت الذراع الشبكي | Building site · Red crawler crane body under the lattice boom |
+| 6393 | موقع إنشاءات · جسم رافعة صفراء عليه اسم GROVE، والذراع يرتفع نحو سماء زرقاء | Building site · Yellow crane body lettered GROVE, boom rising into a blue sky |
 
 ---
 
@@ -319,7 +323,7 @@ Document slots. List only the files Atlas actually has:
 | Hours | ساعات العمل: [[HOURS]] | Hours: [[HOURS]] |
 | Map link | افتح الموقع في خرائط جوجل | Open in Google Maps |
 | Facebook link | صفحتنا على فيسبوك | Our Facebook page |
-| New-tab note (screen readers) | يفتح في نافذة جديدة | opens in a new tab |
+| New-tab note (screen readers) | يفتح في علامة تبويب جديدة | opens in a new tab |
 
 **Form furniture**
 
@@ -383,7 +387,7 @@ Document slots. List only the files Atlas actually has:
 | Unit suffix | طن | t |
 | Hint | يكفي رقم تقريبي. | A rough figure is fine. |
 | Error: empty | أدخل وزن الحمولة بالطن. يكفي رقم تقريبي. | Enter the load weight in tonnes. A rough figure is fine. |
-| Error: format | أدخل رقماً أكبر من صفر، مثل 12 أو 7.5 | Enter a number above zero, such as 12 or 7.5. |
+| Error: format | أدخل رقماً أكبر من صفر، مثل 12 أو 7.5. | Enter a number above zero, such as 12 or 7.5. |
 
 *Design note: if the visitor picks "Oil services", consider making this field optional. Decide with Atlas.*
 
@@ -392,7 +396,7 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | نصف قطر الرفع (م) | Lift radius (m) |
-| Hint | المسافة الأفقية من مركز الرافعة إلى الحمولة. اتركه فارغاً إن لم تعرفه. | The flat distance from the centre of the crane to the load. Leave it blank if you don't know. |
+| Hint | المسافة الأفقية من مركز الرافعة إلى الحمولة. اترك الحقل فارغاً إن لم تعرفها. | The flat distance from the centre of the crane to the load. Leave it blank if you don't know. |
 | Error: format | أدخل رقماً بالمتر، أو اترك الحقل فارغاً. | Enter a number in metres, or leave this blank. |
 
 *7. Lift height, m (optional)*
@@ -425,7 +429,7 @@ Document slots. List only the files Atlas actually has:
 |---|---|---|
 | Label | المدة | Duration |
 | Hint | تقديرك يكفي. | Your best guess is fine. |
-| Options | يوم واحد أو أقل / من يومين إلى أسبوع / من أسبوع إلى شهر / أكثر من شهر / لا أعرف بعد | One day or less / 2 days to a week / 1 week to a month / More than a month / Not sure yet |
+| Options | يوم واحد أو أقل / من يومين إلى أسبوع / من أسبوع إلى شهر / أكثر من شهر / لا أعرف بعد | One day or less / Two days to a week / One week to a month / More than a month / Not sure yet |
 
 *11. Message (optional)*
 
@@ -433,7 +437,7 @@ Document slots. List only the files Atlas actually has:
 |---|---|---|
 | Label | رسالة | Message |
 | Hint | أي تفاصيل أخرى: نوع الحمولة ومقاساتها، وصعوبة الوصول إلى الموقع، وهل تحتاج إلى نقل أيضاً. | Anything else: what the load is, its size, site access, or whether you also need transport. |
-| Counter | {n} / 1000 | {n} / 1,000 |
+| Counter | {n} من 1000 | {n} / 1,000 |
 | Error: too long | الرسالة طويلة. اختصرها إلى 1000 حرف. | Your message is too long. Keep it to 1,000 characters. |
 
 **After sending**
@@ -451,7 +455,7 @@ Document slots. List only the files Atlas actually has:
 | Failure button 2 → template D | أرسل عبر واتساب | Send on WhatsApp |
 | Failure button 3 → mailto | أرسل بالبريد الإلكتروني | Send by email |
 | Offline | لا يوجد اتصال بالإنترنت. تحقق من الاتصال، ثم حاول مرة أخرى. | You seem to be offline. Check your connection and try again. |
-| Email fallback subject | طلب رافعة: {crane_or_service} | Crane request: {crane_or_service} |
+| Email fallback subject | طلب من الموقع: {crane_or_service} | Website request: {crane_or_service} |
 | Email fallback body | Same lines as template D | Same lines as template D |
 
 ---
@@ -464,7 +468,7 @@ All links use `https://wa.me/[[WHATSAPP_INTL]]?text={URL-encoded message}`. `[[W
 
 ```text
 السلام عليكم، أطلس الصحراء.
-وصلت إليكم من موقعكم الإلكتروني، وأريد الاستفسار عن خدماتكم.
+تعرّفت عليكم من خلال موقعكم الإلكتروني، وأريد الاستفسار عن خدماتكم.
 ```
 ```text
 Hello Atlas Alshraa,
@@ -492,7 +496,7 @@ Start date: ___
 
 ```text
 السلام عليكم، أطلس الصحراء.
-أريد الاستفسار عن خدمة {service_ar}.
+أريد الاستفسار عن {service_ar}.
 التفاصيل: ___
 ```
 ```text
@@ -505,7 +509,7 @@ Details: ___
 
 ```text
 السلام عليكم، أطلس الصحراء.
-طلب رافعة من الموقع الإلكتروني:
+طلب من الموقع الإلكتروني:
 الاسم: {name}
 الشركة: {company}
 الهاتف: {phone}
@@ -520,7 +524,7 @@ Details: ___
 ```
 ```text
 Hello Atlas Alshraa,
-Crane request from your website:
+Request from your website:
 Name: {name}
 Company: {company}
 Phone: {phone}
@@ -538,11 +542,11 @@ Notes: {message}
 
 ```text
 السلام عليكم، أطلس الصحراء.
-أرسلت الآن طلب رافعة من موقعكم باسم {name}، ورقمي {phone}.
+أرسلت الآن طلباً عبر موقعكم الإلكتروني باسم {name}، ورقمي {phone}.
 ```
 ```text
 Hello Atlas Alshraa,
-I just sent a crane request on your website. Name: {name}, phone: {phone}.
+I just sent a request through your website. Name: {name}, phone: {phone}.
 ```
 
 **Floating WhatsApp button** (every screen; opens template A)
