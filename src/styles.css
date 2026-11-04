@@ -1,0 +1,258 @@
+@import 'tailwindcss' source('.');
+@import './fonts.css';
+
+/* ── Tokens (spec §6). Only these colours exist: the default palette is cleared,
+   so a stray `bg-yellow-400` simply does not compile to anything. ─────────── */
+@theme static {
+  --color-*: initial;
+  --color-navy-950: #0d0c2b;
+  --color-navy: #23207a;
+  --color-red: #c9221c;
+  --color-red-bright: #ff5a4f;
+  --color-concrete: #f3f2ee;
+  --color-white: #ffffff;
+  --color-steel: #a6a6c8;
+  --color-ink: #14131f;
+  --color-line: #d9d8e3;
+  --color-line-dark: rgb(255 255 255 / 0.14);
+
+  /* Archivo has no Arabic glyphs, so Arabic display text falls through to Kufi
+     while digits stay Archivo. */
+  --font-display: 'Archivo Atlas', 'Kufi Atlas', 'Archivo Fallback', 'Kufi Fallback', system-ui, sans-serif;
+  --font-body: 'Plex Atlas', 'Plex Fallback', system-ui, sans-serif;
+  --font-mono: 'Plex Mono Atlas', 'Plex Atlas', ui-monospace, monospace;
+
+  /* The only shadow in the system: the RequestBar (spec §15.6), utility `shadow-bar`.
+     Tailwind's default shadow scales are cleared. */
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --shadow-bar: 0 -8px 24px rgb(13 12 43 / 0.18);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+@layer base {
+  /* Themed browser surfaces (spec §15.5). */
+  :root {
+    caret-color: var(--color-red);
+    scrollbar-color: var(--color-navy) var(--color-concrete);
+    accent-color: var(--color-red);
+  }
+  ::selection {
+    background: var(--color-navy);
+    color: var(--color-white);
+  }
+  /* Dark grounds: selection switches (covers direct-child text too). */
+  :is(.bg-navy-950, .bg-navy, [data-ground='dark'])::selection,
+  :is(.bg-navy-950, .bg-navy, [data-ground='dark']) ::selection {
+    background: var(--color-red-bright);
+    color: var(--color-navy-950);
+  }
+  /* Focus ring and caret colour come from the nearest ground ancestor, never from the
+     element's own background (a bg-navy button on concrete keeps a navy ring). Descendants
+     only; the light-panel reset comes later at equal specificity so it wins for light
+     panels nested in dark sections. */
+  :is(.bg-navy-950, .bg-navy, [data-ground='dark']) * {
+    --ring: var(--color-white);
+    caret-color: var(--color-red-bright);
+  }
+  :is(.bg-concrete, .bg-white, [data-ground='light']) * {
+    --ring: var(--color-navy);
+    caret-color: var(--color-red);
+  }
+  /* Hairline by default: a bare `border` is not ink. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-line);
+  }
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+  /* All numerals in data are tabular (spec §15.5). */
+  .t-spec,
+  [data-counter],
+  table {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  html {
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 6rem;
+  }
+  body {
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
+    line-height: 1.6;
+    background: var(--color-concrete);
+    color: var(--color-ink);
+  }
+  body:lang(ar) {
+    font-size: clamp(1.0625rem, 1.042rem + 0.093vw, 1.125rem);
+    line-height: 1.85;
+  }
+  /* Arabic: tracking breaks the joins and there are no capitals (spec §6, global rule 5).
+     Latin text inside an Arabic page that needs tracking/caps must carry lang="en" on its own element. */
+  :lang(ar) {
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+  }
+  /* Navy on light grounds; dark grounds set --ring to white (see the dark-ground rule above). */
+  :focus-visible {
+    outline: 2px solid var(--ring, var(--color-navy));
+    outline-offset: 3px;
+  }
+}
+
+/* ── Type scale (docs/05-typography.md §4). Fluid from 360 px to 1440 px.
+   Every class sets an explicit line-height (the subset fonts change `normal`). ── */
+@layer components {
+  .t-readout {
+    font-family: var(--font-display);
+    font-stretch: 75%;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-size: clamp(4.5rem, 1.833rem + 11.852vw, 12.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+  }
+  .t-readout:lang(ar) {
+    line-height: 1;
+  }
+
+  .t-h1 {
+    font-family: var(--font-display);
+    font-stretch: 100%;
+    font-weight: 800;
+    font-size: clamp(2.375rem, 1.667rem + 3.148vw, 4.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .t-h1:lang(ar) {
+    font-size: clamp(2.5rem, 1.75rem + 3.333vw, 4.75rem);
+    line-height: 1.3;
+  }
+
+  .t-h2 {
+    font-family: var(--font-display);
+    font-stretch: 100%;
+    font-weight: 700;
+    font-size: clamp(1.875rem, 1.5rem + 1.667vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+  .t-h2:lang(ar) {
+    font-size: clamp(1.875rem, 1.458rem + 1.852vw, 3.125rem);
+    line-height: 1.35;
+  }
+
+  .t-h3 {
+    font-family: var(--font-display);
+    font-stretch: 100%;
+    font-weight: 700;
+    font-size: clamp(1.3125rem, 1.167rem + 0.648vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+  .t-h3:lang(ar) {
+    font-size: clamp(1.375rem, 1.208rem + 0.741vw, 1.875rem);
+    line-height: 1.45;
+  }
+
+  .t-lead {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: clamp(1.125rem, 1.0625rem + 0.278vw, 1.3125rem);
+    line-height: 1.55;
+  }
+  .t-lead:lang(ar) {
+    font-size: clamp(1.1875rem, 1.125rem + 0.278vw, 1.375rem);
+    line-height: 1.8;
+  }
+
+  .t-body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
+    line-height: 1.6;
+  }
+  .t-body:lang(ar) {
+    font-size: clamp(1.0625rem, 1.042rem + 0.093vw, 1.125rem);
+    line-height: 1.85;
+  }
+
+  .t-spec {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: clamp(0.875rem, 0.833rem + 0.185vw, 1rem);
+    line-height: 1.5;
+  }
+  .t-spec:lang(ar) {
+    line-height: 1.6;
+  }
+
+  .t-small {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .t-small:lang(ar) {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+
+  /* DATA LABEL ONLY, e.g. «السعة / Capacity» inside a load tag. Never place it
+     above a heading: no eyebrows or kickers (spec §15.1, Impeccable ban). */
+  .t-label {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-weight: 600;
+    font-size: clamp(0.75rem, 0.729rem + 0.093vw, 0.8125rem);
+    line-height: 1.3;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .t-label:lang(ar) {
+    font-family: var(--font-body);
+    font-stretch: 100%;
+    font-size: clamp(0.8125rem, 0.792rem + 0.093vw, 0.875rem);
+    line-height: 1.5;
+  }
+
+  /* ── Layout (spec §6) ── */
+  .shell {
+    margin-inline: auto;
+    max-width: 90rem;
+    padding-inline: clamp(1rem, 4vw, 3.5rem);
+  }
+  .section-y {
+    padding-block: clamp(5rem, 12vw, 11rem);
+  }
+  .measure {
+    max-width: 36rem;
+  }
+  .measure:lang(ar) {
+    max-width: 38rem;
+  }
+
+  /* Rendered by App (C9); Part D's motion.css shows it on desktop motion only. */
+  .progress-rope {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
