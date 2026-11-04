@@ -1,0 +1,816 @@
+{
+ "meta": {
+  "generated": "2026-11-04",
+  "watermarkModel": "centre x=w/2, y=h-265*(w/4240), r=135*(w/4240); IMG_6371 override centre (1416,2618) r=110. Crops keep >=30px (scaled) clearance.",
+  "rect": "left/top/width/height in source pixels"
+ },
+ "photos": {
+  "6359": {
+   "file": "IMG_6359.JPG",
+   "class": "hero+fleet RT700E",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2332,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    },
+    "mobile_9x16": {
+     "status": "OK",
+     "left": 1445,
+     "top": 0,
+     "width": 1351,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6360": {
+   "file": "IMG_6360.JPG",
+   "class": "fleet RT700E",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2332,
+    "y": 1133
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1372,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Optional: lower chassis cut.",
+   "note": null
+  },
+  "6363": {
+   "file": "IMG_6363.JPG",
+   "class": "fleet RT700E",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 1908,
+    "y": 1274
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 948,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6364": {
+   "file": "IMG_6364.JPG",
+   "class": "fleet RT700E",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1133
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Optional: tyre bottoms slightly cut.",
+   "note": null
+  },
+  "6367": {
+   "file": "IMG_6367.JPG",
+   "class": "fleet Kobelco (branding check)",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 1908,
+    "y": 1133
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 948,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6370": {
+   "file": "IMG_6370.JPG",
+   "class": "fleet Kobelco (branding check)",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2332,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1372,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6371": {
+   "file": "IMG_6371.JPG",
+   "class": "fleet Kobelco (branding check)",
+   "source": {
+    "width": 2832,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 1558,
+    "y": 1133
+   },
+   "watermark": {
+    "cx": 1416,
+    "cy": 2618,
+    "r": 110
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 2832,
+     "height": 1593
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 421,
+     "top": 0,
+     "width": 1990,
+     "height": 2487
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6374": {
+   "file": "IMG_6374.JPG",
+   "class": "hero+fleet AC200",
+   "source": {
+    "width": 4168,
+    "height": 2784
+   },
+   "focalPoint": {
+    "x": 2084,
+    "y": 1114
+   },
+   "watermark": {
+    "cx": 2084,
+    "cy": 2524,
+    "r": 133
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4168,
+     "height": 2344
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1140,
+     "top": 0,
+     "width": 1889,
+     "height": 2361
+    },
+    "mobile_9x16": {
+     "status": "OK",
+     "left": 1420,
+     "top": 0,
+     "width": 1328,
+     "height": 2360
+    }
+   },
+   "cleanExport": "Clean export recommended for hero use: counterweight base cut; 9:16 keeps lettering but trims counterweight edges.",
+   "note": null
+  },
+  "6375": {
+   "file": "IMG_6375.JPG",
+   "class": "fleet AC200",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1558
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 948,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Optional: outrigger pad cut.",
+   "note": null
+  },
+  "6376": {
+   "file": "IMG_6376.JPG",
+   "class": "detail/fleet AC200",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6379": {
+   "file": "IMG_6379.JPG",
+   "class": "detail/fleet AC200",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6380": {
+   "file": "IMG_6380.JPG",
+   "class": "hero+fleet QUY250",
+   "source": {
+    "width": 4224,
+    "height": 2821
+   },
+   "focalPoint": {
+    "x": 2196,
+    "y": 1411
+   },
+   "watermark": {
+    "cx": 2112,
+    "cy": 2557,
+    "r": 134
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4224,
+     "height": 2376
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1239,
+     "top": 0,
+     "width": 1914,
+     "height": 2392
+    },
+    "mobile_9x16": {
+     "status": "OK",
+     "left": 1524,
+     "top": 0,
+     "width": 1345,
+     "height": 2391
+    }
+   },
+   "cleanExport": "Clean export recommended: track bottoms cut.",
+   "note": null
+  },
+  "6382": {
+   "file": "IMG_6382.JPG",
+   "class": "detail/fleet QUY250",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6385": {
+   "file": "IMG_6385.JPG",
+   "class": "fleet QUY250",
+   "source": {
+    "width": 4196,
+    "height": 2803
+   },
+   "focalPoint": {
+    "x": 2098,
+    "y": 1402
+   },
+   "watermark": {
+    "cx": 2098,
+    "cy": 2541,
+    "r": 134
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4196,
+     "height": 2360
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1148,
+     "top": 0,
+     "width": 1901,
+     "height": 2376
+    }
+   },
+   "cleanExport": "Optional: track bottoms cut.",
+   "note": null
+  },
+  "6388": {
+   "file": "IMG_6388.JPG",
+   "class": "fleet GMK6350",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2332,
+    "y": 1274
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1584,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6389": {
+   "file": "IMG_6389.JPG",
+   "class": "hero+fleet GMK6350",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2756,
+    "y": 1274
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 2008,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    },
+    "mobile_9x16": {
+     "status": "OK",
+     "left": 2293,
+     "top": 0,
+     "width": 1351,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Clean export recommended: wheels cut in every watermark-free crop; 9:16 shows only boom base.",
+   "note": null
+  },
+  "6392": {
+   "file": "IMG_6392.JPG",
+   "class": "fleet GMK6350",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 1696,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 0,
+     "top": 388,
+     "width": 1955,
+     "height": 2443,
+     "note": "side crop (clear of watermark, includes bottom of frame)"
+    }
+   },
+   "cleanExport": null,
+   "note": "Mobile 4:5 is a left-side crop so the front wheels stay in frame."
+  },
+  "6393": {
+   "file": "IMG_6393.JPG",
+   "class": "detail/fleet GMK6350",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 1272,
+    "y": 1699
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 0,
+     "top": 388,
+     "width": 1955,
+     "height": 2443,
+     "note": "side crop (clear of watermark, includes bottom of frame)"
+    }
+   },
+   "cleanExport": null,
+   "note": "Mobile 4:5 is a left-side crop (clear of watermark) so the GROVE lettering is whole."
+  },
+  "6395": {
+   "file": "IMG_6395.JPG",
+   "class": "fleet Faun",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Clean export optional: tyres/outriggers cut.",
+   "note": null
+  },
+  "6396": {
+   "file": "IMG_6396.JPG",
+   "class": "fleet Faun/site",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1558
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    }
+   },
+   "cleanExport": null,
+   "note": null
+  },
+  "6397": {
+   "file": "IMG_6397.JPG",
+   "class": "fleet Faun",
+   "source": {
+    "width": 4186,
+    "height": 2796
+   },
+   "focalPoint": {
+    "x": 1884,
+    "y": 1398
+   },
+   "watermark": {
+    "cx": 2093,
+    "cy": 2534,
+    "r": 133
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4186,
+     "height": 2354
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 935,
+     "top": 0,
+     "width": 1897,
+     "height": 2371
+    }
+   },
+   "cleanExport": "Clean export optional: outrigger pad/tyre bottoms cut.",
+   "note": null
+  },
+  "6398": {
+   "file": "IMG_6398.JPG",
+   "class": "hero",
+   "source": {
+    "width": 4240,
+    "height": 2832
+   },
+   "focalPoint": {
+    "x": 2120,
+    "y": 1416
+   },
+   "watermark": {
+    "cx": 2120,
+    "cy": 2567,
+    "r": 135
+   },
+   "crops": {
+    "desktop_16x9": {
+     "status": "OK",
+     "left": 0,
+     "top": 0,
+     "width": 4240,
+     "height": 2385
+    },
+    "mobile_4x5": {
+     "status": "OK",
+     "left": 1160,
+     "top": 0,
+     "width": 1921,
+     "height": 2401
+    },
+    "mobile_9x16": {
+     "status": "OK",
+     "left": 1445,
+     "top": 0,
+     "width": 1351,
+     "height": 2401
+    }
+   },
+   "cleanExport": "Clean export recommended: wheels/ground cropped (bases of both cranes touch frame bottom).",
+   "note": null
+  }
+ }
+}
