@@ -245,34 +245,90 @@ describe('CraneGridView', () => {
     vi.useRealTimers();
   });
 
-  it('compares one to three models; unpicked columns stay in the markup for no-JS', async () => {
-    const html = renderHtml(<CraneGridView cranes={unverified} />, 'en');
-    const heads = [...html.querySelectorAll('table thead th[data-col]')];
-    expect(heads.map((th) => th.getAttribute('data-col'))).toEqual(['rt700e', 'atf60-3', 'ac200-1', 'quy250', 'gmk6350']);
-    expect(heads.filter((th) => !th.hasAttribute('data-off')).map((th) => th.getAttribute('data-col'))).toEqual(['rt700e', 'ac200-1', 'gmk6350']);
-    // Every row has a header cell; missing figures say so to screen readers.
-    expect(html.querySelectorAll('table tbody th[scope="row"]').length).toBeGreaterThan(15);
-    expect(html.querySelector('td[data-empty] .sr-only')?.textContent).toBe('Not stated by the manufacturer');
-    expect(html.textContent).not.toContain('\u00D7');
-
+  it('compares three models on the key rows; a picker swaps a column; the other rows render on demand', async () => {
     const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
-    const pick = (id: string) => host.querySelector(`[data-testid="compare-pick"][data-crane="${id}"]`);
-    const status = () => host.querySelector('.lineup-compare__status')?.textContent;
+    const compare = host.querySelector('#crane-compare') as HTMLElement;
+    const selects = () => [...compare.querySelectorAll<HTMLSelectElement>('select[data-testid="compare-slot"]')];
+    const slots = () => selects().map((s) => s.value);
+    const cols = () => [...compare.querySelectorAll('table thead th[data-col]')].map((th) => th.getAttribute('data-col'));
+    const status = () => compare.querySelector('[aria-live="polite"]')?.textContent;
+
+    expect(slots()).toEqual(['rt700e', 'ac200-1', 'gmk6350']);
+    expect(cols()).toEqual(['rt700e', 'ac200-1', 'gmk6350']);
+    expect(selects().map((s) => s.getAttribute('aria-label'))).toEqual(['Model 1 in the comparison', 'Model 2 in the comparison', 'Model 3 in the comparison']);
+    // Seven key rows, each with a row header; nothing else is in the DOM until asked for.
+    expect([...compare.querySelectorAll('tbody tr[data-row] th[scope="row"]')].map((th) => th.textContent)).toEqual([
+      'Max capacity',
+      'Main boom',
+      'Max tip height',
+      'Counterweight',
+      'Carrier',
+      'Engine power',
+      'Basic weight',
+    ]);
+    expect(compare.querySelectorAll('td')).toHaveLength(21);
+    expect(compare.querySelector('#crane-compare-more table')).toBeNull();
+    expect(compare.textContent).not.toContain('Track width');
+    // A missing figure says so to screen readers; the legend explains the dash; the badge appears once.
+    expect(compare.querySelector('td[data-empty] .sr-only')?.textContent).toBe('Not stated by the manufacturer');
+    expect(compare.textContent).toContain(craneListCopy.en.compare.missingNote);
+    expect(compare.querySelectorAll('[data-testid="draft-badge"]')).toHaveLength(1);
     expect(status()).toBe(''); // nothing to say before a change
-    await click(pick('quy250')); // full: the oldest pick (rt700e) makes room, and the status says so
-    expect(pick('quy250')?.getAttribute('aria-pressed')).toBe('true');
-    expect(pick('rt700e')?.getAttribute('aria-pressed')).toBe('false');
-    expect(status()).toBe(craneListCopy.en.compare.limit);
-    const on = [...host.querySelectorAll('table thead th[data-col]:not([data-off])')].map((th) => th.getAttribute('data-col'));
-    expect(on).toEqual(['ac200-1', 'quy250', 'gmk6350']);
-    // Each model column offers the request, with a distinct name.
-    const requests = [...host.querySelectorAll('.lineup-table__request')].map((b) => b.textContent);
-    expect(new Set(requests).size).toBe(5);
-    // Rows no picked model has are hidden; track width only exists for the crawler.
-    const trackRow = [...host.querySelectorAll('table tbody tr')].find((tr) => tr.textContent?.startsWith('Track width'));
-    expect(trackRow?.hasAttribute('data-off')).toBe(false);
-    await click(pick('quy250'));
-    expect(trackRow?.hasAttribute('data-off')).toBe(true);
+
+    await changeValue(selects()[0] ?? null, 'quy250');
+    expect(slots()).toEqual(['quy250', 'ac200-1', 'gmk6350']);
+    expect(cols()).toEqual(['quy250', 'ac200-1', 'gmk6350']);
+    expect(status()).toBe('Now comparing: Fuwa QUY250, Terex AC200-1, Grove GMK6350.');
+    // The QUY250 shows the cards' 250 t, captioned as to be confirmed; its figures from a spec database carry the *.
+    const capacity = compare.querySelector('tr[data-row="capacity"] td');
+    expect(capacity?.textContent).toContain('250');
+    expect(capacity?.textContent).toContain(craneListCopy.en.conflict.label);
+    expect(compare.textContent).toContain(craneListCopy.en.compare.secondaryNote);
+
+    // Picking a model another column shows trades places: the columns stay distinct.
+    await changeValue(selects()[0] ?? null, 'gmk6350');
+    expect(slots()).toEqual(['gmk6350', 'ac200-1', 'quy250']);
+
+    const toggle = compare.querySelector('button[aria-controls="crane-compare-more"]');
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    await click(toggle);
+    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle?.textContent).toBe(craneListCopy.en.compare.showKey);
+    const more = compare.querySelector('#crane-compare-more');
+    expect([...(more?.querySelectorAll('.cmp-group th') ?? [])].map((th) => th.textContent)).toEqual([
+      'Boom and jib',
+      'Carrier',
+      'Engine and travel',
+      'Dimensions and weights',
+    ]);
+    const track = [...(more?.querySelectorAll('tbody tr') ?? [])].find((tr) => tr.querySelector('th')?.textContent === 'Track width');
+    expect(track?.querySelectorAll('td[data-empty]')).toHaveLength(2); // only the crawler states one
+    await click(toggle);
+    expect(compare.querySelector('#crane-compare-more table')).toBeNull();
+
+    // Each column requests its own crane, with a distinct name.
+    const requests = [...compare.querySelectorAll('[data-compare-request]')];
+    expect(new Set(requests.map((b) => b.textContent)).size).toBe(3);
+    await click(compare.querySelector('[data-compare-request][data-crane="quy250"]'));
+    expect(getRequestedCrane()).toBe('quy250');
+    expect(trackMock).toHaveBeenCalledWith('request_crane', { crane_id: 'quy250', location: 'compare' });
+
+    // Notes and sources: one disclosure per column, with the rating note.
+    const notes = [...compare.querySelectorAll('details.cmp-note')];
+    expect(notes).toHaveLength(3);
+    expect(notes[2]?.textContent).toContain(craneListCopy.en.capacityNotes.quy250);
+    await unmount();
+  });
+
+  it('opens the detail sheet from a comparison column', async () => {
+    const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
+    await click(host.querySelector('[data-compare-details][data-crane="gmk6350"]'));
+    for (let i = 0; i < 100 && !host.querySelector<HTMLDialogElement>('dialog#crane-sheet')?.open; i++) {
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+    }
+    const dialog = host.querySelector<HTMLDialogElement>('dialog#crane-sheet');
+    expect(dialog?.open).toBe(true);
+    expect(dialog?.querySelector('h2')?.textContent).toBe('Grove GMK6350');
     await unmount();
   });
 
@@ -282,7 +338,9 @@ describe('CraneGridView', () => {
     const link = host.querySelector('dialog#crane-sheet a[href="#crane-compare"]');
     link?.addEventListener('click', (e) => e.preventDefault());
     await click(link);
-    expect(host.querySelector('[data-testid="compare-pick"][data-crane="atf60-3"]')?.getAttribute('aria-pressed')).toBe('true');
+    const slots = [...host.querySelectorAll<HTMLSelectElement>('select[data-testid="compare-slot"]')].map((s) => s.value);
+    expect(slots).toEqual(['ac200-1', 'gmk6350', 'atf60-3']);
+    expect(host.querySelector('#crane-compare [aria-live="polite"]')?.textContent).toContain('Tadano Faun ATF 60-3');
     expect(host.querySelector<HTMLDialogElement>('dialog#crane-sheet')?.open).toBe(false);
     await unmount();
   });

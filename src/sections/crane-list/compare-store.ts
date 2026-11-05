@@ -3,7 +3,8 @@ import type { Crane, CraneId } from '@/content/types';
 
 /**
  * Which models are in the comparison. Shared by the comparison island and the detail sheet ("Compare with other
- * models"); both are lazy chunks, so this never ships in the initial bundle. null = the default pick.
+ * models"); both are lazy chunks, so this never ships in the initial bundle. null = the default pick. The array is the
+ * column order: the comparison shows COMPARE_MAX columns (two on phones) and tops a shorter pick up (compareSlots).
  */
 export const COMPARE_MAX = 3;
 
@@ -24,6 +25,32 @@ export function toggleCompare(selected: readonly CraneId[], id: CraneId): readon
 export function addToCompare(selected: readonly CraneId[], id: CraneId): readonly CraneId[] {
   if (selected.includes(id)) return selected;
   return selected.length < COMPARE_MAX ? [...selected, id] : [...selected.slice(1), id];
+}
+
+/**
+ * The models in the columns, in order: the pick (unknown or repeated ids dropped), topped up to COMPARE_MAX (or every
+ * model, when there are fewer) from the default range, then the rest. Every column always holds a different model.
+ */
+export function compareSlots(selected: readonly CraneId[] | null, cranes: readonly Crane[]): CraneId[] {
+  const known = new Set(cranes.map((c) => c.id));
+  const size = Math.min(COMPARE_MAX, known.size);
+  const out: CraneId[] = [];
+  for (const id of [...(selected ?? []), ...defaultCompare(cranes), ...cranes.map((c) => c.id)]) {
+    if (out.length === size) break;
+    if (known.has(id) && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+/**
+ * The model in column `slot` becomes `id`. A model already in another column trades places with it, so the columns
+ * stay distinct and nothing the visitor chose disappears. An unknown slot returns the same array.
+ */
+export function swapCompare(slots: readonly CraneId[], slot: number, id: CraneId): readonly CraneId[] {
+  const old = slots[slot];
+  if (old === undefined || old === id) return slots;
+  const from = slots.indexOf(id);
+  return slots.map((x, i) => (i === slot ? id : i === from ? old : x));
 }
 
 let picked: readonly CraneId[] | null = null;

@@ -1,8 +1,7 @@
 import { craneSpecs, type CraneSpec, type CraneSpecId, type CraneSpecSource } from '@/content/crane-specs';
 import { specRows } from '@/content/spec-rows';
 import type { Copy, Crane, CraneId, CraneListCopy, Lang, SpecFieldId, SpecGroupId } from '@/content/types';
-import { formatNumber, formatTonnes } from '@/lib/numbers';
-import { fillTemplate } from '@/lib/whatsapp';
+import { formatNumber } from '@/lib/numbers';
 
 /**
  * Pure data for the «اعثر على رافعتك» lineup: spec groups, cells, the load check and the comparison selection.
@@ -37,33 +36,6 @@ const DIM = { length: 'l', width: 'w', height: 'h' } as const;
 type DimRow = keyof typeof DIM;
 const isDim = (row: RowId): row is DimRow => row in DIM;
 
-/** The number behind a row, for the comparison's magnitude bars (ranges use their top end). Capability rows only. */
-const MAGNITUDE: Partial<Record<RowId, (s: CraneSpec) => number | undefined>> = {
-  maxCapacity: (s) => s.maxCapacityT,
-  boom: (s) => s.boomMaxM ?? s.boomMinM,
-  tipHeight: (s) => s.tipHeightM,
-  jib: (s) => s.jibMaxM,
-  tipHeightJib: (s) => s.tipHeightJibM,
-  maxRadius: (s) => s.maxRadiusM,
-  counterweight: (s) => s.counterweightT,
-  enginePower: (s) => s.enginePowerKw,
-  travelSpeed: (s) => s.travelSpeedKmh,
-};
-// No bars on weights and dimensions: there, a longer bar is not "more crane".
-
-export const hasBar = (row: RowId): boolean => row in MAGNITUDE;
-
-export function magnitude(spec: CraneSpec, row: RowId): number | undefined {
-  const v = MAGNITUDE[row]?.(spec);
-  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined;
-}
-
-/** Largest value of a row across `specs`: the fixed scale of its bars (the same scale whichever models are picked). */
-export function rowMax(specs: readonly CraneSpec[], row: RowId): number | undefined {
-  const values = specs.map((s) => magnitude(s, row)).filter((v): v is number => v !== undefined);
-  return values.length ? Math.max(...values) : undefined;
-}
-
 export interface SpecCell {
   /** Formatted value; the unit is joined with a no-break space. */
   text: string;
@@ -88,22 +60,46 @@ export function capacityCell(crane: Crane, spec: CraneSpec, copy: Copy, lang: La
 
 const NBSP = ' ';
 
-export function specCell(spec: CraneSpec, row: RowId, copy: Copy, lang: Lang): SpecCell | null {
+/** A row's figure and unit apart (the comparison sets the figure large, the unit small); null when the source omits it. */
+export interface SpecParts {
+  value: string;
+  unit?: string;
+  latin: boolean;
+  secondary: boolean;
+  source?: CraneSpecSource;
+}
+
+export function specParts(spec: CraneSpec, row: RowId, copy: Copy, lang: Lang): SpecParts | null {
   if (isDim(row)) {
     const d = spec.dimensionsM;
     if (!d) return null;
     const source = spec.sources.find((s) => s.field === 'dimensionsM');
     const value = formatNumber(d[DIM[row]], lang, { maximumFractionDigits: 3 });
-    return { text: `${value}${NBSP}${copy.specs.units.m}`, latin: false, secondary: source ? !source.official : false, source };
+    return { value, unit: copy.specs.units.m, latin: false, secondary: source ? !source.official : false, source };
   }
   const r = specRows(spec, copy, lang, [row])[0];
   if (!r) return null;
-  return {
-    text: r.unit ? `${r.value}${NBSP}${r.unit}` : r.value,
-    latin: r.latin === true,
-    secondary: r.source ? !r.source.official : false,
-    source: r.source,
-  };
+  return { value: r.value, unit: r.unit, latin: r.latin === true, secondary: r.source ? !r.source.official : false, source: r.source };
+}
+
+export function specCell(spec: CraneSpec, row: RowId, copy: Copy, lang: Lang): SpecCell | null {
+  const p = specParts(spec, row, copy, lang);
+  return p && { text: p.unit ? `${p.value}${NBSP}${p.unit}` : p.value, latin: p.latin, secondary: p.secondary, source: p.source };
+}
+
+/** Unique source documents of one machine, manufacturer documents first (the sheet and the comparison). */
+export function sourcesOf(spec: CraneSpec): CraneSpecSource[] {
+  const seen = new Map<string, CraneSpecSource>();
+  for (const s of spec.sources) if (!seen.has(s.url)) seen.set(s.url, s);
+  return [...seen.values()].sort((a, b) => Number(b.official) - Number(a.official));
+}
+
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 export function rowLabel(row: RowId, copy: Copy, text: CraneListCopy): string {
@@ -112,9 +108,5 @@ export function rowLabel(row: RowId, copy: Copy, text: CraneListCopy): string {
 
 /* ── Load check ───────────────────────────────────────────────────── */
 
-/** "3 models have a maximum rating of 120 t or more." Arabic plural forms as in resultCount (n < 100). */
-export function loadResult(n: number, tonnes: number, text: CraneListCopy, lang: Lang): string {
-  const { none, one, two, few, many } = text.load.result;
-  const template = n === 0 ? none : n === 1 ? one : n === 2 ? two : n <= 10 ? few : many;
-  return fillTemplate(template, { n: formatNumber(n, lang), load: formatTonnes(tonnes, lang) });
-}
+// The load check's sentence lives with the load check, so the lineup chunk does not pull in crane-specs.ts.
+export { loadResult } from './load';

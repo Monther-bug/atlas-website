@@ -1,82 +1,263 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { Button, NewTabNote } from '@/components/Button';
 import { DraftBadge } from '@/components/DraftBadge';
+import { ArrowIcon, HookIcon } from '@/components/Icons';
+import { Picture } from '@/components/Picture';
+import { fill } from '@/components/ui/util';
 import { craneListCopy } from '@/content/crane-list-copy';
 import type { CraneSpec } from '@/content/crane-specs';
-import type { Crane } from '@/content/types';
+import type { Crane, CraneId, CraneListCopy } from '@/content/types';
+import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
-import { formatNumber } from '@/lib/numbers';
-import { CheckIcon } from './icons';
+import { setRequestedCrane } from '@/lib/request';
+import { KEY_ROWS, MORE_GROUPS, keyCell, keyLabel, type CompareCell } from './compare-data';
+import { compareSlots, compareStore, swapCompare, useCompare } from './compare-store';
+import { ChevronDownIcon } from './icons';
+import { hostOf, rowLabel, sourcesOf, specIdOf, specOf, specParts } from './lineup-data';
+// Live-only styles travel with this lazy chunk; what the prerender needs is in crane-list.css.
+import './compare-live.css';
 
-/** Add a model to the comparison (24 px grid, 1.75 stroke, like the shared set). */
-function PlusIcon({ className }: { className?: string }) {
+/** Phones show two columns (the CSS uses the same query, so the prerender and the live table agree). */
+const NARROW = '(width < 48rem)';
+const media = () => (typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(NARROW) : null);
+function subscribeNarrow(onChange: () => void): () => void {
+  const mq = media();
+  mq?.addEventListener('change', onChange);
+  return () => mq?.removeEventListener('change', onChange);
+}
+const useNarrow = () => useSyncExternalStore(subscribeNarrow, () => media()?.matches ?? false, () => false);
+
+/** The cards' `sizes`, so a column photo reuses the file its card already loaded (no extra download). */
+const CARD_SIZES = '(min-width: 1024px) 30rem, (min-width: 640px) 46vw, 84vw';
+
+interface Column {
+  crane: Crane;
+  spec: CraneSpec;
+  /** Position in the comparison; -1 for a model only the no-JS page shows. */
+  slot: number;
+  /** Prerender only: shown without JS, hidden with it (not in the comparison). */
+  off: boolean;
+  /** Prerender only: the middle of three columns, which phones leave out. */
+  mid: boolean;
+}
+
+/** Prerender: hidden with JS (data-off), left out on phones (data-mid). */
+const slotAttrs = (c: Column) => ({
+  ...(c.off ? { 'data-off': '' } : {}),
+  ...(c.mid ? { 'data-mid': '' } : {}),
+});
+const colAttrs = (c: Column) => ({ 'data-col': c.crane.id, ...slotAttrs(c) });
+
+/** Screen-reader suffix that makes a column's actions unique (": Grove GMK6350"), as on the cards. */
+function CraneName({ crane }: { crane: Crane }) {
   return (
-    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="square" aria-hidden="true" focusable="false" className={className}>
-      <path d="M12 5v14M5 12h14" />
-    </svg>
+    <span className="sr-only">
+      : <Latin>{`${crane.make} ${crane.model}`}</Latin>
+    </span>
   );
 }
-import { HookIcon } from '@/components/Icons';
-import { setRequestedCrane } from '@/lib/request';
-import { track } from '@/lib/analytics';
-import { COMPARE_MAX, addToCompare, compareStore, useCompare } from './compare-store';
-import { SPEC_GROUPS, capacityCell, hasBar, magnitude, rowLabel, rowMax, specCell, specIdOf, specOf } from './lineup-data';
 
-const off = (hidden: boolean) => (hidden ? { 'data-off': '' } : {});
+function Latin({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <bdi lang="en" dir="ltr" className={className}>
+      {children}
+    </bdi>
+  );
+}
+
+/** A cell as plain text, for the no-JS table. */
+function plain(cell: CompareCell): ReactNode {
+  const text = `${cell.value}${cell.unit ? `\u00A0${cell.unit}` : ''}${cell.secondary ? '*' : ''}`;
+  return cell.latin ? <Latin>{text}</Latin> : text;
+}
+
+/** A figure set large with its unit small; "—" (and a spoken "not stated") where the manufacturer gives none. */
+function Cell({ cell, text, mark }: { cell: CompareCell | null; text: CraneListCopy['compare']; mark: Record<string, string> }) {
+  if (!cell) {
+    return (
+      <td role="cell" data-empty="" {...mark}>
+        <span aria-hidden="true">—</span>
+        <span className="sr-only">{text.missing}</span>
+      </td>
+    );
+  }
+  return (
+    <td role="cell" {...mark}>
+      <span className="cmp-v">
+        {cell.latin ? (
+          <Latin className="cmp-w">{cell.value}</Latin>
+        ) : (
+          <span className={cell.word ? 'cmp-w' : 'cmp-n'}>{cell.value}</span>
+        )}
+        {cell.unit ? <span className="cmp-u">{` ${cell.unit}`}</span> : null}
+        {cell.secondary ? (
+          <>
+            <span aria-hidden="true" className="cmp-mark">
+              *
+            </span>
+            <span className="sr-only"> ({text.secondary})</span>
+          </>
+        ) : null}
+      </span>
+      {cell.bar !== undefined ? (
+        <span className="cmp-meter" aria-hidden="true">
+          <span style={{ '--m': cell.bar.toFixed(3) } as CSSProperties} />
+        </span>
+      ) : null}
+      {cell.caption ? (
+        <span className="t-caption cmp-cap">
+          {cell.caption.map((part, i) => (
+            <span key={i}>
+              {i > 0 ? ' · ' : ''}
+              {part.latin ? <Latin>{part.text}</Latin> : part.text}
+            </span>
+          ))}
+        </span>
+      ) : null}
+    </td>
+  );
+}
+
+/** Column headers for screen readers; the visible names are the sticky pickers above the tables. */
+function Head({ columns, corner }: { columns: Column[]; corner: string }) {
+  return (
+    <thead role="rowgroup" className="cmp-head">
+      <tr role="row">
+        <th scope="col" role="columnheader">
+          <span className="sr-only">{corner}</span>
+        </th>
+        {columns.map((c) => (
+          <th key={c.crane.id} scope="col" role="columnheader" {...colAttrs(c)}>
+            <span className="sr-only">
+              <Latin>{`${c.crane.make} ${c.crane.model}`}</Latin>
+            </span>
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
 
 /**
- * "Compare models" (Apple compare): pick one to three cranes; a real <table> lines their manufacturer specs up row by
- * row, grouped, with sticky model headers and a magnitude bar under each figure (one fixed scale per row, so a bar means
- * the same thing whichever models are picked). Every model is in the markup: without JS all five columns show (the
- * page stays complete); with JS the unpicked columns and the rows none of the picked models has are hidden (.js rule).
- * On phones the rows restack (label above, values side by side), so three models fit without sideways scrolling.
- * Prerendered, then mounted as a lazy island (islands.tsx); the pick lives in compare-store.ts (the sheet adds to it).
+ * «قارن الطرازات» / "Compare models" (Apple compare, simplified). Three columns (two on phones), each with a native
+ * model picker that sticks under the header, the crane's photo, Request and Details. One real <table> holds the seven
+ * key rows; "Show all specs" renders the other rows, grouped, in a second table on demand (live only, so the default
+ * DOM stays small). Notes and sources fold into one disclosure per column. Every figure is from crane-specs.ts.
+ *
+ * Prerendered with every model (unpicked ones data-off, hidden by the .js rule) so the page is complete without JS:
+ * there the full table sits in <noscript>, which a page with JS never parses. In the browser the section is a lazy
+ * island (mount.tsx) rendered with createRoot, never hydrated, so the live markup may differ from the prerender; the
+ * boxes it keeps (photo frame, picker, toggle) have the same size in both, so mounting shifts nothing.
  */
-export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
+export function CompareModels({
+  cranes,
+  onDetails,
+}: {
+  cranes: readonly Crane[];
+  onDetails?: (crane: Crane, media: HTMLElement | null) => void;
+}) {
   const { copy, lang } = useLang();
   const extra = craneListCopy[lang];
   const text = extra.compare;
-  const selected = useCompare(cranes);
-  // A pick on a full table replaces the oldest pick (as "Compare with other models" in the sheet does); the last
-  // model cannot be removed. The status line speaks only after such a change.
-  const [note, setNote] = useState<'' | 'replaced' | 'min'>('');
-  const onToggle = (id: Crane['id']) => {
-    if (selected.includes(id)) {
-      if (selected.length === 1) return setNote('min');
-      setNote('');
-      return compareStore.set(selected.filter((x) => x !== id));
-    }
-    setNote(selected.length >= COMPARE_MAX ? 'replaced' : '');
-    compareStore.set(addToCompare(selected, id));
-  };
-  const models = cranes.flatMap((crane) => {
-    const spec = specOf(crane);
-    return spec ? [{ crane, spec, on: selected.includes(crane.id) }] : [];
-  });
-  const specs: CraneSpec[] = models.map((m) => m.spec);
-  const picked = models.filter((m) => m.on);
-  const status = note === 'replaced' ? text.limit : note === 'min' || (note === '' && picked.length === 1) ? text.needTwo : '';
-
-  // The prerendered table (no JS) shows all five models and scrolls sideways: a focusable, labelled region. The live
-  // table (mounted in the browser, never hydrated) restacks on phones and never scrolls, so it needs neither.
-  const prerender = typeof window === 'undefined';
+  // Build-time constant: the client bundle drops every prerender-only branch (no-JS table, notes in <noscript>).
+  const prerender = import.meta.env.SSR;
+  const narrow = useNarrow();
+  const [all, setAll] = useState(false);
   const [ready, setReady] = useState(false);
   useEffect(() => setReady(true), []);
 
-  const groups = SPEC_GROUPS.map((group) => ({
-    id: group.id,
-    rows: group.rows
-      .map((row) => {
-        const cells = models.map((m) => {
-          // One capacity per crane on the page: the row shows the figure the cards show (see capacityCell).
-          const own = row === 'maxCapacity' ? capacityCell(m.crane, m.spec, copy, lang) : null;
-          return { id: m.crane.id, on: m.on, cell: own ?? specCell(m.spec, row, copy, lang), size: own ? m.crane.capacityT : magnitude(m.spec, row) };
-        });
-        return { row, cells, max: hasBar(row) ? rowMax(specs, row) : undefined, any: cells.some((c) => c.cell), anyPicked: cells.some((c) => c.on && c.cell) };
+  const models = cranes.flatMap((crane) => {
+    const spec = specOf(crane);
+    return spec ? [{ crane, spec }] : [];
+  });
+  const withSpec = models.map((m) => m.crane);
+  const slots = compareSlots(useCompare(withSpec), withSpec);
+  const byId = new Map(models.map((m) => [m.crane.id, m]));
+  const three = slots.length === 3;
+  // Phones keep the first and the last column: the range by default, and a model just added from a sheet.
+  const shown = narrow && three ? [0, 2] : slots.map((_, i) => i);
+  const columns: Column[] = prerender
+    ? models.map((m) => {
+        const slot = slots.indexOf(m.crane.id);
+        return { ...m, slot, off: slot < 0, mid: three && slot === 1 };
       })
-      .filter((r) => r.any),
-  })).filter((g) => g.rows.length > 0);
+    : shown.flatMap((slot) => {
+        const m = byId.get(slots[slot] as CraneId);
+        return m ? [{ ...m, slot, off: false, mid: false }] : [];
+      });
+  const maxT = Math.max(0, ...models.map((m) => m.crane.capacityT));
 
-  const tableStyle = { '--cols': String(Math.max(1, picked.length)) } as CSSProperties;
+  const keyRows = KEY_ROWS.map((row) => {
+    const cells = columns.map((c) => ({ c, cell: keyCell(row, c.crane, c.spec, copy, extra, lang, maxT) }));
+    return { row, label: keyLabel(row, copy, extra), cells, off: !cells.some((x) => !x.c.off && x.cell) };
+  }).filter((r) => r.cells.some((x) => x.cell));
+
+  const moreGroups = (cols: Column[]) =>
+    MORE_GROUPS.map((group) => ({
+      id: group.id,
+      rows: group.rows
+        .map((row) => ({ row, label: rowLabel(row, copy, extra), cells: cols.map((c) => ({ c, cell: specParts(c.spec, row, copy, lang) })) }))
+        .filter((r) => r.cells.some((x) => x.cell)),
+    })).filter((g) => g.rows.length > 0);
+  const more = all && !prerender ? moreGroups(columns) : [];
+
+  // The legend explains only the marks in the comparison. It reads every slot, not just a phone's two columns, so it
+  // is the same in the prerender and the live table (mounting changes no height).
+  const slotCells = KEY_ROWS.map((row) =>
+    slots.flatMap((id) => {
+      const m = byId.get(id);
+      return m ? [keyCell(row, m.crane, m.spec, copy, extra, lang, maxT)] : [];
+    }),
+  ).filter((cells) => cells.some(Boolean));
+  const moreCells = more.flatMap((g) => g.rows.flatMap((r) => r.cells.map((x) => x.cell)));
+  const anyMissing = slotCells.some((cells) => cells.some((cell) => !cell)) || moreCells.some((cell) => !cell);
+  const anySecondary = [...slotCells.flat(), ...moreCells].some((cell) => cell?.secondary);
+
+  // Announce the models after a change (a swap here, or a pick from a sheet), never on load.
+  const names = columns.filter((c) => !c.off).map((c) => `${c.crane.make} ${c.crane.model}`);
+  const namesKey = names.join('|');
+  const announced = useRef(namesKey);
+  const [status, setStatus] = useState('');
+  useEffect(() => {
+    if (announced.current === namesKey) return;
+    announced.current = namesKey;
+    setStatus(fill(text.nowComparing, { models: namesKey.split('|').join(lang === 'ar' ? '، ' : ', ') }));
+  }, [namesKey, text.nowComparing, lang]);
+
+  const style = {
+    '--cols': String(columns.filter((c) => !c.off).length),
+    '--cols-all': String(columns.length),
+    '--cols-sm': String(Math.min(2, slots.length)),
+  } as CSSProperties;
+
+  const table = (cols: Column[], body: ReactNode, caption: ReactNode, describedBy?: string) => (
+    <table className={describedBy ? 'cmp-table cmp-table--key' : 'cmp-table'} role="table" {...(describedBy ? { 'aria-describedby': describedBy } : {})}>
+      {caption}
+      <Head columns={cols} corner={copy.ui.specification} />
+      {body}
+    </table>
+  );
+
+  const groupBodies = (groups: ReturnType<typeof moreGroups>) =>
+    groups.map((group) => (
+      <tbody key={group.id} role="rowgroup">
+        <tr role="row" className="cmp-group">
+          <th scope="rowgroup" role="rowheader" colSpan={columns.length + 1} className="t-small">
+            {extra.groups[group.id]}
+          </th>
+        </tr>
+        {group.rows.map(({ row, label, cells }) => (
+          <tr key={row} role="row">
+            <th scope="row" role="rowheader" className="t-small">
+              {label}
+            </th>
+            {cells.map(({ c, cell }) => (
+              <Cell key={c.crane.id} cell={cell} text={text} mark={slotAttrs(c)} />
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    ));
 
   return (
     <section id="crane-compare" className="surface-white lineup-compare" data-ground="light" aria-labelledby="crane-compare-title">
@@ -86,172 +267,229 @@ export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
             {text.title}
           </h3>
           <p className="t-sub lineup-compare__lead">{text.lead}</p>
-          <p className="t-small lineup-compare__muted">{copy.specs.disclaimer}</p>
         </header>
 
-        <div className="lineup-compare__picker">
-          <p id="crane-compare-picker" className="t-small lineup-compare__label">
-            {text.pickerLabel}
-          </p>
-          <div role="group" aria-labelledby="crane-compare-picker" className="lineup-picks">
-            {models.map(({ crane, on }) => {
-              return (
-                <button
-                  key={crane.id}
-                  type="button"
-                  aria-pressed={on}
-                  aria-disabled={(on && picked.length === 1) || undefined}
-                  data-testid="compare-pick"
-                  data-crane={crane.id}
-                  onClick={() => onToggle(crane.id)}
-                  className="lineup-pick"
-                >
-                  {on ? <CheckIcon className="size-4" /> : <PlusIcon className="size-4" />}
-                  <bdi lang="en" dir="ltr" className="t-spec">
-                    {crane.model}
-                  </bdi>
-                  <span className="lineup-pick__cap">
-                    {formatNumber(crane.capacityT, lang)}
-                    {' '}
-                    {copy.hoist.unit}
+        <div
+          className="cmp"
+          style={style}
+          data-ready={ready ? '' : undefined}
+          // The no-JS table holds every model and scrolls sideways: a focusable, labelled region.
+          {...(prerender ? { role: 'region', tabIndex: 0, 'aria-label': text.tableName } : {})}
+        >
+          <div className="cmp-pick" role="group" aria-label={text.pickerLabel}>
+            {columns.map((c) => (
+              <div key={prerender ? c.crane.id : `slot-${c.slot}`} className="cmp-swap" {...colAttrs(c)}>
+                <span className="t-caption cmp-swap__make">
+                  <Latin>{c.crane.make}</Latin>
+                </span>
+                {prerender ? (
+                  <span className="cmp-swap__model" lang="en" dir="ltr">
+                    {c.crane.model}
                   </span>
-                </button>
-              );
-            })}
+                ) : (
+                  <span className="cmp-swap__field">
+                    <select
+                      className="cmp-swap__model"
+                      data-testid="compare-slot"
+                      data-slot={c.slot}
+                      aria-label={fill(text.slotLabel, { n: String(columns.indexOf(c) + 1) })}
+                      value={c.crane.id}
+                      onChange={(event) => compareStore.set(swapCompare(slots, c.slot, event.currentTarget.value as CraneId))}
+                    >
+                      {models.map(({ crane }) => (
+                        <option key={crane.id} value={crane.id} lang="en">
+                          {crane.model}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon className="cmp-swap__chev" />
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
-          <p aria-live="polite" className="t-small lineup-compare__status">
-            {status}
-          </p>
-        </div>
 
-        <div className="lineup-compare__wrap" {...(prerender ? { role: 'region', tabIndex: 0, 'aria-label': text.tableName } : {})}>
-          <table
-            className="lineup-table"
-            role="table"
-            aria-describedby="crane-compare-missing"
-            data-ready={ready ? '' : undefined}
-            style={tableStyle}
-          >
-            <caption className="t-small lineup-table__caption">
+          <div className="cmp-media">
+            {columns.filter((c) => !c.off).map((c) => (
+              <div key={c.crane.id} className="cmp-model" {...slotAttrs(c)}>
+                <div className="cmp-photo" data-cmp-photo="">
+                  {prerender ? null : (
+                    <Picture photo={c.crane.cardPhoto} crop="desktop_16x9" alt="" sizes={CARD_SIZES} pictureClassName="block h-full w-full" className="h-full w-full" />
+                  )}
+                </div>
+                <div className="cmp-actions">
+                  <Button
+                    size="sm"
+                    icon={<HookIcon className="size-4" />}
+                    data-compare-request=""
+                    data-crane={c.crane.id}
+                    onClick={(event) => {
+                      setRequestedCrane(c.crane.id, event.currentTarget);
+                      track('request_crane', { crane_id: c.crane.id, location: 'compare' });
+                    }}
+                  >
+                    {text.request}
+                    <CraneName crane={c.crane} />
+                  </Button>
+                  {onDetails ? (
+                    <Button
+                      size="sm"
+                      variant="plain"
+                      iconEnd={<ArrowIcon className="size-4" />}
+                      aria-haspopup="dialog"
+                      data-compare-details=""
+                      data-crane={c.crane.id}
+                      onClick={(event) => onDetails(c.crane, event.currentTarget.closest('.cmp-model')?.querySelector<HTMLElement>('[data-cmp-photo]') ?? null)}
+                    >
+                      {copy.grid.card.details}
+                      <CraneName crane={c.crane} />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {table(
+            columns,
+            <tbody role="rowgroup">
+              {keyRows.map(({ row, label, cells, off }) => (
+                <tr key={row} role="row" data-row={row} {...(off ? { 'data-off': '' } : {})}>
+                  <th scope="row" role="rowheader" className="t-small">
+                    {label}
+                  </th>
+                  {cells.map(({ c, cell }) => (
+                    <Cell key={c.crane.id} cell={cell} text={text} mark={slotAttrs(c)} />
+                  ))}
+                </tr>
+              ))}
+            </tbody>,
+            <caption className="t-small cmp-caption">
               <span className="sr-only">{text.tableName}: </span>
               {copy.specs.heading}
               <DraftBadge verified={cranes.every((c) => c.verified)} />
-            </caption>
-            <thead role="rowgroup">
-              <tr role="row">
-                <th scope="col" role="columnheader" className="lineup-table__corner">
-                  <span className="sr-only">{copy.ui.specification}</span>
-                </th>
-                {models.map(({ crane, on }) => (
-                  <th key={crane.id} scope="col" role="columnheader" data-col={crane.id} {...off(!on)} className="lineup-table__model">
-                    <span className="t-caption lineup-table__make">
-                      <bdi lang="en" dir="ltr">
-                        {crane.make}
-                      </bdi>
-                    </span>
-                    <span className="t-spec lineup-table__code">
-                      <bdi lang="en" dir="ltr">
-                        {crane.model}
-                      </bdi>
-                    </span>
-                    <button
-                      type="button"
-                      className="t-small lineup-table__request"
-                      onClick={(event) => {
-                        setRequestedCrane(crane.id, event.currentTarget);
-                        track('request_crane', { crane_id: crane.id, location: 'compare' });
-                      }}
-                    >
-                      <HookIcon className="size-4" />
-                      {text.request}
-                      <span className="sr-only">
-                        : <bdi lang="en" dir="ltr">{crane.make} {crane.model}</bdi>
-                      </span>
-                    </button>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            {groups.map((group) => (
-              <tbody key={group.id} role="rowgroup" {...off(!group.rows.some((r) => r.anyPicked))}>
-                <tr role="row" className="lineup-table__group">
-                  <th scope="rowgroup" role="rowheader" colSpan={picked.length + 1} className="t-body">
-                    {extra.groups[group.id]}
-                  </th>
-                </tr>
-                {group.rows.map(({ row, cells, max, anyPicked }) => (
-                  <tr key={row} role="row" {...off(!anyPicked)}>
-                    <th scope="row" role="rowheader" className="t-small">
-                      {rowLabel(row, copy, extra)}
+            </caption>,
+            'crane-compare-legend',
+          )}
+
+          {/* Kept in the prerender (inert until the island mounts) so mounting adds no height. */}
+          <div className="cmp-more">
+            <Button
+              variant="ghost-light"
+              size="sm"
+              className="cmp-toggle"
+              aria-expanded={all}
+              aria-controls="crane-compare-more"
+              iconEnd={<ChevronDownIcon className="size-4 cmp-toggle__chev" />}
+              onClick={() => setAll((open) => !open)}
+            >
+              {all ? text.showKey : text.showAll}
+            </Button>
+            <div id="crane-compare-more" className="cmp-more__body" hidden={!all}>
+              {more.length > 0
+                ? table(columns, groupBodies(more), <caption className="sr-only">{text.moreName}</caption>)
+                : null}
+            </div>
+          </div>
+          {prerender ? (
+            <noscript>
+              <table className="cmp-table">
+                <caption className="t-small cmp-caption">{text.moreName}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" className="t-small">
+                      {copy.ui.specification}
                     </th>
-                    {cells.map(({ id, on, cell, size }) =>
-                      cell ? (
-                        <td key={id} role="cell" data-col={id} {...off(!on)} className="t-body">
-                          {cell.latin ? (
-                            <bdi lang="en" dir="ltr">
-                              {cell.text}
-                            </bdi>
-                          ) : (
-                            // Number and unit stay on one line (CSS nowrap); only a phone column too narrow for a long
-                            // unit («ميغاباسكال») may put the unit under its number instead of overflowing.
-                            <span className="lineup-num">{cell.text.replace('\u00A0', ' ')}</span>
-                          )}
-                          {cell.secondary ? (
-                            <>
-                              <span aria-hidden="true">*</span>
-                              <span className="sr-only"> ({text.secondary})</span>
-                            </>
-                          ) : null}
-                          {cell.conflict ? (
-                            <>
-                              <span aria-hidden="true">†</span>
-                              <span className="sr-only"> ({extra.conflict.mark})</span>
-                            </>
-                          ) : null}
-                          {max !== undefined && size !== undefined ? (
-                            <span className="lineup-bar" aria-hidden="true">
-                              <span style={{ '--m': (size / max).toFixed(3) } as CSSProperties} />
-                            </span>
-                          ) : null}
-                        </td>
-                      ) : (
-                        <td key={id} role="cell" data-col={id} data-empty="" {...off(!on)} className="t-body">
-                          <span aria-hidden="true">—</span>
-                          <span className="sr-only">{text.missing}</span>
-                        </td>
-                      ),
-                    )}
+                    {columns.map((c) => (
+                      <th key={c.crane.id} scope="col" className="t-small">
+                        <Latin>{`${c.crane.make} ${c.crane.model}`}</Latin>
+                      </th>
+                    ))}
                   </tr>
+                </thead>
+                {moreGroups(columns).map((group) => (
+                  <tbody key={group.id}>
+                    <tr className="cmp-group">
+                      <th scope="rowgroup" colSpan={columns.length + 1} className="t-small">
+                        {extra.groups[group.id]}
+                      </th>
+                    </tr>
+                    {group.rows.map(({ row, label, cells }) => (
+                      <tr key={row}>
+                        <th scope="row" className="t-small">
+                          {label}
+                        </th>
+                        {cells.map(({ c, cell }) => (
+                          <td key={c.crane.id}>{cell ? plain(cell) : '—'}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
                 ))}
-              </tbody>
-            ))}
-          </table>
+              </table>
+              <p className="t-small lineup-compare__muted cmp-plain-notes">{text.secondaryNote}</p>
+              <dl className="t-small cmp-plain-notes">
+                {columns.map((c) => {
+                  const id = specIdOf(c.crane.id);
+                  return id ? (
+                    <div key={c.crane.id}>
+                      <dt>
+                        <Latin>{`${c.crane.make} ${c.crane.model}`}</Latin>
+                      </dt>
+                      <dd>{extra.capacityNotes[id]}</dd>
+                    </div>
+                  ) : null;
+                })}
+              </dl>
+            </noscript>
+          ) : null}
+
+          {/* The prerender keeps this row's box (closed disclosures, the shown models only) so the live comparison
+              changes no height above the next section; their contents are live-only (the no-JS page lists the notes
+              in <noscript> and hides this row). */}
+          <div className="cmp-notes">
+            <p className="t-small cmp-notes__label">{extra.sheet.sourcesHeading}</p>
+            {columns
+              .filter((c) => !c.off)
+              .map((c) => {
+                const id = specIdOf(c.crane.id);
+                return (
+                  <details key={c.crane.id} className="cmp-note" {...slotAttrs(c)}>
+                    <summary className="t-small">
+                      <span>{text.notes}</span>
+                      <CraneName crane={c.crane} />
+                      <ChevronDownIcon className="cmp-note__chev" />
+                    </summary>
+                    {prerender ? null : (
+                      <>
+                        {id ? <p className="t-small">{extra.capacityNotes[id]}</p> : null}
+                        <ul className="lineup-sources">
+                          {sourcesOf(c.spec).map((s) => (
+                            <li key={s.url} className="t-small">
+                              <a href={s.url} target="_blank" rel="noopener noreferrer">
+                                <Latin>{hostOf(s.url)}</Latin>
+                                <NewTabNote />
+                              </a>{' '}
+                              <span className="lineup-compare__muted">· {s.official ? copy.specs.official : copy.specs.secondary}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </details>
+                );
+              })}
+          </div>
         </div>
 
-        <div className="lineup-compare__foot">
-          <p id="crane-compare-missing" className="t-small lineup-compare__muted">
-            {text.missingNote}
-          </p>
-          <p className="t-small lineup-compare__muted">{text.secondaryNote}</p>
-
-          <h4 className="t-body lineup-compare__notes-title">{text.notesHeading}</h4>
-          <dl className="lineup-notes">
-            {models.map(({ crane, on }) => {
-              const id = specIdOf(crane.id);
-              return id ? (
-                <div key={crane.id} {...off(!on)}>
-                  <dt className="t-spec">
-                    <bdi lang="en" dir="ltr">
-                      {crane.make} {crane.model}
-                    </bdi>
-                  </dt>
-                  <dd className="t-small">{extra.capacityNotes[id]}</dd>
-                </div>
-              ) : null;
-            })}
-          </dl>
-
+        <div id="crane-compare-legend" className="t-small lineup-compare__muted cmp-legend">
+          {anyMissing ? <p>{text.missingNote}</p> : null}
+          {anySecondary ? <p>{text.secondaryNote}</p> : null}
+          <p>{copy.specs.disclaimer}</p>
         </div>
+        <p aria-live="polite" className="sr-only">
+          {status}
+        </p>
       </div>
     </section>
   );

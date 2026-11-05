@@ -15,11 +15,13 @@ export function mountLineup(section: HTMLElement, copy: Copy, cranes: readonly C
   const field = section.querySelector<HTMLInputElement>('input[name="load-check"]');
   const focused = field !== null && document.activeElement === field;
   if (field?.value) loadStore.set(field.value);
+  // The comparison loads later, as its own chunk: until then it stays exactly as prerendered.
+  const keptCompare = section.querySelector('#crane-compare')?.outerHTML;
   const root = createRoot(section);
   flushSync(() =>
     root.render(
       <LangProvider lang={copy.lang} copy={copy}>
-        <CraneListBody cranes={cranes} />
+        <CraneListBody cranes={cranes} keptCompare={keptCompare} />
       </LangProvider>,
     ),
   );

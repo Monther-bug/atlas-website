@@ -30,3 +30,12 @@ export function CheckIcon(props: SVGProps<SVGSVGElement>) {
     </Svg>
   );
 }
+
+/** Opens a column's model list in the comparison. */
+export function ChevronDownIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M6 9.5l6 6 6-6" />
+    </Svg>
+  );
+}

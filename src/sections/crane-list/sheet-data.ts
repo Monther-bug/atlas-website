@@ -1,4 +1,4 @@
-import type { CraneSpec, CraneSpecId, CraneSpecSource } from '@/content/crane-specs';
+import type { CraneSpec, CraneSpecId } from '@/content/crane-specs';
 import type { Copy, Crane, CraneListCopy, Lang, SpecGroupId } from '@/content/types';
 import type { PhotoId } from '@/generated/images';
 import { fillTemplate } from '@/lib/whatsapp';
@@ -41,20 +41,8 @@ export function specGroups(
   })).filter((group) => group.rows.length > 0);
 }
 
-/** Unique source documents of one machine, manufacturer documents first. */
-export function sourcesOf(spec: CraneSpec): CraneSpecSource[] {
-  const seen = new Map<string, CraneSpecSource>();
-  for (const s of spec.sources) if (!seen.has(s.url)) seen.set(s.url, s);
-  return [...seen.values()].sort((a, b) => Number(b.official) - Number(a.official));
-}
-
-export function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
-}
+// Shared with the comparison (in the lineup chunk), so they live in lineup-data.ts.
+export { hostOf, sourcesOf } from './lineup-data';
 
 /** Template B (copy deck §10), the same message the request bar sends. */
 export function craneMessage(crane: Crane, copy: Copy): string {

@@ -298,24 +298,34 @@ Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, s
 | Spec groups | الرفع · الذراع الرئيسي والإضافي · الهيكل والقيادة · المحرك والسير · الأبعاد والأوزان | Lifting · Boom and jib · Carrier · Engine and travel · Dimensions and weights |
 | Dimension rows | الطول الكلي · العرض الكلي · الارتفاع الكلي | Overall length · Overall width · Overall height |
 
-**Comparison**
+**Comparison** (v2.1: key rows by default, every other row on demand; the rating notes and the source documents fold into one disclosure per column)
 
 | Element | العربية | English |
 |---|---|---|
 | Title | قارن الطرازات | Compare models |
-| Lead | اختر حتى ثلاث رافعات لتقارن مواصفاتها جنباً إلى جنب. | Choose up to three cranes to compare their specifications side by side. |
-| Picker label | الطرازات في المقارنة | Models in the comparison |
-| A 4th pick replaced the oldest | ثلاث رافعات كحدّ أقصى، فأُزيلت أقدم رافعة اخترتها. | Three at most, so your oldest pick made room. |
-| Only one model left | اختر رافعة ثانية لتبدأ المقارنة. | Choose a second crane to start comparing. |
+| Lead | اختر الطرازات واقرأ أهم أرقامها جنباً إلى جنب. | Choose the models and read their key figures side by side. |
+| Picker group (screen readers) | الطرازات في المقارنة | Models in the comparison |
+| A column's model picker (screen readers, {n} = column) | الطراز {n} في المقارنة | Model {n} in the comparison |
+| Announced after the columns change ({models}, joined with «، » / ", ") | في المقارنة الآن: {models}. | Now comparing: {models}. |
 | Request (per column, + model for screen readers) | اطلبها | Request |
-| Table name | مقارنة مواصفات الرافعات | Crane specification comparison |
+| Details (per column, + model for screen readers) | التفاصيل | Details |
+| Key table name (screen readers) | مقارنة مواصفات الرافعات | Crane specification comparison |
+| Key rows | أقصى حمولة · طول الذراع الرئيسي · أقصى ارتفاع لرأس الذراع · ثقل الموازنة · الهيكل والقيادة · قدرة المحرك · الوزن الأساسي | Max capacity · Main boom · Max tip height · Counterweight · Carrier · Engine power · Basic weight |
+| Show the other rows | اعرض كل المواصفات | Show all specs |
+| Back to the key rows | اعرض أهم المواصفات فقط | Show key specs only |
+| Other rows table (screen readers) | بقية المواصفات | More specifications |
+| Under a tip height measured with the jib | مع الذراع الإضافي | with jib |
+| Axles under the carrier type (1 · 2 · 3–10 · 11+) | محور واحد · محوران · {n} محاور · {n} محوراً | 1 axle · 2 axles · {n} axles · {n} axles |
+| Per-column disclosure | الملاحظة والمصادر | Note and sources |
+| Row label of the disclosures (= sheet sources heading) | مصادر الأرقام | Where the figures come from |
 | Empty cell (screen readers) | غير مذكور في وثيقة الشركة المصنّعة | Not stated by the manufacturer |
-| Empty-cell note | — تعني أن وثيقة الشركة المصنّعة لا تذكر هذا الرقم لهذا الطراز. نتركه فارغاً ولا نقدّره. | — means the manufacturer's document does not state this figure for this model. We leave it blank rather than estimate it. |
+| Empty-cell note (shown only when a — is on screen) | — تعني أن وثيقة الشركة المصنّعة لا تذكر هذا الرقم لهذا الطراز. نتركه فارغاً ولا نقدّره. | — means the manufacturer's document does not state this figure for this model. We leave it blank rather than estimate it. |
 | * mark (screen readers) | من قاعدة بيانات مواصفات | from a spec database |
-| * note | * من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة. | * From a spec database, not from the manufacturer's own document. |
-| Notes heading | ملاحظات على التصنيفات | Notes on the ratings |
+| * note (shown only when a * is on screen) | * من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة. | * From a spec database, not from the manufacturer's own document. |
 
-**Rating notes** (from the research notes in `crane-specs.ts`; shown in the sheet and under the comparison)
+The QUY250's capacity cell reads 250 t with the caption «حسب اسم الطراز، بانتظار التأكيد» / "From the model name, to be confirmed", as on its card; its note (below) gives Fuwa's 260 t. Removed in v2.1: "A 4th pick replaced the oldest", "Only one model left", "Notes heading" (the pickers always show distinct models; the notes sit in each column's disclosure).
+
+**Rating notes** (from the research notes in `crane-specs.ts`; shown in the sheet and in each comparison column's «الملاحظة والمصادر» / "Note and sources")
 
 | Model | العربية | English |
 |---|---|---|

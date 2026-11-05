@@ -865,34 +865,97 @@ async function sheetCheck(page) {
   };
 }
 
+/**
+ * «قارن الطرازات»: the live comparison loads as it comes near; three distinct models (two on phones) with matching
+ * columns and only the key rows; a picker swaps a column and announces it; picking a model another column shows trades
+ * places; "Show all specs" renders the other rows and takes them away again. No sideways overflow at any point.
+ */
 async function compareCheck(page) {
-  const state = () =>
-    page.evaluate(() => ({
-      pressed: [...document.querySelectorAll('[data-testid="compare-pick"][aria-pressed="true"]')].map((b) => b.dataset.crane),
-      cols: [...document.querySelectorAll('#crane-compare thead th[data-col]')].filter((th) => th.checkVisibility()).map((th) => th.dataset.col),
-      status: document.querySelector('#crane-compare .lineup-compare__status')?.textContent?.trim() ?? '',
-    }));
-  const s0 = await state();
-  const unpicked = await page.$$eval('[data-testid="compare-pick"][aria-pressed="false"]', (bs) => bs.map((b) => b.dataset.crane));
-  let s1 = s0;
-  if (unpicked[0]) {
-    await tap(page, `[data-testid="compare-pick"][data-crane="${unpicked[0]}"]`, 250);
-    await wait(500);
-    s1 = await state();
+  await page.$eval('#crane-compare', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  let live = false;
+  for (let i = 0; i < 40 && !live; i++) {
+    live = !!(await page.$('#crane-compare select[data-testid="compare-slot"]'));
+    if (!live) await wait(200);
   }
-  await tap(page, `[data-testid="compare-pick"][data-crane="${s1.pressed[0]}"]`, 250);
+  if (!live) return { pass: false, detail: 'the live comparison never loaded' };
+  await wait(300);
+  const state = () =>
+    page.evaluate(() => {
+      const c = document.getElementById('crane-compare');
+      const shown = (sel) => [...c.querySelectorAll(sel)].filter((e) => e.checkVisibility());
+      return {
+        narrow: matchMedia('(width < 48rem)').matches,
+        slots: shown('select[data-testid="compare-slot"]').map((s) => s.value),
+        firstSlot: shown('select[data-testid="compare-slot"]')[0]?.dataset.slot ?? '',
+        cols: shown('table thead th[data-col]').map((th) => th.dataset.col),
+        cells: shown('tr[data-row="capacity"] td').length,
+        rows: shown('tr[data-row]').length,
+        more: c.querySelectorAll('#crane-compare-more tbody tr').length,
+        expanded: c.querySelector('[aria-controls="crane-compare-more"]')?.getAttribute('aria-expanded') ?? '',
+        status: c.querySelector('[aria-live="polite"]')?.textContent?.trim() ?? '',
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+  const s0 = await state();
+  const want = s0.narrow ? 2 : 3;
+  const options = await page.$$eval('#crane-compare select[data-testid="compare-slot"] option', (os) => [...new Set(os.map((o) => o.value))]);
+  const fresh = options.find((id) => !s0.slots.includes(id));
+  const first = `#crane-compare select[data-testid="compare-slot"][data-slot="${s0.firstSlot}"]`;
+  if (fresh) await page.select(first, fresh);
+  await wait(500);
+  const s1 = await state();
+  const last = s1.slots[s1.slots.length - 1];
+  await page.select(first, last);
   await wait(500);
   const s2 = await state();
+  await tap(page, '#crane-compare [aria-controls="crane-compare-more"]', 250);
+  await wait(700);
+  const s3 = await state();
+  await tap(page, '#crane-compare [aria-controls="crane-compare-more"]', 250);
+  await wait(500);
+  const s4 = await state();
+  const distinct = (xs) => new Set(xs).size === xs.length;
   const pass =
-    s0.pressed.length === 3 &&
-    s0.cols.join() === s0.pressed.join() &&
-    s1.pressed.length === 3 &&
-    s1.pressed.includes(unpicked[0]) &&
-    s1.status.length > 0 &&
-    s1.cols.length === 3 &&
-    s2.pressed.length === 2 &&
-    s2.cols.length === 2;
-  return { pass, detail: `default ${s0.pressed.join(',')} cols ${s0.cols.join(',')} · +${unpicked[0]} → ${s1.pressed.join(',')} "${s1.status}" · −${s1.pressed[0]} → ${s2.pressed.join(',')} cols ${s2.cols.length}` };
+    !!fresh &&
+    s0.slots.length === want &&
+    distinct(s0.slots) &&
+    s0.cols.join() === s0.slots.join() &&
+    s0.cells === want &&
+    s0.rows >= 6 &&
+    s0.rows <= 8 &&
+    s0.more === 0 &&
+    s0.status === '' &&
+    s1.slots[0] === fresh &&
+    s1.cols.join() === s1.slots.join() &&
+    normModel(s1.status).includes(normModel(CRANES[fresh]?.model ?? '?')) &&
+    s2.slots[0] === last &&
+    s2.slots[s2.slots.length - 1] === s1.slots[0] &&
+    distinct(s2.slots) &&
+    s2.cols.join() === s2.slots.join() &&
+    s3.expanded === 'true' &&
+    s3.more > 0 &&
+    s4.expanded === 'false' &&
+    s4.more === 0 &&
+    [s0, s1, s2, s3, s4].every((s) => s.overflow <= 0);
+  return {
+    pass,
+    detail: `default ${s0.slots.join(',')} cols ${s0.cols.join(',')} rows ${s0.rows} · ${fresh} → ${s1.slots.join(',')} "${s1.status}" · ${last} → ${s2.slots.join(',')} · show all ${s3.expanded} +${s3.more} rows → ${s4.expanded} ${s4.more} · overflow ${Math.max(s0.overflow, s3.overflow)}`,
+  };
+}
+
+/** A comparison column's Request puts that crane on the hook: bar chip, WhatsApp text, form select. */
+async function compareRequestCheck(page) {
+  const btn = await firstVisible(page, '#crane-compare [data-compare-request]');
+  if (!btn) return { pass: false, detail: 'no visible Request in the comparison' };
+  const id = await btn.evaluate((b) => b.dataset.crane);
+  await tap(page, btn, 350);
+  await wait(1500);
+  const chip = await barChip(page);
+  const href = await barHref(page);
+  const form = await formCrane(page);
+  const model = normModel(CRANES[id]?.model ?? '?');
+  const pass = chip !== null && normModel(chip).includes(model) && normModel(decodedHref(href)).includes(model) && form === `crane:${id}`;
+  return { pass, detail: `${id}: chip="${(chip ?? 'none').trim()}" form=${form} href names it=${normModel(decodedHref(href)).includes(model)}` };
 }
 
 /** Request this crane (card) → the chip rides into the bar → bar chip, encoded WhatsApp text, form select. */
@@ -1315,9 +1378,10 @@ async function controlsFor(p, c) {
     await step('lineup', `${tag} type filters show the right cranes, one pressed, live count`, () => filterCheck(page));
     await step('lineup', `${tag} load check: «٢٠٠» marks the cranes rated ≥ 200 t; invalid input flagged; clear refocuses`, () => loadCheck(page));
     await step('lineup', `${tag} Details sheet: Enter opens a modal, focus stays inside, Esc returns focus`, () => sheetCheck(page));
-    await step('lineup', `${tag} compare: three by default, a fourth replaces the oldest, columns follow`, () => compareCheck(page));
+    await step('lineup', `${tag} compare: three models (two on phones) on the key rows; a picker swaps and announces; a shown model trades places; show all on demand`, () => compareCheck(page));
     await step('request', `${tag} Request this crane rides into the bar: chip, encoded text, form select`, () => requestRideCheck(page, motion));
     await step('request', `${tag} the sheet's Request closes it and puts its crane on the hook`, () => sheetRequestCheck(page));
+    await step('request', `${tag} compare column Request: bar chip, WhatsApp text, form select`, () => compareRequestCheck(page));
   });
   await group('gallery', async ({ page }) => {
     await step('gallery', `${tag} site picker narrows the strip and comes back`, () => galleryPickerCheck(page));

@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
-import type { Crane } from '@/content/types';
+import type { Crane, CraneListCopy, Lang } from '@/content/types';
 import { parseDecimal } from '@/lib/digits';
+import { formatNumber, formatTonnes } from '@/lib/numbers';
+import { fillTemplate } from '@/lib/whatsapp';
 
 /**
  * The load typed into the load check. The check itself is a lazy island; the cards (main bundle) read the same
@@ -22,6 +24,13 @@ export function parseLoad(input: string): Load {
 /** The honest test: the crane's maximum rating (at its shortest radius) is at least the load. Never a promise. */
 export function ratedFor(crane: Crane, tonnes: number): boolean {
   return crane.capacityT >= tonnes;
+}
+
+/** "3 models have a maximum rating of 120 t or more." Arabic plural forms as in resultCount (n < 100). */
+export function loadResult(n: number, tonnes: number, text: CraneListCopy, lang: Lang): string {
+  const { none, one, two, few, many } = text.load.result;
+  const template = n === 0 ? none : n === 1 ? one : n === 2 ? two : n <= 10 ? few : many;
+  return fillTemplate(template, { n: formatNumber(n, lang), load: formatTonnes(tonnes, lang) });
 }
 
 let text = '';

@@ -400,20 +400,25 @@ export interface CraneListCopy {
     noteHeading: string;
     sourcesHeading: string;
   };
-  /** v2 comparison table. */
+  /** v2 comparison: key rows by default, every other row on demand (CompareModels.tsx). */
   compare: {
     title: string;
     lead: string;
-    pickerLabel: string;
-    limit: string; // after a pick on a full table replaced the oldest one
-    request: string; // short "Request" in each model's column header; the model is appended for screen readers
-    needTwo: string;
-    tableName: string;
+    pickerLabel: string; // screen readers: the group of column model selects
+    slotLabel: string; // {n}: screen-reader name of one column's model select
+    nowComparing: string; // {models}: announced after the columns change
+    request: string; // short "Request" under each model; the model is appended for screen readers
+    tableName: string; // screen readers: the key-figures table
+    moreName: string; // screen readers: the table of every other figure
+    showAll: string;
+    showKey: string;
+    withJib: string; // under a tip height measured with the jib (the model states no boom-only figure)
+    axles: { one: string; two: string; few: string; many: string }; // {n}: under the carrier type
+    notes: string; // per-column disclosure: the rating note and the source documents
     missing: string; // screen-reader text of an empty cell
     missingNote: string;
     secondary: string; // screen-reader text of the * mark
     secondaryNote: string;
-    notesHeading: string;
   };
   /** v2: spec groups in the sheet and the comparison. */
   groups: Record<SpecGroupId, string>;

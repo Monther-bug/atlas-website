@@ -6,8 +6,8 @@ import { SPEC_ORDER } from '@/content/spec-rows';
 import type { Crane } from '@/content/types';
 import { craneListCopy } from '@/content/crane-list-copy';
 import { CARD_FACTS, keySpecs, ratingDiffers, ratingRadius } from './card-facts';
-import { COMPARE_MAX, addToCompare, defaultCompare, toggleCompare } from './compare-store';
-import { SPEC_GROUPS, capacityCell, loadResult, rowMax, specCell, specOf } from './lineup-data';
+import { COMPARE_MAX, addToCompare, compareSlots, defaultCompare, swapCompare, toggleCompare } from './compare-store';
+import { SPEC_GROUPS, capacityCell, loadResult, specCell, specOf } from './lineup-data';
 import { parseLoad, ratedFor } from './load';
 import { CRANE_PHOTOS, craneMessage, sourcesOf, specGroups } from './sheet-data';
 
@@ -47,11 +47,6 @@ describe('spec groups', () => {
     expect(specCell(craneSpecs.quy250, 'counterweight', en, 'en')?.secondary).toBe(true);
     expect(specCell(craneSpecs.quy250, 'boom', en, 'en')?.secondary).toBe(false);
     expect(specCell(craneSpecs['atf60-3'], 'tipHeightJib', en, 'en')?.secondary).toBe(true);
-  });
-
-  it('scale bars to the largest value of the row', () => {
-    expect(rowMax(Object.values(craneSpecs), 'boom')).toBe(72.2);
-    expect(rowMax([craneSpecs['ac200-1']], 'tipHeight')).toBeUndefined();
   });
 
   it('list each source document once, manufacturer documents first', () => {
@@ -156,6 +151,21 @@ describe('comparison selection', () => {
   it('makes room for a model added from the sheet', () => {
     expect(addToCompare(['rt700e', 'ac200-1', 'gmk6350'], 'quy250')).toEqual(['ac200-1', 'gmk6350', 'quy250']);
     expect(addToCompare(['rt700e'], 'rt700e')).toEqual(['rt700e']);
+  });
+
+  it('fills every column with a different model, the pick first', () => {
+    expect(compareSlots(null, visibleCranes)).toEqual(['rt700e', 'ac200-1', 'gmk6350']);
+    expect(compareSlots(['quy250'], visibleCranes)).toEqual(['quy250', 'rt700e', 'ac200-1']);
+    expect(compareSlots(['gmk6350', 'gmk6350', 'cke2500'], visibleCranes)).toEqual(['gmk6350', 'rt700e', 'ac200-1']);
+    expect(compareSlots(['atf60-3'], visibleCranes.slice(0, 2))).toEqual(['atf60-3', 'rt700e']);
+  });
+
+  it('swaps a column; a model already shown trades places, so columns stay distinct', () => {
+    const slots = ['rt700e', 'ac200-1', 'gmk6350'] as const;
+    expect(swapCompare(slots, 0, 'quy250')).toEqual(['quy250', 'ac200-1', 'gmk6350']);
+    expect(swapCompare(slots, 0, 'gmk6350')).toEqual(['gmk6350', 'ac200-1', 'rt700e']);
+    expect(swapCompare(slots, 1, 'ac200-1')).toBe(slots);
+    expect(swapCompare(slots, 5, 'quy250')).toBe(slots);
   });
 });
 

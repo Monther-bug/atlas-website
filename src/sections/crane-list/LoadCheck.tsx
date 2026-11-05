@@ -3,8 +3,7 @@ import { ArrowIcon, CloseIcon } from '@/components/Icons';
 import { craneListCopy } from '@/content/crane-list-copy';
 import type { Crane } from '@/content/types';
 import { useLang } from '@/lib/lang';
-import { loadResult } from './lineup-data';
-import { loadStore, parseLoad, ratedFor, useLoadText } from './load';
+import { loadResult, loadStore, parseLoad, ratedFor, useLoadText } from './load';
 
 /** Quiet time before the result is written (and announced), so typing "120" is announced once, not three times. */
 const SETTLE_MS = 450;

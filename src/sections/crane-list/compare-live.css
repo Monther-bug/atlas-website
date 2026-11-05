@@ -1,0 +1,81 @@
+/* «قارن الطرازات», live-only rules: they ship with the comparison's lazy chunk (CompareModels.tsx), not with the page.
+   Everything the prerendered comparison needs to keep its boxes is in crane-list.css; these style only what the live
+   island adds (the native pickers, the open disclosures, "show all") and its motion. Reduced motion: none of the
+   motion block applies, and the global rule in styles.css removes the rest. */
+
+@layer components {
+  select.cmp-swap__model {
+    display: block;
+    field-sizing: content;
+    appearance: none;
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    transition: color var(--dur-state) var(--ease-ui);
+  }
+  select.cmp-swap__model:hover,
+  .cmp-swap__field:hover .cmp-swap__chev {
+    color: var(--surface-accent);
+  }
+  .cmp-swap__chev {
+    position: absolute;
+    inset-inline-end: 0.375rem;
+    top: 50%;
+    translate: 0 -50%;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    color: var(--surface-fg-2);
+    pointer-events: none;
+    transition: color var(--dur-state) var(--ease-ui);
+  }
+  .cmp-toggle__chev {
+    transition: rotate var(--dur-state) var(--ease-ui);
+  }
+  .cmp-toggle[aria-expanded='true'] .cmp-toggle__chev {
+    rotate: 180deg;
+  }
+  .cmp-more__body > table {
+    margin-block-start: 0.25rem;
+  }
+  .cmp-note[open] .cmp-note__chev {
+    rotate: 180deg;
+  }
+  .cmp-note > p {
+    margin: 0.25rem 0 0.5rem;
+    color: var(--surface-fg-2);
+  }
+  .cmp-note .lineup-sources a {
+    overflow-wrap: anywhere;
+  }
+
+  /* Motion: a swapped-in model and its cells fade up, the capacity bar grows, "show all" wipes down. CSS only, from
+     the second render on (data-ready), so the island mounting animates nothing; reduced motion: none of it. */
+  @media (prefers-reduced-motion: no-preference) {
+    .cmp[data-ready] :is(.cmp-model, .cmp-table--key td) {
+      transition:
+        opacity var(--dur-ui) var(--ease-set),
+        translate var(--dur-ui) var(--ease-set);
+    }
+    .cmp[data-ready] .cmp-meter > span {
+      transition: transform var(--dur-layout) var(--ease-set);
+    }
+    .cmp[data-ready] .cmp-more__body > table {
+      transition:
+        opacity var(--dur-layout) var(--ease-set),
+        clip-path var(--dur-layout) var(--ease-set);
+    }
+    @starting-style {
+      .cmp[data-ready] :is(.cmp-model, .cmp-table--key td) {
+        opacity: 0;
+        translate: 0 0.5rem;
+      }
+      .cmp[data-ready] .cmp-meter > span {
+        transform: scaleX(0);
+      }
+      .cmp[data-ready] .cmp-more__body > table {
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+      }
+    }
+  }
+}

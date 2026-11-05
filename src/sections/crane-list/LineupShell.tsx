@@ -10,8 +10,9 @@ const KEEP = { __html: '' };
 /**
  * The browser side of «اعثر على رافعتك» (main bundle: this file only). Hydration keeps the prerendered section as is:
  * its innerHTML is declared empty, which React does not patch, so the page is complete before any of the section's
- * code loads. When the section comes within a viewport of the screen, mount.tsx loads (lineup, load check,
- * comparison, crane-specs) and renders the live body into the same <section>. Like Astro's client:visible.
+ * code loads. When the section comes within a viewport of the screen, mount.tsx loads (lineup, load check) and
+ * renders the live body into the same <section>; the comparison (with crane-specs) is its own chunk, loaded when it
+ * comes near (CompareSlot.tsx). Like Astro's client:visible.
  */
 export function LineupShell({ cranes }: { cranes: readonly Crane[] }) {
   const { copy } = useLang();

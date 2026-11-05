@@ -556,7 +556,7 @@
     transition: none !important;
   }
 
-  /* ── Comparison ── */
+  /* ── Comparison (CompareModels.tsx): Apple-style columns, key rows, the rest on demand ── */
   .lineup-compare {
     padding-block: var(--space-section);
   }
@@ -567,309 +567,342 @@
     margin: 0;
   }
   .lineup-compare__lead {
-    margin-block-start: 1rem !important;
+    margin-block-start: 0.75rem !important;
     color: var(--surface-fg-2);
   }
-  .lineup-compare__head .lineup-compare__muted {
-    margin-block-start: 0.75rem !important;
+  .js .lineup-compare [data-off] {
+    display: none;
   }
-  .lineup-compare__picker {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem 1rem;
+
+  /* One grid for every column row: the label column (a share of the width, as in the table), then equal columns.
+     --cols (live columns), --cols-all (no-JS: every model) and --cols-sm (phones) come from the component. */
+  .cmp {
+    --cm-label: 22%;
+    --cm-gap: 1.5rem;
+    --cm-n: var(--cols, 3);
+    position: relative; /* holds the cells' sr-only spans, so they never widen the page */
+    overflow-x: clip; /* not a scroll container: the pickers can stick */
     margin-block-start: var(--space-head);
   }
-  .lineup-compare__label {
-    margin: 0;
-    font-weight: 600;
-    color: var(--surface-fg-2);
-  }
-  .lineup-picks {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .lineup-pick {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-block-size: 2.75rem;
-    padding-inline: 0.875rem 1.125rem;
-    border: 1px solid var(--surface-control);
-    border-radius: 999px;
-    color: var(--surface-fg);
-    background-color: transparent;
-    cursor: pointer;
-    transition:
-      background-color var(--dur-state) var(--ease-ui),
-      color var(--dur-state) var(--ease-ui),
-      border-color var(--dur-state) var(--ease-ui),
-      opacity var(--dur-state) var(--ease-ui);
-  }
-  .lineup-pick:hover {
-    border-color: var(--surface-fg);
-  }
-  .lineup-pick:active {
-    scale: 0.98;
-  }
-  .lineup-pick[aria-pressed='true'] {
-    border-color: var(--color-brand);
-    background-color: var(--color-brand);
-    color: var(--color-white);
-  }
-  .lineup-pick[aria-disabled='true']:not([aria-pressed='true']) {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-  .lineup-pick[aria-pressed='true'][aria-disabled='true'] {
-    cursor: default;
-  }
-  .lineup-pick__cap {
-    font-size: 0.875rem;
-    font-variant-numeric: tabular-nums;
-    opacity: 0.8;
-  }
-  .lineup-compare__status {
-    flex-basis: 100%;
-    min-block-size: 1.5em;
-    margin: 0;
-    color: var(--surface-fg-2);
-  }
-  .lineup-compare__wrap {
-    margin-block-start: 1rem;
-  }
-  /* Live: clip (not a scroll container, so the model row can stick); a column sliding in never adds a scrollbar. */
-  .lineup-compare__wrap {
-    position: relative; /* contains the cells' sr-only spans, so they never widen the page */
-    overflow-x: clip;
-  }
-  html:not(.js) .lineup-compare__wrap {
+  html:not(.js) .cmp {
+    --cm-n: var(--cols-all, 5);
     overflow-x: auto;
     overscroll-behavior-x: contain;
   }
-  .lineup-compare__wrap[role='region']:focus-visible {
+  html:not(.js) .cmp > * {
+    min-inline-size: 60rem;
+  }
+  .cmp[role='region']:focus-visible {
     border-radius: var(--radius-sm);
   }
-  html:not(.js) .lineup-table {
-    min-inline-size: 48rem;
+  .cmp-pick,
+  .cmp-media {
+    display: grid;
+    grid-template-columns: repeat(var(--cm-n), minmax(0, 1fr));
+    padding-inline-start: var(--cm-label);
+  }
+  .cmp-notes {
+    display: grid;
+    grid-template-columns: var(--cm-label) repeat(var(--cm-n), minmax(0, 1fr));
+    align-items: start;
+  }
+  .cmp-pick > *,
+  .cmp-media > *,
+  .cmp-notes > * {
+    min-inline-size: 0;
+    padding-inline-end: var(--cm-gap);
+  }
+  /* Focus never lands under the sticky pickers (WCAG 2.4.11). */
+  .cmp :is(a, button, summary) {
+    scroll-margin-block-start: calc(var(--lineup-sticky) + 6rem);
   }
 
-  .lineup-table {
+  /* Pickers: the make as a caption, the model as a native select; they stick under the site header. */
+  .cmp-pick {
+    position: sticky;
+    top: var(--lineup-sticky);
+    z-index: 3;
+    padding-block: 0.625rem;
+    background-color: var(--surface-raised);
+    border-block-end: 1px solid var(--surface-line);
+  }
+  .cmp-swap {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+  }
+  .cmp-swap__make {
+    color: var(--surface-fg-2);
+  }
+  /* The chevron sits right after the name (Apple's picker), so the field is only as wide as the select. */
+  .cmp-swap__field {
+    position: relative;
+    display: inline-flex;
+    max-inline-size: 100%;
+  }
+  /* The prerendered name and the live select share one box height, so mounting the island moves nothing. */
+  .cmp-swap__model {
+    display: inline-flex;
+    align-items: center;
+    max-inline-size: 100%;
+    min-block-size: 2.75rem;
+    margin: 0;
+    padding-block: 0.25rem;
+    padding-inline: 0 2rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.125rem, 1rem + 0.45vw, 1.375rem);
+    line-height: 1.3;
+    color: var(--surface-fg);
+  }
+
+  /* Photo (the card's own file), then Request (the only red) and Details. */
+  .cmp-media {
+    padding-block: 1.25rem 0.25rem;
+  }
+  .cmp-model {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.75rem;
+  }
+  .cmp-photo {
+    inline-size: 100%;
+    max-inline-size: 16rem;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    overflow: clip;
+    background-color: var(--surface-sunken);
+  }
+  /* Photos, actions and the notes' disclosures need the live island; the no-JS page is the plain table. */
+  html:not(.js) :is(.cmp-media, .cmp-notes) {
+    display: none;
+  }
+  .cmp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+  }
+
+  /* Tables: the head row sets the column widths and carries the names for screen readers; it has no height. */
+  .cmp-table {
     inline-size: 100%;
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
   }
-  .lineup-table__caption {
+  .cmp-caption {
     caption-side: top;
-    padding-block-end: 1rem;
+    padding-block: 1.75rem 0.5rem;
     text-align: start;
     color: var(--surface-fg-2);
   }
-  .lineup-table__caption {
-    display: table-caption;
-  }
-  .lineup-table__caption > [data-testid='draft-badge'] {
+  .cmp-caption > [data-testid='draft-badge'] {
     margin-inline-start: 0.625rem;
     vertical-align: middle;
   }
-  .lineup-table th,
-  .lineup-table td {
-    padding-block: 1rem;
-    padding-inline: 0 1.25rem;
+  .cmp-head th {
+    block-size: 0;
+    padding: 0;
+    border: 0;
+    line-height: 0;
+  }
+  .cmp-head th:first-child {
+    inline-size: var(--cm-label);
+  }
+  .cmp-table tbody th,
+  .cmp-table tbody td {
+    padding-block: 1.125rem;
+    padding-inline: 0 var(--cm-gap);
     text-align: start;
     vertical-align: top;
     border-block-end: 1px solid var(--surface-line);
   }
-  .lineup-table__corner {
-    inline-size: 28%;
-  }
-  .lineup-table thead th {
-    position: sticky;
-    top: var(--lineup-sticky);
-    z-index: 2;
-    padding-block: 1rem 0.875rem;
-    background-color: var(--surface-raised);
-    border-block-end-color: var(--surface-fg);
-  }
-  .lineup-table__model > * {
-    display: block;
-    text-align: start;
-  }
-  .lineup-table__request {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    min-block-size: 2.75rem;
-    margin-block-start: 0.25rem;
-    font-weight: 600;
-    color: var(--color-red);
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-    text-underline-offset: 0.22em;
-  }
-  .lineup-table__request:hover {
-    text-decoration-color: currentColor;
-  }
-  .lineup-table__make {
-    color: var(--surface-fg-3);
-  }
-  .lineup-table__code {
-    font-weight: 600;
-    color: var(--surface-fg);
-  }
-  .lineup-table__group th {
-    padding-block: 2.25rem 0.75rem;
-    font-weight: 700;
-    color: var(--surface-accent);
-  }
-  .lineup-table tbody:first-of-type .lineup-table__group th {
-    padding-block-start: 1.5rem;
-  }
-  .lineup-table tbody th[scope='row'] {
-    font-weight: 400;
+  .cmp-table tbody th[scope='row'] {
+    padding-block-start: 1.375rem;
+    font-weight: 500;
     color: var(--surface-fg-2);
   }
-  .lineup-table td {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums lining-nums;
+  .cmp-table td {
     color: var(--surface-fg);
   }
-  .lineup-num {
+  .cmp-n,
+  .cmp-w {
+    font-family: var(--font-display);
+    font-weight: 600;
+  }
+  .cmp-n {
+    font-size: clamp(1.375rem, 1.15rem + 0.75vw, 1.875rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .cmp-w {
+    font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.25rem);
+    line-height: 1.35;
+  }
+  .cmp-u {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--surface-fg-2);
     white-space: nowrap;
   }
-  .lineup-table td[data-empty] {
-    font-weight: 400;
+  .cmp-mark {
+    margin-inline-start: 0.125rem;
+    color: var(--surface-fg-2);
+  }
+  .cmp-cap {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--surface-fg-2);
+  }
+  .cmp-table td[data-empty] {
+    font-size: 1.25rem;
     color: var(--surface-fg-3);
   }
-  .lineup-bar {
+  /* Capacity only: one bar on a fixed scale (the largest crane), so the range reads at a glance. */
+  .cmp-meter {
     display: block;
-    max-inline-size: 9rem;
-    block-size: 0.1875rem;
+    max-inline-size: 10rem;
+    block-size: 0.25rem;
     margin-block-start: 0.625rem;
     border-radius: 999px;
     background-color: var(--surface-line);
     overflow: clip;
   }
-  .lineup-bar > span {
+  .cmp-meter > span {
     display: block;
     block-size: 100%;
     background-color: var(--surface-accent);
     transform: scaleX(var(--m, 0));
     transform-origin: left center;
   }
-  [dir='rtl'] .lineup-bar > span {
+  [dir='rtl'] .cmp-meter > span {
     transform-origin: right center;
   }
-  .js .lineup-compare [data-off] {
+  .cmp-table .cmp-group th {
+    padding-block: 2rem 0.625rem;
+    font-weight: 700;
+    color: var(--surface-fg);
+    border-block-end-color: var(--surface-fg);
+  }
+
+  /* "Show all specs": the rest of the rows, rendered on demand. */
+  .cmp-more {
+    margin-block-start: 1.25rem;
+  }
+  html:not(.js) .cmp-more {
     display: none;
   }
-  /* A model added to the comparison slides in from the reading side (only after hydration: no entry on page load). */
-  .lineup-table[data-ready] [data-col] {
-    transition:
-      opacity var(--dur-layout) var(--ease-set),
-      translate var(--dur-layout) var(--ease-set);
+
+  /* One disclosure per column: the rating note and the source documents. */
+  .cmp-notes {
+    margin-block-start: 1.75rem;
+    padding-block-start: 0.5rem;
+    border-block-start: 1px solid var(--surface-line);
   }
-  @starting-style {
-    .lineup-table[data-ready] [data-col] {
-      opacity: 0;
-      translate: 1rem 0;
-    }
-    [dir='rtl'] .lineup-table[data-ready] [data-col] {
-      translate: -1rem 0;
-    }
+  .cmp-notes__label {
+    margin: 0;
+    padding-block: 0.625rem;
+    font-weight: 500;
+    color: var(--surface-fg-2);
+  }
+  .cmp-note summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    font-weight: 600;
+    color: var(--surface-accent);
+    cursor: pointer;
+    list-style: none;
+  }
+  .cmp-note summary::-webkit-details-marker {
+    display: none;
+  }
+  .cmp-note__chev {
+    inline-size: 1rem;
+    block-size: 1rem;
+    transition: rotate var(--dur-state) var(--ease-ui);
+  }
+  .cmp-legend {
+    display: grid;
+    gap: 0.375rem;
+    max-inline-size: 52rem;
+    margin-block-start: 1.5rem;
+  }
+  .cmp-legend > p {
+    margin: 0;
+  }
+  .cmp-plain-notes {
+    max-inline-size: 52rem;
+    margin: 1.5rem 0 0;
   }
 
-  /* Phones: each row restacks (label on its own line, values side by side), so up to three models fit with no
-     sideways scroll. Table semantics are kept by the explicit ARIA roles in CompareModels.tsx. */
+  /* Phones: two columns, no label column (each label sits above its values), the middle model left out. */
   @media (width < 48rem) {
-    .js .lineup-table,
-    .js .lineup-table thead,
-    .js .lineup-table tbody {
+    .cmp {
+      --cm-label: 0%;
+      --cm-gap: 0.75rem;
+    }
+    .js .cmp {
+      --cm-n: var(--cols-sm, 2);
+    }
+    .js .cmp [data-mid] {
+      display: none;
+    }
+    .js .cmp-notes {
+      grid-template-columns: repeat(var(--cm-n), minmax(0, 1fr));
+    }
+    .js .cmp-notes__label {
+      grid-column: 1 / -1;
+      padding-block-end: 0;
+    }
+    .js .cmp-table,
+    .js .cmp-table thead,
+    .js .cmp-table tbody {
       display: block;
     }
-    .js .lineup-table tr {
+    .js .cmp-table .cmp-caption {
+      display: block;
+    }
+    .js .cmp-table tr {
       display: grid;
-      grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
-      column-gap: 1rem;
+      grid-template-columns: repeat(var(--cm-n), minmax(0, 1fr));
       border-block-end: 1px solid var(--surface-line);
     }
-    .js .lineup-table th,
-    .js .lineup-table td {
-      padding-inline: 0;
-      border-block-end: 0;
+    .js .cmp-table .cmp-head tr {
+      border: 0;
     }
-    .js .lineup-table tbody th[scope='row'],
-    .js .lineup-table .lineup-table__group th {
+    .js .cmp-head th:first-child {
       grid-column: 1 / -1;
-      padding-block-end: 0.125rem;
     }
-    .js .lineup-table tbody td {
-      padding-block-start: 0.25rem;
-    }
-    .js .lineup-table .lineup-num {
-      white-space: normal;
-    }
-    .js .lineup-table td bdi,
-    .js .lineup-table th bdi {
-      overflow-wrap: anywhere;
-    }
-    .js .lineup-table .lineup-table__caption {
-      display: block;
-    }
-    .js .lineup-table .lineup-table__group {
+    .js .cmp-table tbody th,
+    .js .cmp-table tbody td {
       border-block-end: 0;
     }
-    .js .lineup-table .lineup-table__corner {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-      padding: 0;
+    .js .cmp-table tbody th[scope='row'] {
+      grid-column: 1 / -1;
+      padding-block: 1rem 0;
     }
-    .js .lineup-table thead {
-      position: sticky;
-      top: var(--lineup-sticky);
-      z-index: 2;
-      background-color: var(--surface-raised);
-    }
-    .js .lineup-table thead tr {
+    .js .cmp-table .cmp-group {
       border-block-end-color: var(--surface-fg);
     }
-    .js .lineup-table thead th {
-      position: static;
+    .js .cmp-table .cmp-group th {
+      grid-column: 1 / -1;
+      padding-block: 1.5rem 0.5rem;
     }
-  }
-
-  .lineup-compare__foot {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-block-start: 1.5rem;
-    max-inline-size: 52rem;
-  }
-  .lineup-compare__foot > p {
-    margin: 0;
-  }
-  .lineup-compare__notes-title {
-    margin: 1.5rem 0 0;
-    font-weight: 700;
-  }
-  .lineup-notes {
-    display: grid;
-    gap: 0.875rem;
-    margin: 0;
-  }
-  .lineup-notes > div {
-    display: grid;
-    gap: 0.125rem;
-  }
-  .lineup-notes dd {
-    margin: 0;
-    color: var(--surface-fg-2);
+    .js .cmp-table tbody td {
+      padding-block: 0.25rem 1rem;
+    }
+    .js .cmp-table bdi {
+      overflow-wrap: anywhere;
+    }
+    .cmp-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 }
 
@@ -890,8 +923,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lineup-card,
-  .lineup-card__photo img,
-  .lineup-table[data-ready] [data-col] {
+  .lineup-card__photo img {
     transition: none !important;
   }
   .lineup-card:hover {

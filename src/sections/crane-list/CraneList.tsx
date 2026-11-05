@@ -8,7 +8,7 @@ import { useLang } from '@/lib/lang';
 import { announceLineup } from '@/lib/lineup';
 import { applyFilter, availableFilters, bandLabel, resultCount, type FilterValue } from '../crane-filters';
 import type { SheetRequest } from './CraneSheet';
-import { CompareModels } from './CompareModels';
+import { CompareSlot } from './CompareSlot';
 import { LineupCard } from './LineupCard';
 import { LoadCheck } from './LoadCheck';
 import { SECTION_PROPS } from './section';
@@ -33,8 +33,11 @@ export function CraneList({ cranes }: { cranes: readonly Crane[] }) {
   );
 }
 
-/** Everything inside the section: header, filter, load check, cards, comparison, and the lazy sheet. */
-export function CraneListBody({ cranes }: { cranes: readonly Crane[] }) {
+/**
+ * Everything inside the section: header, filter, load check, cards, comparison, and the lazy sheet. `keptCompare` is
+ * the prerendered comparison, shown until its own chunk loads (CompareSlot.tsx).
+ */
+export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[]; keptCompare?: string }) {
   const { copy } = useLang();
   const countRef = useRef<HTMLParagraphElement>(null);
   const [filter, setFilter] = useState<FilterValue>('all');
@@ -143,7 +146,7 @@ export function CraneListBody({ cranes }: { cranes: readonly Crane[] }) {
         </div>
       </div>
 
-      <CompareModels cranes={cranes} />
+      <CompareSlot cranes={cranes} onDetails={openDetails} kept={keptCompare} />
 
       {active && sheet ? (
         <Suspense fallback={null}>
