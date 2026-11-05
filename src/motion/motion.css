@@ -3,21 +3,35 @@
    when JS runs and prefers-reduced-motion is not "reduce". No JS → nothing is hidden.
    The hero <img> is never hidden (LCP). */
 
-/* 1. Before core.ts sets html[data-motion]: pre-hide the hero's intro targets.
-      If motion never starts, the keyframe un-hides them after 3 s. */
-html.motion-ok:not([data-motion]) :is([data-intro], [data-split], [data-sling-button], [data-sling-leg]) {
-  opacity: 0;
-  animation: atlas-motion-failsafe 0.01s linear 3s forwards;
+/* 1. Before core.ts sets html[data-motion]: the hero's from-states (direction B, src/motion/hero.ts), so the intro
+      starts without a jump when JS arrives: the cut half-raked, the sling legs short, the load up under the hook.
+      Nothing is hidden and the H1 never moves (it is the LCP element). The 3 s fallback settles everything if motion
+      never starts. */
+html.motion-ok:not([data-motion]) [data-hero-field] {
+  --luff: 0.8; /* an estimate of hero.ts's start luff (computed so the cut stays under the raised load) */
+  animation: atlas-hero-luff 0.01s linear 3s forwards;
 }
-/* Hero links stay usable while transparent, and are never invisible while focused. [data-intro] is a
-   wrapper around links, so it is the wrapper that must show when focus is anywhere inside it. */
-html.motion-ok :is([data-intro], [data-sling-button]):focus-within {
-  opacity: 1 !important;
+html.motion-ok:not([data-motion]) [data-hero] svg[data-sling] {
+  transform: scaleY(0.15);
+  animation: atlas-motion-settle 0.01s linear 3s forwards;
 }
-@keyframes atlas-motion-failsafe {
+html.motion-ok:not([data-motion]) [data-hero-load] {
+  transform: translateY(calc(var(--drop) * -0.85));
+  animation: atlas-motion-settle 0.01s linear 3s forwards;
+}
+@keyframes atlas-hero-luff {
   to {
-    opacity: 1;
+    --luff: 1;
   }
+}
+@keyframes atlas-motion-settle {
+  to {
+    transform: none;
+  }
+}
+/* The docked WhatsApp button (transparent while the ghost sits in the bar) is never invisible while focused. */
+html.motion-ok [data-sling-button]:focus-within {
+  opacity: 1 !important;
 }
 
 /* 2. Lenis (desktop only; rules from lenis/dist/lenis.css, v1.3). */
@@ -85,32 +99,6 @@ html[data-motion="reduced"] .progress-rope {
 }
 
 /* ---- sections appended by later tasks go below this line ---- */
-
-/* ---- Hero (D.3) ----
-   Before core.ts sets html[data-motion], the photo and its sling overlay start 5 % large, so the intro
-   settles them without a jump when JS arrives. The <picture> scales inside the photo box's own overflow
-   clip (the frame never moves); the <img> is never hidden, so the LCP image paints at once.
-   The 3 s fallback puts them at rest if motion never starts. */
-html.motion-ok:not([data-motion]) :is([data-hero-photo] > *, svg[data-sling]) {
-  transform: scale(1.05);
-  transform-origin: 50% 100%;
-  animation: atlas-motion-settle 0.01s linear 3s forwards;
-}
-@keyframes atlas-motion-settle {
-  to {
-    transform: none;
-  }
-}
-/* The scaled sling overlay must not add a horizontal scrollbar. clip, not hidden: no scroll container. */
-html.motion-ok [data-hero] {
-  overflow-x: clip;
-}
-/* SplitText line masks (overflow: clip, set by SplitText): room for Arabic marks above and below the
-   line box while lines rise. overflow-clip-margin moves the clip edge without touching layout; padding
-   plus negative margins would not, because adjacent masks' margins collapse and the H1 grows. */
-.split-line-mask {
-  overflow-clip-margin: 0.15em;
-}
 
 /* ==== Services + Why Atlas (v2, S.services) ====
    The v1 service sling (D.8) is gone with the v1 rows. The v2 motion (services.ts, why.ts) only sets inline from-states

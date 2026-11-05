@@ -1,115 +1,95 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { BUTTON_LG_HEIGHT, buttonClass } from '@/components/Button';
-import { slingClearance, slingGeometry, slingMaxHeight } from '@/components/Sling';
 import { getImage } from '@/generated/images';
 import { renderHtml } from '@/test/render';
-import { HERO_PHOTO, Hero } from './Hero';
+import { HERO_PHOTO, Hero, PORTRAIT, hookCss, hookSide } from './Hero';
 
-describe('Hero', () => {
-  it('is #top with one H1 that holds both clauses, the services line below it', () => {
+describe('Hero (direction B, "The Luff")', () => {
+  it('is #top with one H1 that holds both clauses, and nothing above the heading (spec §16.1)', () => {
+    for (const lang of ['ar', 'en'] as const) {
+      const html = renderHtml(<Hero />, lang);
+      expect(html.querySelector('section#top[data-hero][data-ground="dark"]')).not.toBeNull();
+      const h1 = html.querySelector('h1#hero-title');
+      expect(h1?.textContent?.replace(/\s+/g, ' ')).toBe(
+        lang === 'ar'
+          ? 'من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة'
+          : 'From smaller cranes to the largest ones, every project has the right crane.',
+      );
+      expect(h1?.parentElement?.previousElementSibling?.matches('.hero-fields')).toBe(true);
+      // The H1 is the LCP element: nothing in the hero is a reveal or pre-hidden by the motion layer.
+      expect(html.querySelector('#top [data-reveal], #top [data-split], #top [data-intro]')).toBeNull();
+    }
+  });
+
+  it('reads H1 → WhatsApp → services → Browse, in that order (WCAG 2.4.3)', () => {
     const html = renderHtml(<Hero />, 'ar');
-    expect(html.querySelector('section#top[data-hero]')).not.toBeNull();
-    const h1 = html.querySelector('h1[data-split]');
-    expect(h1?.textContent).toBe('من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة');
-    expect(h1?.previousElementSibling).toBeNull(); // nothing above the heading (spec §15.1)
-    expect(h1?.className).toBe('t-h1'); // .t-h1 already balances; no utility overrides
-    const intro = html.querySelectorAll('[data-intro]');
-    expect(intro[0]?.textContent).toBe('تأجير الرافعات · النقل الثقيل · المناولة · الخدمات النفطية');
-    expect(h1!.compareDocumentPosition(intro[0]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it('uses 6398 in Arabic and 6359 in English, eagerly loaded', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      const photo = renderHtml(<Hero />, lang).querySelector('[data-hero-photo]');
-      expect(photo?.innerHTML).toContain(`/img/${HERO_PHOTO[lang]}-`);
-      expect(photo?.querySelector('img')?.getAttribute('fetchpriority')).toBe('high');
+    const order = ['h1#hero-title', '[data-sling-button]', '.hero-services', 'a[href="#cranes"]'].map((s) => html.querySelector(s)!);
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
   });
 
-  it('hangs the WhatsApp button on the sling only where the crop has a hook point', () => {
+  it('uses 6398 in Arabic and 6359 in English, eagerly loaded, the 9:16 crop for every portrait viewport', () => {
     for (const lang of ['ar', 'en'] as const) {
-      const desktop = getImage(HERO_PHOTO[lang], 'desktop_16x9');
-      const mobile = getImage(HERO_PHOTO[lang], 'mobile_9x16');
-      const html = renderHtml(<Hero />, lang);
-      const slings = [...html.querySelectorAll('svg[data-sling]')];
-      expect(slings).toHaveLength(Number(Boolean(desktop.hook)) + Number(Boolean(mobile.hook)));
-      for (const svg of slings) {
-        expect(svg.querySelectorAll('path[data-sling-leg]')).toHaveLength(2);
-        expect(svg.querySelectorAll('circle[data-hook-pin]')).toHaveLength(1);
+      const photo = renderHtml(<Hero />, lang).querySelector('[data-hero-photo]')!;
+      expect(photo.innerHTML).toContain(`/img/${HERO_PHOTO[lang]}-`);
+      const img = photo.querySelector('img')!;
+      expect(img.getAttribute('loading')).toBe('eager');
+      expect(img.getAttribute('fetchpriority')).toBe('high');
+      const portrait = [...photo.querySelectorAll('source')].filter((s) => s.getAttribute('media') === PORTRAIT);
+      expect(portrait).toHaveLength(2);
+      expect(portrait[0].getAttribute('srcset')).toContain('-mobile_9x16-');
+    }
+  });
+
+  it('pins the rig on the real hook of both crops, in container units (no JS needed)', () => {
+    for (const lang of ['ar', 'en'] as const) {
+      const section = renderHtml(<Hero />, lang).querySelector<HTMLElement>('#top')!;
+      for (const [crop, key] of [['desktop_16x9', 'd'], ['mobile_9x16', 'm']] as const) {
+        const css = hookCss(getImage(HERO_PHOTO[lang], crop))!;
+        expect(section.style.getPropertyValue(`--hx-${key}`)).toBe(css.x);
+        expect(section.style.getPropertyValue(`--hy-${key}`)).toBe(css.y);
+        expect(section.hasAttribute(`data-sling-${key}`)).toBe(true);
       }
-      const onSling = html.querySelector('a[data-sling-button][data-testid="sling-whatsapp"]');
-      expect(Boolean(onSling)).toBe(Boolean(desktop.hook || mobile.hook));
-      expect(Boolean(html.querySelector('[data-testid="hero-whatsapp"]'))).toBe(!(desktop.hook && mobile.hook));
     }
+    expect(renderHtml(<Hero />, 'ar').querySelectorAll('[data-sling-leg]')).toHaveLength(2);
+    expect(renderHtml(<Hero />, 'ar').querySelector('[data-testid="hero-whatsapp"]')).toBeNull(); // both crops have a hook
   });
 
-  it('has a hook point in both hero crops, so phones get the sling too (C11)', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      expect(getImage(HERO_PHOTO[lang], 'desktop_16x9').hook, `${lang} desktop`).not.toBeNull();
-      expect(getImage(HERO_PHOTO[lang], 'mobile_9x16').hook, `${lang} mobile`).not.toBeNull();
-      const html = renderHtml(<Hero />, lang);
-      expect(html.querySelectorAll('svg[data-sling]')).toHaveLength(2);
-      expect(html.querySelector('[data-testid="hero-whatsapp"]')).toBeNull();
-    }
+  it('maps the hook for a bottom-anchored cover image (6398 desktop: dx 1106, dy 1085)', () => {
+    expect(hookCss(getImage('6398', 'desktop_16x9'))).toEqual({
+      x: 'calc(50cqw + 1106 * max(100cqw / 4240, 100cqh / 2385))',
+      y: 'calc(100cqh - 1085 * max(100cqw / 4240, 100cqh / 2385))',
+    });
   });
 
-  it('grows the photo box when needed so the hook, the legs and the button stay inside the photo', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      const desktopImage = getImage(HERO_PHOTO[lang], 'desktop_16x9');
-      const mobileImage = getImage(HERO_PHOTO[lang], 'mobile_9x16');
-      const box = renderHtml(<Hero />, lang).querySelector<HTMLElement>('[data-hero-photo]')?.parentElement;
-      expect(box?.style.getPropertyValue('--clear-d')).toBe(
-        slingClearance(slingGeometry(desktopImage)!, desktopImage.rect, `${BUTTON_LG_HEIGHT.md} + 1.5rem`),
-      );
-      expect(box?.style.getPropertyValue('--clear-m')).toBe(
-        slingClearance(slingGeometry(mobileImage)!, mobileImage.rect, `${BUTTON_LG_HEIGHT.base} + 1rem`),
-      );
-      expect(box?.className).toContain('h-[max(calc(60svh-4.5rem),var(--clear-m,0px))]');
-    }
+  it('rakes the cut away from the hook side, and marks whether it is on the reading-start side of the text', () => {
+    const ar = renderHtml(<Hero />, 'ar').querySelector<HTMLElement>('#top')!;
+    expect(hookSide(getImage('6398', 'desktop_16x9'))).toBe('right');
+    expect(ar.dataset.nearD).toBe('right');
+    expect(ar.dataset.cutD).toBe('start');
+    expect(ar.dataset.cutM).toBe('start');
+    const en = renderHtml(<Hero />, 'en').querySelector<HTMLElement>('#top')!;
+    expect(en.dataset.nearD).toBe('left');
+    expect(en.dataset.cutD).toBe('start');
+    expect(en.dataset.nearM).toBe('right'); // 6359's 9:16 crop puts the hook right of centre
+    expect(en.dataset.cutM).toBe('end');
   });
 
-  it('caps the md photo box so a tall tablet never crops the hook out at the sides', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      const desktopImage = getImage(HERO_PHOTO[lang], 'desktop_16x9');
-      const box = renderHtml(<Hero />, lang).querySelector<HTMLElement>('[data-hero-photo]')?.parentElement;
-      expect(box?.style.getPropertyValue('--max-d')).toBe(slingMaxHeight(slingGeometry(desktopImage)!, desktopImage.rect, '1rem'));
-      expect(box?.className).toContain('md:h-[min(max(calc(74svh-4.5rem),var(--clear-d,0px)),var(--max-d,100svh))]');
-    }
-  });
-
-  it('reserves exactly the lg button height that Button renders', () => {
-    const lg = buttonClass('primary-red', 'lg');
-    expect(lg).toContain(`min-h-[${BUTTON_LG_HEIGHT.base}]`);
-    expect(lg).toContain(`md:min-h-[${BUTTON_LG_HEIGHT.md}]`);
-  });
-
-  it('centres the sling button on the hook, clamped so it can never leave the photo sideways', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      const holder = renderHtml(<Hero />, lang).querySelector('[data-sling-button]')?.parentElement;
-      const classes = holder?.className.split(' ') ?? [];
-      expect(holder?.className).toBe(holder?.className.trim());
-      expect(classes).toEqual(
-        expect.arrayContaining([
-          'w-max',
-          'max-w-[calc(100cqw-2rem)]',
-          '[--sx:var(--sx-m)]',
-          'md:[--sx:var(--sx-d)]',
-          'left-[var(--sx)]',
-          // Centre on the hook (-50% of its own width), but keep both edges 1rem inside the photo.
-          'translate-x-[clamp(calc(1rem-var(--sx)),-50%,calc(100cqw-1rem-var(--sx)-100%))]',
-        ]),
-      );
-    }
-  });
-
-  it('draws the sling button focus ring inside the red, never on the photo (WCAG 1.4.11)', () => {
-    const button = renderHtml(<Hero />, 'en').querySelector('[data-sling-button]');
-    expect(button?.className).toContain('focus-visible:outline-offset-[-6px]');
-  });
-
-  it('links Browse cranes to the Hoist', () => {
-    const browse = [...renderHtml(<Hero />, 'en').querySelectorAll('a')].find((a) => a.textContent === 'Browse cranes');
+  it('names the WhatsApp load for the dock and the tests, and links Browse cranes to the Hoist', () => {
+    const html = renderHtml(<Hero />, 'en');
+    const button = html.querySelector('[data-sling-button]');
+    expect(button?.getAttribute('data-testid')).toBe('sling-whatsapp');
+    expect(button?.className).toContain('hero-whatsapp'); // focus ring drawn inside the red (hero.css)
+    const browse = [...html.querySelectorAll('a')].find((a) => a.textContent === 'Browse cranes');
     expect(browse?.getAttribute('href')).toBe('#cranes');
+  });
+
+  it('never splits "Oil services" across lines, and gives screen readers commas, not dots', () => {
+    const html = renderHtml(<Hero />, 'ar');
+    const items = [...html.querySelectorAll('.hero-service')];
+    expect(items.map((el) => el.firstChild?.textContent)).toEqual(['تأجير الرافعات', 'النقل الثقيل', 'المناولة', 'الخدمات النفطية']);
+    expect(html.querySelectorAll('.hero-services .sr-only')).toHaveLength(3);
+    expect(html.querySelectorAll('.hero-dot[aria-hidden="true"]')).toHaveLength(3);
   });
 });

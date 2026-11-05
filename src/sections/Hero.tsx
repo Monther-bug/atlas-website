@@ -1,123 +1,168 @@
 import type { CSSProperties } from 'react';
-import { BUTTON_LG_HEIGHT, Button } from '@/components/Button';
+import { Button } from '@/components/Button';
 import { ArrowIcon, WhatsAppIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
-import { SlingSvg, cropVisibility, slingClearance, slingGeometry, slingMaxHeight } from '@/components/Sling';
 import type { Lang } from '@/content/types';
-import { getImage, type PhotoId } from '@/generated/images';
+import { getImage, type CropImage, type PhotoId } from '@/generated/images';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
 import { whatsappHref } from '@/lib/whatsapp';
+import './hero.css';
 
-/** Spec §5.2: the real hook is on the right in 6398 (AR) and on the left in 6359 (EN). */
+/** Spec §5.2: the real hook is on the right in 6398 (AR) and on the left in 6359 (EN). Photos are never mirrored. */
+/**
+ * The 9:16 crop is chosen by shape, not width: any portrait viewport (phones, tablets upright) gets it, so the real
+ * hook is always on screen (the 16:9 crop in a tall box would push it off the side). hero.css uses the same query.
+ */
+export const PORTRAIT = '(max-aspect-ratio: 1/1)';
 export const HERO_PHOTO: Record<Lang, PhotoId> = { ar: '6398', en: '6359' };
 
+/**
+ * The real hook of a crop, mapped into the hero box (`container-type: size`) for the hero's full-viewport,
+ * bottom-anchored `object-fit: cover` photo (CSS Images 3: scale = max(W / w, H / h), x centred, y from the
+ * bottom). Pure CSS: it renders in the prerender and stays on the hook at every size, with no JS.
+ */
+export function hookCss(image: CropImage): { x: string; y: string } | null {
+  const { rect, hook } = image;
+  if (!hook) return null;
+  const px = `max(100cqw / ${rect.width}, 100cqh / ${rect.height})`;
+  const dx = Math.round(hook.x - (rect.left + rect.width / 2));
+  const dy = Math.round(rect.top + rect.height - hook.y);
+  return { x: `calc(50cqw + ${dx} * ${px})`, y: `calc(100cqh - ${dy} * ${px})` };
+}
+
+/** Which physical side of the frame the hook is on: the cut passes under the load there and rises to the other side. */
+export function hookSide(image: CropImage): 'left' | 'right' | null {
+  const { rect, hook } = image;
+  if (!hook) return null;
+  return hook.x - rect.left > rect.width / 2 ? 'right' : 'left';
+}
+
+/**
+ * The hero, direction B «زاوية الرفع» / "The Luff" (docs/reviews/hero-concepts.md, chosen 5 Nov 2026).
+ * The real photo fills the first screen (so the H1, not the image, is the LCP element: full-viewport images are
+ * background to Chrome's LCP). A black field, with a brand-navy plane riding along its edge, is cut on one straight
+ * rake that passes just under the WhatsApp load hanging from the real hook; the headline sits on the field, its lines
+ * starting on the cut. Text never sits on the sky. Motion (src/motion/hero.ts) luffs the cut and pays out the load.
+ */
 export function Hero() {
   const { copy, lang } = useLang();
   const photo = HERO_PHOTO[lang];
-  const desktopImage = getImage(photo, 'desktop_16x9');
-  const mobileImage = getImage(photo, 'mobile_9x16');
-  const desktop = slingGeometry(desktopImage);
-  const mobile = slingGeometry(mobileImage);
-  // Photo-box bounds: room below the leg ends for the lg button plus a margin, and (md) a cap that keeps the
-  // hook inside the side edges once a tall box makes the image height-driven and wider than the screen.
-  const box = {
-    ...(desktop
-      ? {
-          '--clear-d': slingClearance(desktop, desktopImage.rect, `${BUTTON_LG_HEIGHT.md} + 1.5rem`),
-          '--max-d': slingMaxHeight(desktop, desktopImage.rect, '1rem'),
-        }
-      : {}),
-    ...(mobile ? { '--clear-m': slingClearance(mobile, mobileImage.rect, `${BUTTON_LG_HEIGHT.base} + 1rem`) } : {}),
+  const desktop = getImage(photo, 'desktop_16x9');
+  const mobile = getImage(photo, 'mobile_9x16');
+  const d = hookCss(desktop);
+  const m = hookCss(mobile);
+  const start = lang === 'ar' ? 'right' : 'left';
+  const sideD = hookSide(desktop);
+  const sideM = hookSide(mobile);
+  const vars = {
+    ...(d ? { '--hx-d': d.x, '--hy-d': d.y } : {}),
+    ...(m ? { '--hx-m': m.x, '--hy-m': m.y } : {}),
   } as CSSProperties;
-  const slingVisibility = cropVisibility(desktop !== null, mobile !== null);
-  const bandVisibility = cropVisibility(desktop === null, mobile === null);
   const href = whatsappHref(copy.whatsapp.general);
   const onWhatsApp = () => track('whatsapp_click', { location: 'hero' });
-  const anchor = {
-    ...(desktop ? { '--sx-d': desktop.anchorLeft, '--sy-d': desktop.anchorTop } : {}),
-    ...(mobile ? { '--sx-m': mobile.anchorLeft, '--sy-m': mobile.anchorTop } : {}),
-  } as CSSProperties;
-  // Physical `left`: photos are never mirrored, so the hook is at the same x in both languages. --sx/--sy pick the
-  // crop's anchor per breakpoint. The holder's left edge goes to the hook, then translate centres it (-50% of its
-  // own width) but is clamped so both edges stay 1rem inside the photo whatever the label's width; max-w keeps
-  // that clamp solvable (a longer label wraps instead). w-max: the absolute box must not squeeze the label.
-  const holder = [
-    'absolute z-10 w-max max-w-[calc(100cqw-2rem)]',
-    '[--sx:var(--sx-m)] [--sy:var(--sy-m)] md:[--sx:var(--sx-d)] md:[--sy:var(--sy-d)]',
-    'top-[var(--sy)] left-[var(--sx)] translate-x-[clamp(calc(1rem-var(--sx)),-50%,calc(100cqw-1rem-var(--sx)-100%))]',
-    slingVisibility,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Two main lines, short then long, so the lines climb the rake: «لكل مشروع / رافعته المناسبة».
+  const words = copy.hero.h1Main.split(' ');
+  const services = copy.hero.servicesLine.split(' · ');
+  const sep = lang === 'ar' ? '، ' : ', ';
 
   return (
-    <section id="top" data-hero="" data-ground="dark" aria-labelledby="hero-title" className="bg-navy-950 pt-[4.5rem] text-white">
-      {/*
-        Photo box: 60/40 on mobile, 74/26 from md (spec §5.2), minus the header strip. It grows past that only when
-        the hook sits too low for the legs and the button to fit (6359 on wide screens and phones), and from md it
-        never gets so tall that the height-driven image pushes the hook out at the side (tall portrait tablets).
-      */}
-      <div
-        style={box}
-        className="relative h-[max(calc(60svh-4.5rem),var(--clear-m,0px))] [container-type:size] md:h-[min(max(calc(74svh-4.5rem),var(--clear-d,0px)),var(--max-d,100svh))]"
-      >
-        <div data-hero-photo="" className="absolute inset-0 overflow-hidden">
-          <Picture
-            photo={photo}
-            crop="desktop_16x9"
-            mobileCrop="mobile_9x16"
-            alt={copy.alt[photo]}
-            sizes="100vw"
-            priority
-            pictureClassName="block h-full w-full"
-            className="h-full w-full"
-          />
-        </div>
-        {desktop && <SlingSvg geometry={desktop} className="hidden md:block" />}
-        {mobile && <SlingSvg geometry={mobile} className="md:hidden" />}
-        {slingVisibility !== null && (
-          <div style={anchor} className={holder}>
-            {/*
-              The global ring sits 3px outside the button, on the photo, where white fails 3:1 against the clouds
-              (WCAG 1.4.11). Here it is drawn inside the red instead: white on #C9221C is about 5.6:1.
-            */}
+    <section
+      id="top"
+      data-hero=""
+      data-ground="dark"
+      aria-labelledby="hero-title"
+      className="hero"
+      style={vars}
+      // Per breakpoint: the hook's side, and whether the cut is on the reading-start side of the text ("start":
+      // the lines step along it) or on its end side ("end": the cut runs nearly flat above the text).
+      data-near-d={sideD ?? undefined}
+      data-near-m={sideM ?? undefined}
+      data-cut-d={sideD === start ? 'start' : 'end'}
+      data-cut-m={sideM === start ? 'start' : 'end'}
+      data-sling-d={d ? '' : undefined}
+      data-sling-m={m ? '' : undefined}
+    >
+      <div className="hero-photo" data-hero-photo="">
+        <Picture
+          photo={photo}
+          crop="desktop_16x9"
+          mobileCrop="mobile_9x16"
+          mobileMedia={PORTRAIT}
+          alt={copy.alt[photo]}
+          sizes="100vw"
+          priority
+          pictureClassName="hero-picture"
+          className="hero-img"
+        />
+      </div>
+      {/* The WebGL depth layer's slot (desktop, fine pointer, after the intro: src/motion/hero-gl.ts). */}
+      <div className="hero-gl" data-hero-gl="" aria-hidden="true" />
+      <div className="hero-fields" data-hero-field="" aria-hidden="true">
+        <div className="hero-field hero-field--accent" />
+        <div className="hero-field" />
+      </div>
+
+      <div className="hero-text">
+        <h1 id="hero-title" className="hero-h1">
+          <span className="hero-line hero-lead">{copy.hero.h1Lead}</span>{' '}
+          <span className="hero-line hero-line-1">{words.slice(0, 2).join(' ')}</span>{' '}
+          <span className="hero-line hero-line-2">{words.slice(2).join(' ')}</span>
+        </h1>
+      </div>
+
+      {/* The load: the WhatsApp button on two sling legs from the real hook (only where the crop has a hook point). */}
+      <div className="hero-rig" data-hero-rig="">
+        <svg className="hero-legs" data-sling="" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path data-sling-leg="" d="M50 0L0 100" vectorEffect="non-scaling-stroke" />
+          <path data-sling-leg="" d="M50 0L100 100" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <span className="hero-pin" data-hook-pin="" aria-hidden="true" />
+        {/* The outer box centres and clamps the load in CSS; motion only ever moves the inner one. */}
+        <div className="hero-load">
+          <div data-hero-load="">
             <Button
               href={href}
               external
               icon={<WhatsAppIcon className="size-5" />}
               onClick={onWhatsApp}
-              className="focus-visible:outline-offset-[-6px]"
+              className="hero-whatsapp"
               data-sling-button=""
               data-testid="sling-whatsapp"
             >
               {copy.hero.whatsapp}
             </Button>
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="shell flex min-h-[40svh] flex-col justify-center py-8 md:min-h-[26svh]">
-        <h1 id="hero-title" data-split="" className="t-h1">
-          <span className="block text-[0.55em]">{copy.hero.h1Lead}</span> <span className="block">{copy.hero.h1Main}</span>
-        </h1>
-        <div className="mt-6 flex flex-col items-start gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <p data-intro="" className="t-lead text-steel">
-            {copy.hero.servicesLine}
-          </p>
-          <div data-intro="" className="flex flex-wrap gap-3">
-            {bandVisibility !== null && (
-              <div className={bandVisibility}>
-                <Button href={href} external icon={<WhatsAppIcon className="size-5" />} onClick={onWhatsApp} data-testid="hero-whatsapp">
-                  {copy.hero.whatsapp}
-                </Button>
-              </div>
-            )}
-            <Button href="#cranes" variant="outline-on-dark" iconEnd={<ArrowIcon direction="down" className="size-5" />}>
-              {copy.hero.browse}
+      <div className="hero-foot">
+        {/* The services and "Browse" share one wrapping row (on phones the p is display: contents). */}
+        <p className="hero-services">
+          {services.map((item, i) => (
+            <span key={item} className="hero-service">
+              {item}
+              {i < services.length - 1 ? (
+                <>
+                  <span className="sr-only">{sep}</span>
+                  <span aria-hidden="true" className="hero-dot" />
+                </>
+              ) : null}
+            </span>
+          ))}
+        </p>
+        {/* Without a hook point for this crop, the WhatsApp button sits here instead of on the sling. */}
+        {(!d || !m) && (
+          <div className="hero-foot-whatsapp">
+            <Button href={href} external icon={<WhatsAppIcon className="size-5" />} onClick={onWhatsApp} data-testid="hero-whatsapp">
+              {copy.hero.whatsapp}
             </Button>
           </div>
-        </div>
+        )}
+        <a href="#cranes" className="hero-browse">
+          <span>{copy.hero.browse}</span>
+          <ArrowIcon direction="down" className="size-5" />
+        </a>
       </div>
     </section>
   );

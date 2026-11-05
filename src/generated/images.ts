@@ -106,36 +106,36 @@ export const images: Partial<Record<`${PhotoId}:${CropName}`, CropImage>> = {
     "photo": "6359",
     "crop": "mobile_9x16",
     "rect": {
-      "left": 604,
+      "left": 362,
       "top": 0,
-      "width": 1351,
-      "height": 2401
+      "width": 1593,
+      "height": 2832
     },
     "avif": [
       {
-        "url": "/img/6359-mobile_9x16-640.8f8bdca5.avif",
+        "url": "/img/6359-mobile_9x16-640.bf91f50a.avif",
         "width": 640
       },
       {
-        "url": "/img/6359-mobile_9x16-828.7455cfbc.avif",
+        "url": "/img/6359-mobile_9x16-828.73740bd8.avif",
         "width": 828
       },
       {
-        "url": "/img/6359-mobile_9x16-1080.2b4b608d.avif",
+        "url": "/img/6359-mobile_9x16-1080.e56aabd5.avif",
         "width": 1080
       }
     ],
     "webp": [
       {
-        "url": "/img/6359-mobile_9x16-640.45599603.webp",
+        "url": "/img/6359-mobile_9x16-640.a5e06a23.webp",
         "width": 640
       },
       {
-        "url": "/img/6359-mobile_9x16-828.55bbcfee.webp",
+        "url": "/img/6359-mobile_9x16-828.077682e8.webp",
         "width": 828
       },
       {
-        "url": "/img/6359-mobile_9x16-1080.d0d75217.webp",
+        "url": "/img/6359-mobile_9x16-1080.cfdb6ec1.webp",
         "width": 1080
       }
     ],
@@ -1685,34 +1685,34 @@ export const images: Partial<Record<`${PhotoId}:${CropName}`, CropImage>> = {
     "rect": {
       "left": 2290,
       "top": 0,
-      "width": 1351,
-      "height": 2401
+      "width": 1593,
+      "height": 2832
     },
     "avif": [
       {
-        "url": "/img/6398-mobile_9x16-640.0a93f66d.avif",
+        "url": "/img/6398-mobile_9x16-640.e67a058f.avif",
         "width": 640
       },
       {
-        "url": "/img/6398-mobile_9x16-828.ef9db7a5.avif",
+        "url": "/img/6398-mobile_9x16-828.ffde1998.avif",
         "width": 828
       },
       {
-        "url": "/img/6398-mobile_9x16-1080.46b4b45a.avif",
+        "url": "/img/6398-mobile_9x16-1080.220f5f09.avif",
         "width": 1080
       }
     ],
     "webp": [
       {
-        "url": "/img/6398-mobile_9x16-640.ff3d63f8.webp",
+        "url": "/img/6398-mobile_9x16-640.ab70df5f.webp",
         "width": 640
       },
       {
-        "url": "/img/6398-mobile_9x16-828.542b7cfb.webp",
+        "url": "/img/6398-mobile_9x16-828.9939f0f3.webp",
         "width": 828
       },
       {
-        "url": "/img/6398-mobile_9x16-1080.dd4b58e5.webp",
+        "url": "/img/6398-mobile_9x16-1080.b47d71ed.webp",
         "width": 1080
       }
     ],

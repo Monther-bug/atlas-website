@@ -55,7 +55,7 @@ function sectionAtSpyLine(): string | null {
 }
 
 /**
- * Scroll state for the bar, read at most once per frame: `atTop` (transparent over the hero's first pixels), `tone`
+ * Scroll state for the bar, read at most once per frame: `atTop` (the first pixels; the bar keeps its dark glass over the hero photo), `tone`
  * (the ground under the bar: black glass over dark sections, white glass over light ones) and `active` (the nav target
  * in view). The server render assumes the first screen: solid dark glass, nothing active.
  */
@@ -63,6 +63,7 @@ function useChromeState() {
   const [atTop, setAtTop] = useState(false);
   const [tone, setTone] = useState<Tone>('dark');
   const [active, setActive] = useState<string | null>(null);
+  const [overHero, setOverHero] = useState(true);
 
   useEffect(() => {
     const header = document.querySelector<HTMLElement>('[data-header]');
@@ -70,7 +71,11 @@ function useChromeState() {
     let frame = 0;
     const read = () => {
       frame = 0;
-      setAtTop(document.getElementById('top') !== null && window.scrollY < TOP_SLACK);
+      const hero = document.getElementById('top');
+      setAtTop(hero !== null && window.scrollY < TOP_SLACK);
+      // Until the hero's WhatsApp load docks into the bar (hero bottom above 65 % of the viewport, RequestBar.tsx),
+      // the hero's red button is the one red action on screen, so the header's request pill stays outlined.
+      setOverHero(hero !== null && hero.getBoundingClientRect().bottom > window.innerHeight * 0.65);
       setTone(groundUnder(header) ?? 'dark');
       setActive(sectionAtSpyLine());
     };
@@ -89,12 +94,12 @@ function useChromeState() {
     };
   }, []);
 
-  return { atTop, tone, active };
+  return { atTop, tone, active, overHero };
 }
 
 export function Header() {
   const { lang, copy, otherLang, otherHref } = useLang();
-  const { atTop, tone, active } = useChromeState();
+  const { atTop, tone, active, overHero } = useChromeState();
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -171,7 +176,7 @@ export function Header() {
       {/* Two glass layers cross-fade (opacity only): black over the hero and dark sections, white over light ones. */}
       <span
         aria-hidden="true"
-        className={`glass-dark pointer-events-none absolute inset-0 border-b border-line-dark transition-opacity duration-(--dur-ui) ease-ui ${!atTop && !onLight ? 'opacity-100' : 'opacity-0'}`}
+        className={`glass-dark pointer-events-none absolute inset-0 border-b border-line-dark transition-opacity duration-(--dur-ui) ease-ui ${!onLight ? 'opacity-100' : 'opacity-0'}`}
       />
       <span
         aria-hidden="true"
@@ -241,7 +246,7 @@ export function Header() {
             {copy.header.langSwitch.text}
           </a>
           <div className="hidden sm:block">
-            <Button href="#request" size="sm">
+            <Button href="#request" size="sm" variant={overHero ? 'ghost-dark' : 'primary'} data-testid="header-request">
               {copy.header.request}
             </Button>
           </div>

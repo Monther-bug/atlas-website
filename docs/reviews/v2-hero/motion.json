@@ -1,0 +1,45 @@
+{
+ "ar": {
+  "gl": {
+   "canvas": true,
+   "ready": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
+  },
+  "frameTimes": {
+   "median": 33.3,
+   "p95": 33.4
+  },
+  "errors": []
+ },
+ "scroll-1": {
+  "y": 0,
+  "btn": "1",
+  "bar": "hidden"
+ },
+ "scroll-2": {
+  "y": 280,
+  "btn": "1",
+  "bar": "hidden"
+ },
+ "scroll-3": {
+  "y": 600,
+  "btn": "0",
+  "bar": "shown"
+ },
+ "undock": {
+  "y": 0,
+  "btn": "1"
+ },
+ "en": {
+  "gl": {
+   "canvas": true,
+   "ready": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
+  },
+  "frameTimes": {
+   "median": 33.3,
+   "p95": 33.4
+  },
+  "errors": []
+ }
+}

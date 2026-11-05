@@ -1,0 +1,62 @@
+[
+ {
+  "name": "ar-1440x900-reduced",
+  "vh": 900,
+  "h1In": true,
+  "waIn": true,
+  "servicesIn": true,
+  "browseIn": true,
+  "offField": [],
+  "legsOnButton": true,
+  "lcp": "IMG.hero-img",
+  "cls": 0.019,
+  "ovx": false,
+  "gl": false,
+  "errors": []
+ },
+ {
+  "name": "en-1440x900-reduced",
+  "vh": 900,
+  "h1In": true,
+  "waIn": true,
+  "servicesIn": true,
+  "browseIn": true,
+  "offField": [],
+  "legsOnButton": true,
+  "lcp": "SPAN.hero-line",
+  "cls": 0.01,
+  "ovx": false,
+  "gl": false,
+  "errors": []
+ },
+ {
+  "name": "ar-390x844-reduced",
+  "vh": 844,
+  "h1In": true,
+  "waIn": true,
+  "servicesIn": true,
+  "browseIn": true,
+  "offField": [],
+  "legsOnButton": true,
+  "lcp": "SPAN.hero-line",
+  "cls": 0,
+  "ovx": false,
+  "gl": false,
+  "errors": []
+ },
+ {
+  "name": "en-390x844-reduced",
+  "vh": 844,
+  "h1In": true,
+  "waIn": true,
+  "servicesIn": true,
+  "browseIn": true,
+  "offField": [],
+  "legsOnButton": true,
+  "lcp": "SPAN.hero-line",
+  "cls": 0,
+  "ovx": false,
+  "gl": false,
+  "errors": []
+ }
+]

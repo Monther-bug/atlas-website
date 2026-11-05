@@ -153,17 +153,30 @@ describe('Header behaviour', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('is transparent (data-top) only within the first pixels of a page that has a hero', async () => {
+  it('marks data-top within the first pixels of a page that has a hero, and keeps its dark glass over the photo', async () => {
     addEl('<section id="top"></section>');
     const { host } = await mount(<Header />, 'en');
     const header = host.querySelector('header');
     expect(header?.hasAttribute('data-top')).toBe(true);
-    expect(header?.querySelector('.glass-dark')?.className).toContain('opacity-0');
+    // The hero photo runs under the header: white nav text never sits on the bare sky.
+    expect(header?.querySelector('.glass-dark')?.className).toContain('opacity-100');
     await scroll(200);
     expect(header?.hasAttribute('data-top')).toBe(false);
     expect(header?.querySelector('.glass-dark')?.className).toContain('opacity-100');
     await scroll(0);
     expect(header?.hasAttribute('data-top')).toBe(true);
+  });
+
+  it('outlines the request pill while the hero still reaches below the dock line, red after (one red action)', async () => {
+    const hero = addEl('<section id="top"></section>');
+    let bottom = 900;
+    hero.getBoundingClientRect = () => new DOMRect(0, bottom - 900, 1440, 900);
+    const { host } = await mount(<Header />, 'en');
+    const pill = () => host.querySelector('[data-testid="header-request"]')!;
+    expect(pill().className).toContain('border-white/40');
+    bottom = 200;
+    await scroll(700);
+    expect(pill().className).toContain('bg-red');
   });
 
   it('stays glass without a #top element', async () => {

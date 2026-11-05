@@ -1,9 +1,9 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { SplitText } from 'gsap/SplitText';
 import { makeGhost } from './ghost';
 import { flightDelta, type Rect } from './math';
-import { noop, type MotionModule } from './shared';
+import { startLiveHook } from './hero-live';
+import { noop, type Dispose, type MotionModule } from './shared';
 
 /**
  * Heroes whose intro has played (or was skipped). The intro plays once per page load and never again
@@ -18,169 +18,133 @@ export function finishIntro(): void {
   introTimeline?.progress(1);
 }
 
-/** The hero's sling overlay that is laid out at this width (Part C renders one per crop and hides the other). */
-export function visibleSling(hero: ParentNode): SVGSVGElement | null {
-  return Array.from(hero.querySelectorAll<SVGSVGElement>('svg[data-sling]')).find((svg) => svg.getBoundingClientRect().width > 0) ?? null;
+/** The two heights (left, right edge, px) of a field polygon's top edge, as the browser resolved its clip-path. */
+function cutHeights(el: Element | null): [number, number] | null {
+  const cp = el ? getComputedStyle(el).clipPath : '';
+  const open = cp.indexOf('(');
+  if (open < 0) return null;
+  const pts = cp.slice(open + 1, cp.lastIndexOf(')')).split(',').map((p) => p.trim().split(/\s+/));
+  const yl = parseFloat(pts[0]?.[1] ?? '');
+  const yr = parseFloat(pts[1]?.[1] ?? '');
+  return Number.isFinite(yl) && Number.isFinite(yr) ? [yl, yr] : null;
 }
-
-/** Draw a sling leg from whichever end is higher on screen: that end is on the hook. */
-function drawFrom(leg: SVGPathElement): string {
-  if (typeof leg.getTotalLength !== 'function') return '0% 0%';
-  const length = leg.getTotalLength();
-  const start = leg.getPointAtLength(0);
-  const end = leg.getPointAtLength(length);
-  return start.y <= end.y ? '0% 0%' : '100% 100%';
-}
-
-const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-
-/** Everything is still by this time (spec §5.2), counted from the start of the intro. */
-const STILL_BY = 1.95;
-const H1_START = 0.35;
-const H1_DURATION = 0.9;
-const H1_STAGGER = 0.1;
-/** Split the H1 after this long even if fonts are not ready (autoSplit re-splits when they arrive). */
-const FONT_WAIT_MS = 800;
 
 /**
- * Hero, first 2 s (concept §2 table, spec §5.2). Desktop and touch contexts.
- * Transform and opacity only. The hero <img> (LCP) is never hidden: only its <picture> scales,
- * inside the photo box's own overflow clip, and the sling overlay scales about the same point.
- * Geometry is read from real rects (the photo box can be taller than 74svh, and the sling holder is
- * clamped inside the photo), so the swing pivots on the hook pin at every width.
+ * The luff the intro starts from: as low as 0.5 (half-raked), but never so flat that the navy plane covers the raised
+ * load and the real hook above it. Solved on the measured final cut (luff 1): the cut's height at the load's corner
+ * on the far side is linear in the luff, so the smallest safe value is one division.
  */
-export const heroIntro: MotionModule = ({ lang, late }) => {
+export function startLuff(hero: HTMLElement, load: HTMLElement, drop: number): number {
+  const cut = cutHeights(hero.querySelector('.hero-field--accent'));
+  const box = hero.getBoundingClientRect();
+  if (!cut || box.width === 0) return 0.5;
+  const [yl, yr] = cut.map((y) => y + box.top);
+  const near = Math.max(yl, yr);
+  const far = Math.min(yl, yr);
+  if (near - far < 1) return 0.5;
+  const b = load.getBoundingClientRect();
+  const target = b.bottom - drop * 0.85 + 12; // the raised load's bottom, plus a margin
+  // the far-side corner of the load, as a fraction of the way from the far edge to the near edge
+  const t = yr > yl ? (b.left - box.left) / box.width : 1 - (b.right - box.left) / box.width;
+  const need = t > 0 ? (target - far) / ((near - far) * t) : 1;
+  return Math.min(1, Math.max(0.5, need));
+}
+
+/** One damped swing about the hook: the rig is a zero-size box on the hook, so rotating it swings the load. */
+const swing = (degrees: number) => ({
+  keyframes: { rotation: [0, degrees, -degrees * 0.58, degrees * 0.24, 0], easeEach: 'sine.inOut' },
+  ease: 'none',
+});
+
+/**
+ * Hero intro, direction B "The Luff" (docs/reviews/hero-concepts.md §4). Desktop and touch contexts.
+ * The H1 is never moved or hidden (it is the LCP element), the photo never moves.
+ * - 0.00: the cut is part-raked (startLuff: 0.5 or as much more as keeps the raised load and the real hook clear);
+ *   the load hangs close under the hook.
+ * - 0.15–1.25: the cut luffs down on the hook side to its full rake (`--luff` on the field wrapper) while the hook
+ *   line pays out (legs 0.15 → 1) and the WhatsApp load lowers into the sky the cut has just opened.
+ * - 1.25–1.85: one damped swing about the hook. Still by 1.85 s.
+ * Under the first-visit loader, core.ts runs this through afterLoader (loader.ts): it starts as the curtain lifts.
+ * Desktop adds the scroll hoist (A's move) and, after the intro, the live hook (hero-live.ts: cursor pendulum and
+ * the lazy WebGL depth layer).
+ */
+export const heroIntro: MotionModule = (env) => {
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   if (!hero) return noop;
-  // Late start: the 3 s CSS fallback has shown everything already, so never hide it again.
-  // Already played: a context that re-runs after a resize must not replay it either.
-  if (played.has(hero) || late) {
-    played.add(hero);
-    return noop;
-  }
+  const field = hero.querySelector<HTMLElement>('[data-hero-field]');
+  const rig = hero.querySelector<HTMLElement>('[data-hero-rig]');
+  const legs = hero.querySelector<SVGSVGElement>('svg[data-sling]');
+  const load = hero.querySelector<HTMLElement>('[data-hero-load]');
+  const desktop = document.documentElement.dataset.motion === 'desktop';
+  const drop = legs?.getBoundingClientRect().height || 0;
+  const disposers: Dispose[] = [];
+
+  // Late start: the 3 s CSS fallback has shown everything already, so never hide it again (core.ts does not count a
+  // start under the loader's curtain as late). Already played: a context re-run must not replay it.
+  const skip = played.has(hero) || env.late;
   played.add(hero);
 
-  const picture = hero.querySelector<HTMLElement>('[data-hero-photo] > *');
-  const sling = visibleSling(hero);
-  const legs = sling ? Array.from(sling.querySelectorAll<SVGPathElement>('[data-sling-leg]')) : [];
-  const pin = sling?.querySelector<SVGCircleElement>('[data-hook-pin]') ?? null;
-  const button = hero.querySelector<HTMLElement>('[data-sling-button]');
-  const h1 = hero.querySelector<HTMLElement>('[data-split]');
-  const intro = Array.from(hero.querySelectorAll<HTMLElement>('[data-intro]'));
-
-  // Measure now: data-motion is already set, so the CSS pre-scale is gone and nothing is transformed yet.
-  let svgOrigin: string | null = null;
-  let buttonOrigin: string | null = null;
-  if (pin) {
-    const cx = pin.getAttribute('cx');
-    const cy = pin.getAttribute('cy');
-    if (cx && cy) svgOrigin = `${cx} ${cy}`;
-    const hook = pin.getBoundingClientRect();
-    const b = button?.getBoundingClientRect();
-    if (b && b.width > 0 && hook.width > 0) {
-      buttonOrigin = `${hook.left + hook.width / 2 - b.left}px ${hook.top + hook.height / 2 - b.top}px`;
-    }
-  }
-
-  let split: SplitText | null = null;
-  let cancelled = false;
-  const startedAt = performance.now();
-
   const ctx = gsap.context(() => {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        if (introTimeline === tl) introTimeline = null;
-      },
-    });
-    introTimeline = tl;
-
-    // 0.00–2.00 The photo settles inside its frame; the sling overlay settles about the same point,
-    // so the legs stay on the real hook.
-    const settle = [picture, sling].filter((el): el is HTMLElement | SVGSVGElement => el !== null);
-    if (settle.length) {
-      tl.fromTo(settle, { scale: 1.05, transformOrigin: '50% 100%' }, { scale: 1, duration: STILL_BY, ease: 'expo.out', immediateRender: true }, 0);
+    if (!skip && field && legs && load && rig && drop > 0) {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          if (introTimeline === tl) introTimeline = null;
+        },
+      });
+      introTimeline = tl;
+      // Dev server only: lets the review storyboard seek the intro (docs/reviews/v2-hero). Folded away in production.
+      if (import.meta.env.DEV) (window as unknown as { __heroIntro?: gsap.core.Timeline }).__heroIntro = tl;
+      const from = startLuff(hero, load, drop);
+      tl.fromTo(field, { '--luff': from }, { '--luff': 1, duration: 1.1, ease: 'power2.inOut', immediateRender: true }, 0.15);
+      tl.fromTo(legs, { scaleY: 0.15 }, { scaleY: 1, duration: 1.1, ease: 'power2.inOut', immediateRender: true }, 0.15);
+      tl.fromTo(load, { y: -drop * 0.85 }, { y: 0, duration: 1.1, ease: 'power2.inOut', immediateRender: true }, 0.15);
+      tl.to(rig, { ...swing(3), duration: 0.6 }, 1.25);
     }
 
-    // 0.15–0.85 The sling legs pay out downward from the hook, like rope running off a drum.
-    if (legs.length) {
-      gsap.set(legs, { opacity: 0 });
-      tl.set(legs, { opacity: 1 }, 0.15);
-      for (const leg of legs) {
-        tl.fromTo(leg, { drawSVG: drawFrom(leg) }, { drawSVG: '0% 100%', duration: 0.7, ease: 'power2.in', immediateRender: true }, 0.15);
-      }
+    // Scroll (desktop): the hoist. The load rises to the hook as the hero leaves (it docks into the bar at the dock
+    // line, heroDock); then the cut closes over the photo and the hero becomes the ground of the next section.
+    if (desktop && field && legs && load && drop > 0) {
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: hero,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.6,
+            onUpdate: (self) => {
+              if (self.progress > 0) finishIntro();
+            },
+          },
+        })
+        .fromTo(legs, { scaleY: 1 }, { scaleY: 0.3, ease: 'none', duration: 0.4, immediateRender: false }, 0)
+        .fromTo(load, { y: 0 }, { y: -drop * 0.7, ease: 'none', duration: 0.4, immediateRender: false }, 0)
+        .fromTo(field, { '--close': 0 }, { '--close': 1, ease: 'none', duration: 0.5, immediateRender: false }, 0.5);
     }
-
-    // 0.80–1.20 The button settles onto the sling ends (tappable throughout)…
-    if (button) {
-      tl.fromTo(button, { y: -18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'expo.out', immediateRender: true }, 0.8);
-      // …1.20–1.70 then one damped swing about the hook pin. Capped at one cycle (concept risk 2).
-      const swing = { keyframes: { rotation: [0, 4, -2.5, 1, 0], easeEach: 'sine.inOut' }, duration: 0.5, ease: 'none' };
-      if (buttonOrigin) {
-        gsap.set(button, { transformOrigin: buttonOrigin });
-        tl.to(button, swing, 1.2);
-      }
-      if (svgOrigin && legs.length) {
-        gsap.set(legs, { svgOrigin });
-        tl.to(legs, swing, 1.2);
-      }
-    }
-
-    // 1.10–1.75 The services line and "Browse cranes" rise.
-    if (intro.length) {
-      tl.fromTo(intro, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out', stagger: 0.08, immediateRender: true }, 1.1);
-    }
-
-    // The H1 stays transparent until it is split (CSS hid it before data-motion). Opacity only, never
-    // visibility: the heading stays in the accessibility tree the whole time.
-    if (h1) gsap.set(h1, { opacity: 0 });
   });
 
-  // 0.35–1.25 The H1 rises in masked lines once fonts are ready (spec §7).
-  if (h1) {
-    const fontsReady = document.fonts?.ready ?? Promise.resolve();
-    void Promise.race([fontsReady, wait(FONT_WAIT_MS)]).then(() => {
-      if (cancelled) return;
-      try {
-        ctx.add(() => {
-          split = SplitText.create(h1, {
-            type: lang === 'ar' ? 'lines,words' : 'lines', // never chars: Arabic letters must stay joined
-            linesClass: 'split-line',
-            mask: 'lines',
-            autoSplit: true,
-            onSplit(self) {
-              gsap.set(h1, { opacity: 1 });
-              const start = Math.max(H1_START, (performance.now() - startedAt) / 1000);
-              const stagger = self.lines.length > 1 ? H1_STAGGER : 0;
-              const room = STILL_BY - start - stagger * (self.lines.length - 1);
-              return gsap.from(self.lines, {
-                yPercent: 105,
-                duration: Math.max(0.4, Math.min(H1_DURATION, room)),
-                ease: 'expo.out',
-                stagger,
-                delay: Math.max(0, H1_START - (performance.now() - startedAt) / 1000),
-                // Hand the H1 back to React's plain markup: no masks left to clip Arabic marks.
-                onComplete: () => {
-                  split?.revert();
-                  split = null;
-                },
-              });
-            },
-          });
-        });
-      } catch (error) {
-        console.error('[motion]', error);
-        split?.revert();
-        split = null;
-        gsap.set(h1, { clearProps: 'opacity' });
-      }
+  // Desktop, after the intro: the live hook (cursor pendulum, hero-live.ts) and, from there, the WebGL depth layer
+  // (hero-gl.ts, its own lazy chunk, fetched on idle).
+  if (desktop && rig) {
+    let stopLive: Dispose = noop;
+    let alive = true;
+    const begin = () => {
+      if (alive) stopLive = startLiveHook(hero, rig, env);
+    };
+    const tl = introTimeline;
+    if (tl && tl.progress() < 1) tl.eventCallback('onComplete', () => {
+      if (introTimeline === tl) introTimeline = null;
+      begin();
+    });
+    else begin();
+    disposers.push(() => {
+      alive = false;
+      stopLive();
     });
   }
 
   return () => {
-    cancelled = true;
+    for (const dispose of disposers.splice(0)) dispose();
     introTimeline = null;
-    split?.revert();
-    split = null;
     ctx.revert();
   };
 };

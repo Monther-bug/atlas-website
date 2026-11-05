@@ -5,7 +5,9 @@ import { getImage, type CropName, type ImageSource, type PhotoId } from '@/gener
 export interface PictureProps {
   photo: PhotoId;
   crop: CropName;                 // used ≥ 768px (or always, when mobileCrop is absent)
-  mobileCrop?: CropName;          // used < 768px
+  mobileCrop?: CropName;          // used < 768px (or where `mobileMedia` matches)
+  /** When the mobile crop applies; default `(max-width: 767.98px)`. The hero uses portrait (aspect < 1) instead. */
+  mobileMedia?: string;
   /** Alternative text; an empty string marks the image as decorative. */
   alt: string;
   sizes: string;
@@ -18,7 +20,7 @@ const MOBILE = '(max-width: 767.98px)';
 const srcSet = (list: ImageSource[]) => list.map((s) => `${s.url} ${s.width}w`).join(', ');
 
 /** Art-directed, responsive photo from the generated manifest (scripts/build-assets.mjs). */
-export function Picture({ photo, crop, mobileCrop, alt, sizes, priority = false, className, pictureClassName }: PictureProps): JSX.Element {
+export function Picture({ photo, crop, mobileCrop, mobileMedia = MOBILE, alt, sizes, priority = false, className, pictureClassName }: PictureProps): JSX.Element {
   const main = getImage(photo, crop);
   const mobile = mobileCrop ? getImage(photo, mobileCrop) : null;
   // The <img> fallback: the WebP whose width is closest to 1280 px (ties go to the larger).
@@ -34,8 +36,8 @@ export function Picture({ photo, crop, mobileCrop, alt, sizes, priority = false,
     <picture className={pictureClassName}>
       {mobile && (
         <>
-          <source media={MOBILE} type="image/avif" srcSet={srcSet(mobile.avif)} sizes={sizes} width={mobile.rect.width} height={mobile.rect.height} />
-          <source media={MOBILE} type="image/webp" srcSet={srcSet(mobile.webp)} sizes={sizes} width={mobile.rect.width} height={mobile.rect.height} />
+          <source media={mobileMedia} type="image/avif" srcSet={srcSet(mobile.avif)} sizes={sizes} width={mobile.rect.width} height={mobile.rect.height} />
+          <source media={mobileMedia} type="image/webp" srcSet={srcSet(mobile.webp)} sizes={sizes} width={mobile.rect.width} height={mobile.rect.height} />
         </>
       )}
       <source type="image/avif" srcSet={srcSet(main.avif)} sizes={sizes} />

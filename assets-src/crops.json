@@ -38,10 +38,10 @@
     },
     "mobile_9x16": {
      "status": "OK",
-     "left": 604,
+     "left": 362,
      "top": 0,
-     "width": 1351,
-     "height": 2401
+     "width": 1593,
+     "height": 2832
     }
    },
    "cleanExport": null,
@@ -805,8 +805,8 @@
      "status": "OK",
      "left": 2290,
      "top": 0,
-     "width": 1351,
-     "height": 2401
+     "width": 1593,
+     "height": 2832
     }
    },
    "cleanExport": "Clean export recommended: wheels/ground cropped (bases of both cranes touch frame bottom).",

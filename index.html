@@ -121,11 +121,13 @@
     <style>
       /* First-visit intro (#al, before #root): shown only under html[data-loader]. The curtain's lower edge is raked like
          the hero's cut (k = rise per width; it falls toward the hook side), with a navy band along it. */
-      .al{display:none;--k:.46;--b:clamp(.75rem,1.8vw,1.75rem);--d:calc(var(--k)*100vw);--l:var(--d);--r:0px;position:fixed;inset:0 0 auto;z-index:99;height:calc(100vh + var(--d) + var(--b));height:calc(100lvh + var(--d) + var(--b));color:#fff}
+      .al{display:none;--k:.12;--b:clamp(.75rem,1.8vw,1.75rem);--d:calc(var(--k)*100vw);--l:var(--d);--r:0px;position:fixed;inset:0 0 auto;z-index:99;height:calc(100vh + var(--d) + var(--b));height:calc(100lvh + var(--d) + var(--b));color:#fff}
       html[data-loader] .al{display:block;animation:al-x .3s 2.2s forwards}
       .al.up{display:block;pointer-events:none}
-      [dir=ltr] .al{--l:0px;--r:var(--d)}
-      @media (min-width:768px){.al{--k:.36}[lang=en] .al{--k:.5}}
+      /* Matches src/sections/hero.css: portrait (both photos hang the hook right of centre) k .12, .04 for English; landscape
+         k .36 in Arabic (hook right) and .5 in English, where the hook is on the left so the edge falls to the left. */
+      [lang=en] .al{--k:.04}
+      @media (min-aspect-ratio:1001/1000){.al{--k:.36}[lang=en] .al{--k:.5;--l:0px;--r:var(--d)}}
       .al:before,.al:after{content:"";position:absolute;inset:0;background:var(--color-brand);clip-path:polygon(0 0,100% 0,100% calc(100% - var(--r)),0 calc(100% - var(--l)))}
       .al:after{background:var(--grad-night),var(--color-black);clip-path:polygon(0 0,100% 0,100% calc(100% - var(--r) - var(--b)),0 calc(100% - var(--l) - var(--b)))}
       .al-v{position:absolute;z-index:1;inset:0 0 auto;height:100vh;height:100svh;display:grid;place-items:center}

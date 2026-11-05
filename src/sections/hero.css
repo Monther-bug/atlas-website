@@ -1,0 +1,453 @@
+/* Hero, direction B "The Luff" (Hero.tsx; motion in src/motion/hero.ts, hero-live.ts, hero-gl.ts).
+   Everything tied to the photo uses physical left/top (photos are never mirrored, so the hook is at the same x in both
+   languages); text uses logical sides. Geometry is CSS calc() in container units, so it renders in the prerender.
+   Breakpoint: portrait viewports use the 9:16 crop and the "-m" values, landscape the 16:9 crop and "-d"
+   (Hero.tsx PORTRAIT); the query is shape, not width, so upright tablets keep the hook on screen. */
+
+@property --luff {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+@property --close {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.hero {
+  /* the real hook, per crop (Hero.tsx sets -d / -m) */
+  --hx: var(--hx-m);
+  --hy: var(--hy-m);
+  --edge: clamp(1rem, 4vw, 3.5rem);
+  /* the load */
+  --spread: clamp(1.5rem, 3vw, 3rem);
+  --drop: clamp(2rem, 6svh, 6.5rem);
+  --loadh: 3.25rem;
+  --bw: 12.5rem;
+  --clear: clamp(0.5rem, 2svh, 2.25rem);
+  /* the cut: through (xc, yc), just under the load's far corner, rising away from the hook at slope k */
+  --k: 0.12;
+  --m: clamp(0.75rem, 1.6vw, 1.5rem);
+  --padb: clamp(1rem, 3svh, 2.5rem);
+  /* the foot's height (services + "Browse" in one wrapping row): two lines in portrait, one in landscape */
+  --foot: 5.25rem;
+  /* the headline: main size F, every line metric in units of F */
+  --F: clamp(1.75rem, min(9.6vw, 5svh), 3.75rem);
+  --lh: 1.25;
+  --leadsize: 0.5;
+  --leadlh: 1.5;
+  --leadlines: 1;
+  --g: 0.1;
+  /* space between the headline and the foot */
+  --gapf: clamp(0.5rem, 1.5svh, 1.25rem);
+  --yc: calc(var(--hy) + var(--drop) + var(--loadh) + var(--clear));
+  position: relative;
+  /* the photo covers the whole first viewport (under the header): Chrome then treats it as background for LCP */
+  height: max(100svh, 34rem);
+  container-type: size;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--color-black);
+  color: var(--color-white);
+}
+.hero:lang(en) {
+  --foot: 4.5rem;
+  --F: clamp(1.75rem, min(8.4vw, 4.2svh), 3.5rem);
+  --lh: 1.06;
+  --leadsize: 0.5;
+  --leadlh: 1.4;
+}
+/* the cut sits on the text's end side (English phones, hook right of centre): nearly flat, the text below it */
+.hero[data-cut-m='end'] {
+  --k: 0.04;
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero {
+    --hx: var(--hx-d);
+    --hy: var(--hy-d);
+    --k: 0.36;
+    --drop: clamp(2.75rem, 9svh, 6.5rem);
+    /* room for the live swing (±1.7°, about 15 px) between the load and the navy plane */
+    --clear: clamp(1.5rem, 2.6svh + 0.75rem, 3rem);
+    --loadh: 3.5rem;
+    --foot: 3.5rem;
+    --F: clamp(2.5rem, min(5.4vw, 8svh), 5.375rem);
+    --leadsize: 0.5;
+  }
+  .hero:lang(en) {
+    --k: 0.5;
+    --F: clamp(2.5rem, min(4.4vw, 7svh), 5rem);
+    --leadsize: 0.46;
+  }
+  .hero[data-cut-d='end'] {
+    --k: 0.08;
+  }
+}
+
+/* The cut, per hook side. Near side right: y(x) = yc − k·(xc − x); near side left: the mirror. */
+.hero,
+.hero[data-near-m='right'] {
+  --xc: calc(var(--hx) - var(--bw) / 2);
+  --yl: calc(var(--yc) - var(--k) * var(--xc));
+  --yr: calc(var(--yc) + var(--k) * (100cqw - var(--xc)));
+  --far: var(--yl);
+  --near: var(--yr);
+}
+.hero[data-near-m='left'] {
+  --xc: calc(var(--hx) + var(--bw) / 2);
+  --yl: calc(var(--yc) + var(--k) * var(--xc));
+  --yr: calc(var(--yc) - var(--k) * (100cqw - var(--xc)));
+  --far: var(--yr);
+  --near: var(--yl);
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero[data-near-d='right'] {
+    --xc: calc(var(--hx) - var(--bw) / 2);
+    --yl: calc(var(--yc) - var(--k) * var(--xc));
+    --yr: calc(var(--yc) + var(--k) * (100cqw - var(--xc)));
+    --far: var(--yl);
+    --near: var(--yr);
+  }
+  .hero[data-near-d='left'] {
+    --xc: calc(var(--hx) + var(--bw) / 2);
+    --yl: calc(var(--yc) + var(--k) * var(--xc));
+    --yr: calc(var(--yc) - var(--k) * (100cqw - var(--xc)));
+    --far: var(--yr);
+    --near: var(--yl);
+  }
+}
+
+/* ── Photo and WebGL layer ─────────────────────────────────────────── */
+.hero-photo,
+.hero-gl {
+  position: absolute;
+  inset: 0;
+}
+.hero-photo {
+  z-index: 0;
+}
+.hero-picture,
+.hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hero-img {
+  object-fit: cover;
+  /* bottom-anchored: on short, wide windows the sky is trimmed and the machines stay in frame (Picture sets 50% 0) */
+  object-position: 50% 100% !important;
+}
+.hero-gl {
+  z-index: 1;
+  pointer-events: none;
+}
+.hero-gl canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-set);
+}
+.hero-gl canvas[data-ready] {
+  opacity: 1;
+}
+
+/* ── The field: --luff (1 raked, 0 flat at the far side's height) and --close (1 fills the hero) are animated on
+   the wrapper by the intro and the scroll; with no JS they sit at their final values. A brand-navy plane rides just
+   above the black field: the secondary accent, as a second layer of the rake. ── */
+.hero-fields {
+  --lift: clamp(0.75rem, 1.8vw, 1.75rem);
+  --top-far: calc(var(--far) * (1 - var(--close)));
+  --top-near: calc((var(--far) + (var(--near) - var(--far)) * var(--luff)) * (1 - var(--close)));
+  /* physical polygon points: left / right edge heights */
+  --pl: var(--top-far);
+  --pr: var(--top-near);
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.hero[data-near-m='left'] .hero-fields {
+  --pl: var(--top-near);
+  --pr: var(--top-far);
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero[data-near-d='right'] .hero-fields {
+    --pl: var(--top-far);
+    --pr: var(--top-near);
+  }
+  .hero[data-near-d='left'] .hero-fields {
+    --pl: var(--top-near);
+    --pr: var(--top-far);
+  }
+}
+.hero-field {
+  position: absolute;
+  inset: 0;
+  background: var(--color-black);
+  clip-path: polygon(0 var(--pl), 100% var(--pr), 100% 100%, 0 100%);
+}
+.hero-field--accent {
+  background: var(--color-brand);
+  clip-path: polygon(0 calc(var(--pl) - var(--lift)), 100% calc(var(--pr) - var(--lift)), 100% 100%, 0 100%);
+}
+
+/* ── The headline, set on the rake. The block sits on the foot; its last (longest) line starts on the cut and each
+   line above starts further along it by (its height ÷ k). Lines never wrap: F is sized so they fit. ── */
+.hero-text {
+  position: absolute;
+  z-index: 3;
+  bottom: calc(var(--padb) + var(--foot) + var(--gapf));
+  font-size: var(--F);
+  --ylast: calc(100cqh - var(--padb) - var(--foot) - var(--gapf) - var(--lh) * var(--F));
+  /* near right: the cut is x = (y − yl) ÷ k from the left; near left: x = xc − (y − yc) ÷ k */
+  --cut: calc((var(--ylast) - var(--yl)) / var(--k) - var(--m));
+  --slack: max(0px, var(--cut) - (100cqw - var(--edge)));
+  right: calc(100cqw - min(100cqw - var(--edge), var(--cut)));
+}
+.hero[data-near-m='left'] .hero-text {
+  --cut: calc(var(--xc) - (var(--ylast) - var(--yc)) / var(--k) + var(--m));
+  --slack: max(0px, var(--edge) - var(--cut));
+  right: auto;
+  left: max(var(--edge), var(--cut));
+}
+/* the cut is on the text's end side: no stair, the text starts at the edge, under the cut's lowest point */
+.hero[data-cut-m='end'] .hero-text {
+  inset-inline: var(--edge);
+  --steps: 0;
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero[data-near-d='right'] .hero-text {
+    --cut: calc((var(--ylast) - var(--yl)) / var(--k) - var(--m));
+    --slack: max(0px, var(--cut) - (100cqw - var(--edge)));
+    left: auto;
+    right: calc(100cqw - min(100cqw - var(--edge), var(--cut)));
+  }
+  .hero[data-near-d='left'] .hero-text {
+    --cut: calc(var(--xc) - (var(--ylast) - var(--yc)) / var(--k) + var(--m));
+    --slack: max(0px, var(--edge) - var(--cut));
+    right: auto;
+    left: max(var(--edge), var(--cut));
+  }
+  .hero[data-cut-d='start'] .hero-text {
+    inset-inline: auto;
+    --steps: 1;
+  }
+  .hero[data-near-d='right'][data-cut-d='start'] .hero-text {
+    right: calc(100cqw - min(100cqw - var(--edge), var(--cut)));
+  }
+  .hero[data-near-d='left'][data-cut-d='start'] .hero-text {
+    left: max(var(--edge), var(--cut));
+  }
+  .hero[data-cut-d='end'] .hero-text {
+    inset-inline: var(--edge);
+    --steps: 0;
+  }
+}
+.hero-h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.hero-h1:lang(ar) {
+  font-weight: 800;
+}
+.hero-line {
+  display: block;
+  white-space: nowrap;
+  line-height: var(--lh);
+  /* portrait: a flush start edge (the rake stays in the field's shape); in landscape the lines step along the cut */
+  margin-inline-start: max(0px, calc(var(--F) * var(--d, 0) / var(--k) * var(--steps, 0) - var(--slack)));
+}
+.hero-lead {
+  /* the first clause of the sentence, not a kicker: white, one step below the main lines */
+  color: var(--color-white);
+  font-size: calc(var(--leadsize) * 1em);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: var(--leadlh);
+  margin-bottom: calc(var(--g) * var(--F));
+  --d: calc(var(--leadsize) * var(--leadlh) * var(--leadlines) + var(--g) + var(--lh));
+}
+.hero-lead:lang(ar) {
+  font-weight: 700;
+}
+.hero-line-1 {
+  --d: var(--lh);
+}
+@media (max-aspect-ratio: 1/1) and (min-width: 600px) {
+  /* upright tablets: the headline grows into the field */
+  .hero {
+    --F: clamp(2.5rem, min(9vw, 6.5svh), 4.5rem);
+  }
+  .hero:lang(en) {
+    --F: clamp(2.5rem, min(8vw, 6svh), 4.25rem);
+  }
+}
+@media (max-aspect-ratio: 1/1) {
+  /* phones: the lead may wrap (two lines) */
+  .hero {
+    --leadlines: 2;
+  }
+  .hero-lead {
+    white-space: normal;
+  }
+}
+
+/* ── The load ──────────────────────────────────────────────────────── */
+.hero-rig {
+  position: absolute;
+  left: var(--hx);
+  top: var(--hy);
+  width: 0;
+  height: 0;
+  z-index: 4;
+}
+.hero:not([data-sling-m]) .hero-rig {
+  display: none;
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero[data-sling-d] .hero-rig {
+    display: block;
+  }
+  .hero:not([data-sling-d]) .hero-rig {
+    display: none;
+  }
+}
+.hero-pin {
+  position: absolute;
+  left: -0.4375rem;
+  top: -0.4375rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--color-red);
+  box-shadow: 0 0 0 2px var(--color-white);
+  z-index: 2;
+}
+.hero-legs {
+  position: absolute;
+  left: calc(var(--spread) * -1);
+  top: 0;
+  width: calc(var(--spread) * 2);
+  height: var(--drop);
+  overflow: visible;
+  transform-origin: 50% 0;
+}
+.hero-legs path {
+  fill: none;
+  stroke: var(--color-red);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.hero-load {
+  position: absolute;
+  left: 0;
+  top: var(--drop);
+  width: max-content;
+  /* centred under the hook, but kept 1 rem inside the screen (the legs then meet it off-centre) */
+  translate: clamp(calc(1rem - var(--hx)), -50%, calc(100cqw - 1rem - var(--hx) - 100%)) 0;
+}
+/* The global focus ring would sit outside the button, on the sky: draw it inside the red (white on red 5.6 : 1). */
+.hero-whatsapp:focus-visible {
+  outline-offset: -6px;
+}
+
+/* ── The foot: services and "Browse cranes", inside the field too ── */
+.hero-foot {
+  position: absolute;
+  z-index: 3;
+  bottom: var(--padb);
+  --fy: calc(100cqh - var(--padb) - var(--foot));
+  left: var(--edge);
+  right: max(var(--edge), calc(100cqw - (var(--fy) - var(--yl)) / var(--k) + var(--m)));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+}
+.hero[data-near-m='left'] .hero-foot {
+  left: max(var(--edge), calc(var(--xc) - (var(--fy) - var(--yc)) / var(--k) + var(--m)));
+  right: var(--edge);
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero[data-near-d='right'] .hero-foot {
+    left: var(--edge);
+    right: max(var(--edge), calc(100cqw - (var(--fy) - var(--yl)) / var(--k) + var(--m)));
+  }
+  .hero[data-near-d='left'] .hero-foot {
+    left: max(var(--edge), calc(var(--xc) - (var(--fy) - var(--yc)) / var(--k) + var(--m)));
+    right: var(--edge);
+  }
+}
+.hero-services {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1rem;
+  row-gap: 0.125rem;
+  font-family: var(--font-body);
+  font-size: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
+  line-height: 1.6;
+  color: var(--color-neutral-300);
+}
+.hero-services:lang(ar) {
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+}
+.hero-service {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.hero-dot {
+  display: none;
+  flex: none;
+  width: 0.3125rem;
+  height: 0.3125rem;
+  margin-inline-start: 1rem;
+  border-radius: 50%;
+  background: var(--color-neutral-500); /* red stays for actions only (floor §16.18) */
+}
+@media (min-aspect-ratio: 1001/1000) {
+  .hero-services {
+    column-gap: 0;
+  }
+  .hero-service + .hero-service {
+    margin-inline-start: 1rem;
+  }
+  /* desktop: one line, separated by small red dots (phones wrap, so no dot can dangle at a line end) */
+  .hero-dot {
+    display: inline-block;
+  }
+}
+.hero-browse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-white);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.45);
+  text-underline-offset: 0.35em;
+  transition: text-decoration-color var(--dur-state) var(--ease-ui);
+}
+.hero-browse:hover {
+  text-decoration-color: currentColor;
+}
+.hero-foot-whatsapp {
+  display: contents;
+}
+@media (max-aspect-ratio: 1/1) {
+  /* portrait: the services and "Browse" wrap as one sequence (two lines, not three); "Browse" is pushed to the
+     end of its row, apart from the services */
+  .hero-services {
+    display: contents;
+  }
+  .hero-browse {
+    margin-inline-start: auto;
+  }
+}
