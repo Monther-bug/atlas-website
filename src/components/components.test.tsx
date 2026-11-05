@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { renderHtml } from '@/test/render';
 import { vi } from 'vitest';
 import { click, mount } from '@/test/render';
-import { Button, CHEVRON_STRIPES } from './Button';
-import { CHEVRON_STRIPES as STRIPES } from './stripes';
+import { Button } from './Button';
 import { DraftBadge } from './DraftBadge';
 import { Fill } from './Fill';
 import { ArrowIcon, CloseIcon } from './Icons';
@@ -106,7 +105,7 @@ describe('Button states (review fixes)', () => {
   });
 
   it('never gives a loading native button a hover or active style without the not-aria-disabled guard', () => {
-    const variants = ['primary-red', 'outline-on-dark', 'outline-on-light'] as const;
+    const variants = ['primary', 'ghost-dark', 'ghost-light'] as const;
     for (const variant of variants) {
       const button = renderHtml(<Button variant={variant} loading>Sending</Button>).querySelector('button');
       const tokens = (button?.className ?? '').split(/\s+/).filter(Boolean);
@@ -124,9 +123,8 @@ describe('Button states (review fixes)', () => {
     expect(a?.textContent).toBe('Go (opens in a new tab)');
   });
 
-  it('lets labels wrap and shares the stripes', () => {
+  it('lets labels wrap', () => {
     expect(renderHtml(<Button>Go</Button>).querySelector('button')?.className).not.toContain('whitespace-nowrap');
-    expect(CHEVRON_STRIPES).toBe(STRIPES);
   });
 });
 

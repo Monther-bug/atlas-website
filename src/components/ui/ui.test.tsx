@@ -346,12 +346,6 @@ describe('Stat, Chip, Field, Reveal', () => {
 });
 
 describe('Button v2', () => {
-  it('keeps v1 variant names as aliases of the v2 looks', () => {
-    expect(buttonClass('primary-red')).toBe(buttonClass('primary'));
-    expect(buttonClass('outline-on-dark')).toBe(buttonClass('ghost-dark'));
-    expect(buttonClass('outline-on-light', 'md', '', true)).toBe(buttonClass('ghost-light', 'md', '', true));
-  });
-
   it('is a pill with a 44 px minimum even at size sm', () => {
     const cls = buttonClass('secondary', 'sm');
     expect(cls).toContain('rounded-full');

@@ -1,9 +1,7 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import { useLang } from '@/lib/lang';
 
-import { CHEVRON_CLASS, CHEVRON_STRIPES } from '@/components/stripes';
-
-export { CHEVRON_STRIPES };
+import { CHEVRON_CLASS } from '@/components/stripes';
 
 /**
  * v2 variants (docs/superpowers/specs/2026-11-05-atlas-v2-design.md §8.1). Name = role, plus the ground it sits on:
@@ -15,8 +13,6 @@ export { CHEVRON_STRIPES };
  * - ghost-dark   white/40 hairline pill on dark grounds.
  * - glass        frosted pill over photographs (glass-dark).
  * - plain        text action with a trailing arrow; no fill.
- * v1 names are aliases until every section migrates: primary-red -> primary, outline-on-dark -> ghost-dark,
- * outline-on-light -> ghost-light.
  */
 export type ButtonVariant =
   | 'primary'
@@ -25,37 +21,15 @@ export type ButtonVariant =
   | 'ghost-light'
   | 'ghost-dark'
   | 'glass'
-  | 'plain'
-  | 'primary-red'
-  | 'outline-on-dark'
-  | 'outline-on-light';
+  | 'plain';
 export type ButtonSize = 'lg' | 'md' | 'sm';
-
-type V2Variant = Exclude<ButtonVariant, 'primary-red' | 'outline-on-dark' | 'outline-on-light'>;
-const ALIAS: Record<ButtonVariant, V2Variant> = {
-  primary: 'primary',
-  secondary: 'secondary',
-  inverse: 'inverse',
-  'ghost-light': 'ghost-light',
-  'ghost-dark': 'ghost-dark',
-  glass: 'glass',
-  plain: 'plain',
-  'primary-red': 'primary',
-  'outline-on-dark': 'ghost-dark',
-  'outline-on-light': 'ghost-light',
-};
 
 // The focus ring is the global `:focus-visible` rule; its colour comes from `--ring`, set by the ground (A1).
 // Never override the outline colour here. Press feedback is a 2 % scale (transform), hover is colour only.
 const BASE =
   'relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full font-body font-semibold leading-tight text-center transition-[background-color,border-color,color,transform] duration-(--dur-state) ease-ui [&:lang(ar)]:text-[1.0625rem]';
-/**
- * Rendered height of a size="lg" button: 52 px, 56 px from md (typography §4). The hero sling reserves this
- * room under the hook. Tailwind needs literal class names, so SIZES.lg spells the same values (a test checks).
- */
-export const BUTTON_LG_HEIGHT = { base: '3.25rem', md: '3.5rem' } as const;
 const SIZES: Record<ButtonSize, string> = {
-  lg: 'min-h-[3.25rem] px-7 text-base md:min-h-[3.5rem]', // BUTTON_LG_HEIGHT
+  lg: 'min-h-[3.25rem] px-7 text-base md:min-h-[3.5rem]',
   md: 'min-h-12 px-5 text-base', // 48 px, for the 64 px request bar
   sm: 'min-h-11 px-4 text-[0.9375rem]', // 44 px: the tap-target floor
 };
@@ -63,7 +37,7 @@ const PLAIN_SIZE = 'min-h-11 px-1 text-base';
 
 // Anchors: plain hover/active. Native buttons: enabled:not-aria-disabled: so hover and press never fire while
 // disabled or loading. Every class is spelled out in full: Tailwind only compiles names it can read in the source.
-const ANCHOR: Record<V2Variant, string> = {
+const ANCHOR: Record<ButtonVariant, string> = {
   primary: 'bg-red text-white hover:bg-red-600 active:scale-[0.98]',
   secondary: 'bg-ink text-white hover:bg-neutral-800 active:scale-[0.98]',
   inverse: 'bg-white text-ink hover:bg-neutral-200 active:scale-[0.98]',
@@ -72,7 +46,7 @@ const ANCHOR: Record<V2Variant, string> = {
   glass: 'glass-dark text-white hover:bg-black/80 active:scale-[0.98]',
   plain: 'text-(--surface-accent) underline-offset-[0.28em] decoration-1 hover:underline active:opacity-80',
 };
-const NATIVE: Record<V2Variant, string> = {
+const NATIVE: Record<ButtonVariant, string> = {
   primary: 'bg-red text-white enabled:not-aria-disabled:hover:bg-red-600 enabled:not-aria-disabled:active:scale-[0.98]',
   secondary: 'bg-ink text-white enabled:not-aria-disabled:hover:bg-neutral-800 enabled:not-aria-disabled:active:scale-[0.98]',
   inverse: 'bg-white text-ink enabled:not-aria-disabled:hover:bg-neutral-200 enabled:not-aria-disabled:active:scale-[0.98]',
@@ -88,8 +62,7 @@ const IDLE = 'disabled:cursor-not-allowed disabled:opacity-60';
 const BUSY = 'cursor-progress';
 
 export function buttonClass(variant: ButtonVariant = 'primary', size: ButtonSize = 'lg', extra = '', native = false): string {
-  const v = ALIAS[variant];
-  return [BASE, v === 'plain' ? PLAIN_SIZE : SIZES[size], (native ? NATIVE : ANCHOR)[v], extra].filter(Boolean).join(' ');
+  return [BASE, variant === 'plain' ? PLAIN_SIZE : SIZES[size], (native ? NATIVE : ANCHOR)[variant], extra].filter(Boolean).join(' ');
 }
 
 /** target/rel for http(s) links; mailto: and tel: stay in place. */

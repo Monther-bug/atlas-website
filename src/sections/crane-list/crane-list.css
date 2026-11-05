@@ -55,7 +55,7 @@
       background-color var(--dur-state) var(--ease-ui);
   }
   .lineup-seg .ui-seg__option:focus-visible {
-    outline: 2px solid var(--ring, var(--color-navy));
+    outline: 2px solid var(--ring, var(--color-ink));
     outline-offset: 2px;
   }
   .lineup-seg .ui-seg__option:active {
@@ -359,10 +359,6 @@
     gap: 0.25rem 0.625rem;
     margin-block-start: 0.5rem !important;
     color: var(--surface-fg-2);
-  }
-  .lineup-card__kind {
-    margin-block-start: 0.25rem !important;
-    color: var(--surface-fg-3);
   }
   /* Pushed to the bottom, so key specs line up across a row even when a rating label wraps. */
   .lineup-card__specs {
@@ -872,19 +868,6 @@
   .lineup-notes dd {
     margin: 0;
     color: var(--surface-fg-2);
-  }
-  .lineup-compare__sources {
-    margin-block-start: 1rem;
-  }
-  .lineup-compare__sources summary {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: 2.75rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .lineup-compare__sources[open] summary {
-    margin-block-end: 0.5rem;
   }
 }
 

@@ -7,9 +7,7 @@
 @theme static {
   --color-*: initial;
   /* v2 palette (user, 5 Nov 2026: "white and black, and a little of the red and the blue").
-     Grounds are white/light neutrals and black; brand navy is a small accent; red is the action.
-     v1 NAMES ARE REMAPPED so every section shifts at once: navy-950 -> black, concrete -> neutral mist,
-     steel -> neutral grey, ink/line -> neutral. `navy` itself stays brand navy (#23207A).
+     Grounds are white/light neutrals and black; brand navy (`brand-*`) is a small accent; red is the action.
      Contrast pairs: docs/superpowers/specs/2026-11-05-atlas-v2-design.md §3. */
   --color-black: #0a0a0a;
   --color-white: #ffffff;
@@ -56,16 +54,6 @@
   /* Success: ok on light (5.4:1), ok-bright on black (10.6:1). */
   --color-ok: #1c7a45;
   --color-ok-bright: #5fd394;
-  /* v1 names, remapped to the v2 look so any section not yet migrated already reads v2 ("remove all the old look").
-     navy (v1 headings, borders, chips) -> ink; navy-950 grounds -> black; concrete -> mist; steel -> neutral-400.
-     New code uses ink / black / mist / neutral-* / brand-*; these aliases go in the cleanup pass. */
-  --color-navy: #111111;
-  --color-navy-700: #111111;
-  --color-navy-950: #0a0a0a;
-  --color-navy-900: #171717;
-  --color-navy-800: #262626;
-  --color-concrete: #f5f5f5;
-  --color-steel: #a3a3a3;
 
   /* Radii: concentric (inner = outer - padding). Pills use Tailwind's built-in rounded-full. */
   --radius-*: initial;
@@ -143,21 +131,21 @@
     color: var(--color-white);
   }
   /* Dark grounds: selection switches (covers direct-child text too). */
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark'])::selection,
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) ::selection {
+  :is(.bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark'])::selection,
+  :is(.bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) ::selection {
     /* v2: white selection with black text on black grounds (19.8:1). */
     background: var(--color-white);
     color: var(--color-black);
   }
   /* Focus ring and caret colour come from the nearest ground ancestor, never from the
-     element's own background (a bg-navy button on concrete keeps a navy ring). Descendants
+     element's own background (a bg-ink button on mist keeps a brand ring). Descendants
      only; the light-panel reset comes later at equal specificity so it wins for light
      panels nested in dark sections. */
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) * {
+  :is(.bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) * {
     --ring: var(--color-white);
     caret-color: var(--color-red-bright);
   }
-  :is(.bg-concrete, .bg-white, .bg-mist, .bg-neutral-100, .bg-brand-50, [data-ground='light']) * {
+  :is(.bg-white, .bg-mist, .bg-neutral-100, .bg-brand-50, [data-ground='light']) * {
     --ring: var(--color-brand);
     caret-color: var(--color-red);
   }
@@ -192,7 +180,7 @@
     font-family: var(--font-body);
     font-size: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
     line-height: 1.6;
-    background: var(--color-concrete);
+    background: var(--color-mist);
     color: var(--color-ink);
   }
   body:lang(ar) {
@@ -205,7 +193,7 @@
     letter-spacing: 0 !important;
     text-transform: none !important;
   }
-  /* Navy on light grounds; dark grounds set --ring to white (see the dark-ground rule above). */
+  /* Brand on light grounds; dark grounds set --ring to white (see the dark-ground rule above). */
   :focus-visible {
     outline: 2px solid var(--ring, var(--color-brand));
     outline-offset: 3px;
@@ -226,59 +214,6 @@
   }
   .t-readout:lang(ar) {
     line-height: 1.05;
-  }
-
-  .t-h1 {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(2.125rem, 1.5rem + 2.778vw, 4rem);
-    line-height: 1.08;
-    letter-spacing: -0.025em;
-    text-wrap: balance;
-  }
-  /* Tajawal draws smaller than Kufi did (x-height 0.45 em): bigger sizes, Tajawal 800. */
-  .t-h1:lang(ar) {
-    font-weight: 800;
-    font-size: clamp(2.75rem, 2rem + 3.333vw, 5rem);
-    line-height: 1.25;
-  }
-
-  .t-h2 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(1.75rem, 1.417rem + 1.481vw, 2.75rem);
-    line-height: 1.12;
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-  .t-h2:lang(ar) {
-    font-weight: 700;
-    font-size: clamp(2rem, 1.583rem + 1.852vw, 3.25rem);
-    line-height: 1.35;
-  }
-
-  .t-h3 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(1.25rem, 1.125rem + 0.556vw, 1.625rem);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-  }
-  .t-h3:lang(ar) {
-    font-weight: 700;
-    font-size: clamp(1.375rem, 1.208rem + 0.741vw, 1.875rem);
-    line-height: 1.45;
-  }
-
-  .t-lead {
-    font-family: var(--font-body);
-    font-weight: 400;
-    font-size: clamp(1.0625rem, 1rem + 0.278vw, 1.25rem);
-    line-height: 1.6;
-  }
-  .t-lead:lang(ar) {
-    font-size: clamp(1.25rem, 1.167rem + 0.37vw, 1.5rem);
-    line-height: 1.75;
   }
 
   .t-body {
@@ -313,40 +248,12 @@
     line-height: 1.7;
   }
 
-  /* DATA LABEL ONLY, e.g. «السعة / Capacity» inside a load tag. Never place it
-     above a heading: no eyebrows or kickers (spec §15.1, Impeccable ban). */
-  .t-label {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(0.6875rem, 0.667rem + 0.093vw, 0.75rem);
-    line-height: 1.3;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .t-label:lang(ar) {
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: clamp(0.9375rem, 0.917rem + 0.093vw, 1rem);
-    line-height: 1.5;
-  }
-
   /* ── Layout (spec §6) ── */
   .shell {
     margin-inline: auto;
     max-width: 90rem;
     padding-inline: clamp(1rem, 4vw, 3.5rem);
   }
-  /* v1 class, mapped to the v2 rhythm (80 -> 144 px). */
-  .section-y {
-    padding-block: var(--space-section);
-  }
-  .measure {
-    max-width: 36rem;
-  }
-  .measure:lang(ar) {
-    max-width: 38rem;
-  }
-
   /* The red/white chevron motif (spec §6): draft badges and loading states. A class, not an inline style, so the
      gradient never sits next to a photo's inline blur placeholder in the HTML (Impeccable buried-raster false hit). */
   .chevron-stripes {

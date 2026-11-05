@@ -5,8 +5,6 @@ export interface Point { x: number; y: number }
 export interface Size { width: number; height: number }
 /** Same shape as a DOMRect's left/top/width/height and as C6's crop `rect`. */
 export interface Rect { left: number; top: number; width: number; height: number }
-/** Same shape as `SVGSVGElement.viewBox.baseVal`. */
-export interface ViewBox { x: number; y: number; width: number; height: number }
 
 /**
  * A point given in source pixels (inside the crop `rect`), mapped to CSS pixels inside
@@ -19,24 +17,6 @@ export function hookToBox(hook: Point, rect: Rect, box: Size, position: Point = 
   const offsetX = (box.width - rect.width * scale) * position.x;
   const offsetY = (box.height - rect.height * scale) * position.y;
   return { x: offsetX + (hook.x - rect.left) * scale, y: offsetY + (hook.y - rect.top) * scale };
-}
-
-/**
- * The same mapping, as SVG 2 §8.2 computes `preserveAspectRatio="xMidYMin slice"`.
- * Kept separate on purpose: the test proves both give the same point.
- */
-export function viewBoxToBox(point: Point, viewBox: ViewBox, box: Size): Point {
-  // Steps 1–2: per-axis scale factors.
-  const sx = box.width / viewBox.width;
-  const sy = box.height / viewBox.height;
-  // Step 3: "slice" uses the larger factor for both axes.
-  const scale = Math.max(sx, sy);
-  // Step 4: translate so the viewBox origin lands on the viewport origin.
-  let tx = -viewBox.x * scale;
-  const ty = -viewBox.y * scale;
-  // Step 5: xMid centres horizontally; YMin keeps the top edge.
-  tx += (box.width - viewBox.width * scale) / 2;
-  return { x: point.x * scale + tx, y: point.y * scale + ty };
 }
 
 /**

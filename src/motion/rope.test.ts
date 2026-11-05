@@ -55,6 +55,16 @@ describe('startProgressRope', () => {
     expect(rope.classList.contains('is-live')).toBe(false);
   });
 
+  it('goes live when the Hoist track ends (its bottom meets the viewport bottom), ahead of #services', () => {
+    document.body.innerHTML =
+      '<div data-progress-rope></div><div data-hoist-track id="track"></div><section id="services"></section>';
+    vi.spyOn(gsap, 'fromTo').mockReturnValue(undefined as never);
+    startProgressRope(env);
+    const cfg = st.create.mock.calls[0][0];
+    expect(cfg.trigger.id).toBe('track');
+    expect(cfg.start).toBe('bottom bottom');
+  });
+
   it('hands over after the Hoist when there is no Services section, and clears is-live on cleanup', () => {
     document.body.innerHTML = '<div data-progress-rope class="is-live"></div><section id="cranes"></section>';
     vi.spyOn(gsap, 'fromTo').mockReturnValue(undefined as never);

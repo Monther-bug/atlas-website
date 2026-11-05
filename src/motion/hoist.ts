@@ -25,9 +25,8 @@ import { lenisRef, noop, type Dispose } from './shared';
  * (clip-path, the "hoist" mask) over the last one, lowers the next readout and counts from the previous rating to the
  * exact new one. The last beat lands the rope's hook on the real hook in IMG_6389; the exit carries the rope to the
  * reading-start edge, where the page's progress rope (rope.ts, read-only here: D-notes 13) takes over.
- * Note for the chrome owner of rope.ts: the progress rope goes live when #services reaches the viewport; the Hoist's
- * rope reaches that edge one closing block earlier (the end of [data-hoist-track]). Starting the rope there would
- * make the hand-off continuous; this module only reads the rope's rect.
+ * rope.ts starts the progress rope when the bottom of [data-hoist-track] reaches the viewport bottom (the stage
+ * releases), so the hand-off is continuous; this module only reads the rope's rect.
  * Touch: each card plays once as it arrives. Reduced motion never loads this file. Every change is undone on cleanup.
  */
 

@@ -65,8 +65,8 @@ function ServiceText({ service, className }: { service: ServiceCopy; className?:
         <ServiceIcon id={service.id} className="size-[1.1em] shrink-0 text-(--surface-accent)" />
         <span>{service.title}</span>
       </h3>
-      <p className="t-body measure mt-3 text-(--surface-fg-2)">{service.body}</p>
-      {service.confirm && <p className="t-body measure mt-3 text-(--surface-fg-2)">{service.confirm}</p>}
+      <p className="t-body max-w-[36rem] [&:lang(ar)]:max-w-[38rem] mt-3 text-(--surface-fg-2)">{service.body}</p>
+      {service.confirm && <p className="t-body max-w-[36rem] [&:lang(ar)]:max-w-[38rem] mt-3 text-(--surface-fg-2)">{service.confirm}</p>}
       <AskLink service={service} />
     </div>
   );

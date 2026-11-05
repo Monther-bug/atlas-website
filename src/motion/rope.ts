@@ -7,8 +7,11 @@ import { lenisRef, noop, type MotionModule } from './shared';
 export const startProgressRope: MotionModule = () => {
   const rope = document.querySelector<HTMLElement>('[data-progress-rope]');
   if (!rope) return noop;
-  // The Hoist's rope hands over here (D.5 exit). Without a Services section, go live after the Hoist.
-  const handover = document.getElementById('services') ?? document.getElementById('cranes');
+  // The Hoist's rope hands over here: it reaches the reading-start edge when the Hoist's track ends, i.e. when the
+  // track's bottom meets the viewport bottom and the sticky stage lets go. Without a Hoist track (no Hoist, or
+  // it has not mounted), fall back to the section after it, then to the Hoist section itself.
+  const track = document.querySelector<HTMLElement>('[data-hoist-track]');
+  const handover = track ?? document.getElementById('services') ?? document.getElementById('cranes');
   const ctx = gsap.context(() => {
     gsap.fromTo(
       rope,
@@ -18,7 +21,7 @@ export const startProgressRope: MotionModule = () => {
     if (handover) {
       ScrollTrigger.create({
         trigger: handover,
-        start: 'top bottom',
+        start: track ? 'bottom bottom' : 'top bottom',
         end: () => ScrollTrigger.maxScroll(window) + 1,
         onToggle: (self) => rope.classList.toggle('is-live', self.isActive),
       });

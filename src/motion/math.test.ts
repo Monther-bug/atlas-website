@@ -15,7 +15,6 @@ import {
   hoistSnapPoints,
   hookToBox,
   nearestSnap,
-  viewBoxToBox,
   type Point,
 } from './math';
 
@@ -45,33 +44,6 @@ describe('hookToBox (object-fit: cover; object-position: 50% 0)', () => {
   it('honours another object-position when asked', () => {
     // 50% 50%: crop 1000×500 in a 400×400 box → scale 0.8, offset (-200, 0)
     expectPoint(hookToBox({ x: 500, y: 250 }, { left: 0, top: 0, width: 1000, height: 500 }, { width: 400, height: 400 }, { x: 0.5, y: 0.5 }), 200, 200);
-  });
-});
-
-describe('viewBoxToBox (SVG preserveAspectRatio="xMidYMin slice")', () => {
-  it('gives exactly the same point as hookToBox for 500 random crops, boxes and points', () => {
-    let seed = 42;
-    const rand = () => {
-      seed = (seed * 1664525 + 1013904223) % 4294967296;
-      return seed / 4294967296;
-    };
-    for (let i = 0; i < 500; i++) {
-      const rect = {
-        left: Math.round(rand() * 2000),
-        top: Math.round(rand() * 500),
-        width: 300 + Math.round(rand() * 4000),
-        height: 300 + Math.round(rand() * 3000),
-      };
-      const box = { width: 280 + rand() * 1800, height: 200 + rand() * 1200 };
-      const p = { x: rect.left + rand() * rect.width, y: rect.top + rand() * rect.height };
-      const a = hookToBox(p, rect, box);
-      const b = viewBoxToBox(p, { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, box);
-      expectPoint(b, a.x, a.y);
-    }
-  });
-
-  it('also works when the viewBox starts at 0 0 and the point is relative to the crop', () => {
-    expectPoint(viewBoxToBox({ x: 500, y: 250 }, { x: 0, y: 0, width: 1000, height: 500 }, { width: 400, height: 400 }), 200, 200);
   });
 });
 

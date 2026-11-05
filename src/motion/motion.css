@@ -100,11 +100,6 @@ html[data-motion="reduced"] .progress-rope {
 
 /* ---- sections appended by later tasks go below this line ---- */
 
-/* ==== Services + Why Atlas (v2, S.services) ====
-   The v1 service sling (D.8) is gone with the v1 rows. The v2 motion (services.ts, why.ts) only sets inline from-states
-   on elements below the fold, so nothing is pre-hidden here and nothing needs a failsafe. */
-/* ==== end Services + Why Atlas ==== */
-
 /* ==== The Hoist v2: the fleet showcase stage (S.hoist) =================================
    hoist.ts adds .hoist--staged to [data-hoist] and the rig, and sets in px: the track's height (100vh + the stuck
    length), --hoist-top (the fixed header's bottom), and on the GMK6350 frame --photo-ox/-oy, --hook-ax/-ay; GSAP

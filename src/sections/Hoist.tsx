@@ -62,7 +62,7 @@ export function Hoist() {
       />
 
       {/* The caveat comes before the numbers it qualifies, not after five screens of them. */}
-      <p className="t-small measure -mt-4 mb-(--space-head) text-(--surface-fg-3)">{copy.hoist.footnote}</p>
+      <p className="t-small max-w-[36rem] [&:lang(ar)]:max-w-[38rem] -mt-4 mb-(--space-head) text-(--surface-fg-3)">{copy.hoist.footnote}</p>
 
       <h3 id="hoist-list-title" className="sr-only">
         {copy.hoist.listHeading}
@@ -84,7 +84,7 @@ export function Hoist() {
         {...reveal('rise')}
         className="mt-(--space-head) flex flex-col items-start gap-6 border-t border-(--surface-line) pt-10 md:flex-row md:items-center md:justify-between"
       >
-        <p className="t-sub measure m-0">{copy.hoist.closing}</p>
+        <p className="t-sub max-w-[36rem] [&:lang(ar)]:max-w-[38rem] m-0">{copy.hoist.closing}</p>
         <Button href="#request" variant="inverse">
           {copy.hoist.closingButton}
         </Button>

@@ -588,7 +588,7 @@ function RequestFormBody() {
         </div>
 
         <div className="flex flex-col items-start gap-5">
-          <p id="request-privacy" className="t-small measure text-(--surface-fg-3)">
+          <p id="request-privacy" className="t-small max-w-[36rem] [&:lang(ar)]:max-w-[38rem] text-(--surface-fg-3)">
             {f.privacy}
           </p>
           <Button type="submit" size="lg" magnetic loading={status === 'sending'} loadingLabel={f.busy} data-testid="form-submit">
