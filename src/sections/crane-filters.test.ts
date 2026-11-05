@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getCopy, visibleCranes } from '@/content';
+import { getCopy } from '@/content/all';
+import { visibleCranes } from '@/content';
 import type { Crane } from '@/content/types';
 import { applyFilter, availableFilters, bandLabel, bandOf, resultCount } from './crane-filters';
 

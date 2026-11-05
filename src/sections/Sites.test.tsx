@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
-import { getCopy } from '@/content';
+import { getCopy } from '@/content/all';
 import { mount, renderHtml } from '@/test/render';
 import { Sites } from './Sites';
 import { ALL_SITE_PHOTOS, photosFor, splitCaption } from './sites-logic';

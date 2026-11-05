@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { act, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getCopy, visibleCranes } from '@/content';
+import { getCopy } from '@/content/all';
+import { visibleCranes } from '@/content';
 import type { Crane } from '@/content/types';
 import { HOOK_EVENT, getRequestedCrane, setRequestedCrane, type HookEventDetail } from '@/lib/request';
 import { click, mount, renderHtml } from '@/test/render';

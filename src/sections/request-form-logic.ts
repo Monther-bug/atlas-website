@@ -1,5 +1,5 @@
-import { cranes, getCopy } from '@/content';
-import type { Copy, CraneId, DurationId, Lang, ServiceId } from '@/content/types';
+import { cranes } from '@/content';
+import type { Copy, CraneId, DurationId, ServiceId } from '@/content/types';
 import { parseDecimal, toAsciiDigits } from '@/lib/digits';
 import { formatNumber } from '@/lib/numbers';
 import { fillTemplate } from '@/lib/whatsapp';
@@ -85,8 +85,8 @@ const isPositive = (raw: string) => {
  * Copy-deck §9 rules: only phone and weight are required; Arabic-Indic digits
  * are accepted. Keys come back in form order, so the error summary follows it.
  */
-export function validateRequest(values: RequestValues, lang: Lang, today: string = localIsoDate(new Date())): RequestErrors {
-  const f = getCopy(lang).form.fields;
+export function validateRequest(values: RequestValues, copy: Copy, today: string = localIsoDate(new Date())): RequestErrors {
+  const f = copy.form.fields;
   const v = (key: RequestField) => values[key].trim();
   const errors: RequestErrors = {};
 

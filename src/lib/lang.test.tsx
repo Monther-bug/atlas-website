@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { ar } from '@/content/ar';
+import { en } from '@/content/en';
 import { LangProvider, useLang } from './lang';
 
 function Probe() {
@@ -11,7 +13,7 @@ describe('LangProvider', () => {
   it('provides the Arabic page context', () => {
     expect(
       renderToStaticMarkup(
-        <LangProvider lang="ar">
+        <LangProvider lang="ar" copy={ar}>
           <Probe />
         </LangProvider>,
       ),
@@ -21,11 +23,22 @@ describe('LangProvider', () => {
   it('provides the English page context', () => {
     expect(
       renderToStaticMarkup(
-        <LangProvider lang="en">
+        <LangProvider lang="en" copy={en}>
           <Probe />
         </LangProvider>,
       ),
     ).toBe('<p>en|ltr|ar|/|Request a crane</p>');
+  });
+
+  it('serves exactly the copy it is given (no lookup of its own)', () => {
+    const custom = { ...en, header: { ...en.header, request: 'Custom label' } };
+    expect(
+      renderToStaticMarkup(
+        <LangProvider lang="en" copy={custom}>
+          <Probe />
+        </LangProvider>,
+      ),
+    ).toBe('<p>en|ltr|ar|/|Custom label</p>');
   });
 
   it('fails loudly outside a provider', () => {

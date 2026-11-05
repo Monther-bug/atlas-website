@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GalleryPhotoId } from './types';
-import { cranes, getCopy, siteInfo, sites, visibleCranes } from './index';
+import { cranes, siteInfo, sites, visibleCranes } from './index';
+import { getCopy } from './all';
 
 describe('cranes', () => {
   it('lists the visible cranes from smallest to largest', () => {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { getCopy, siteInfo } from '@/content';
+import { getCopy } from '@/content/all';
+import { siteInfo } from '@/content';
 import { wordWindow } from '@/motion/about';
 import { renderHtml } from '@/test/render';
 import { ABOUT_PHOTOS, About, splitWords } from './About';

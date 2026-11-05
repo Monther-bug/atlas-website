@@ -2,12 +2,13 @@ import { act, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Lang } from '@/content/types';
+import { getCopy } from '@/content/all';
 import { LangProvider } from '@/lib/lang';
 
 /** Static HTML, as the prerender produces it, inside a detached <div> for DOM queries. Needs jsdom. */
 export function renderHtml(node: ReactNode, lang: Lang = 'ar'): HTMLDivElement {
   const host = document.createElement('div');
-  host.innerHTML = renderToStaticMarkup(<LangProvider lang={lang}>{node}</LangProvider>);
+  host.innerHTML = renderToStaticMarkup(<LangProvider lang={lang} copy={getCopy(lang)}>{node}</LangProvider>);
   return host;
 }
 
@@ -19,7 +20,7 @@ export async function mount(node: ReactNode, lang: Lang = 'ar'): Promise<{ host:
   document.body.append(host);
   const root = createRoot(host);
   await act(async () => {
-    root.render(<LangProvider lang={lang}>{node}</LangProvider>);
+    root.render(<LangProvider lang={lang} copy={getCopy(lang)}>{node}</LangProvider>);
   });
   const unmount = async () => {
     mounted.delete(unmount);

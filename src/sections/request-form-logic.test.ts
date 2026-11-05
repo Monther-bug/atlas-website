@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCopy } from '@/content';
+import { getCopy } from '@/content/all';
 import {
   HANDOFF_MESSAGE_MAX,
   REQUEST_FIELDS,
@@ -54,33 +54,33 @@ describe('fields', () => {
 
 describe('validateRequest', () => {
   it('requires only phone and load weight, with the language’s messages', () => {
-    const errors = validateRequest(emptyRequest(), 'ar', TODAY);
+    const errors = validateRequest(emptyRequest(), ar, TODAY);
     expect(Object.keys(errors)).toEqual(['phone', 'weight']);
     expect(errors.phone).toBe(ar.form.fields.phone.empty);
     expect(errors.weight).toBe(ar.form.fields.weight.empty);
-    expect(validateRequest(emptyRequest(), 'en', TODAY).weight).toBe(en.form.fields.weight.empty);
+    expect(validateRequest(emptyRequest(), en, TODAY).weight).toBe(en.form.fields.weight.empty);
   });
 
   it('accepts Arabic-Indic digits in weight and phone', () => {
-    expect(validateRequest(values({ weight: '٣٥٠', phone: '٠٩١٢٣٤٥٦٧٨' }), 'ar', TODAY)).toEqual({});
-    expect(validateRequest(values({ weight: '7,5', phone: '+218 91 234 5678' }), 'ar', TODAY)).toEqual({});
+    expect(validateRequest(values({ weight: '٣٥٠', phone: '٠٩١٢٣٤٥٦٧٨' }), ar, TODAY)).toEqual({});
+    expect(validateRequest(values({ weight: '7,5', phone: '+218 91 234 5678' }), ar, TODAY)).toEqual({});
   });
 
   it('rejects a weight that is not a number above zero', () => {
     for (const weight of ['0', 'abc', '-3', '1.2.3']) {
-      expect(validateRequest(values({ ...valid, weight }), 'en', TODAY).weight, weight).toBe(en.form.fields.weight.format);
+      expect(validateRequest(values({ ...valid, weight }), en, TODAY).weight, weight).toBe(en.form.fields.weight.format);
     }
   });
 
   it('rejects an incomplete phone number', () => {
     for (const phone of ['12', '091-234', 'call me']) {
-      expect(validateRequest(values({ ...valid, phone }), 'en', TODAY).phone, phone).toBe(en.form.fields.phone.format);
+      expect(validateRequest(values({ ...valid, phone }), en, TODAY).phone, phone).toBe(en.form.fields.phone.format);
     }
   });
 
   it('checks optional numbers only when they are filled in', () => {
-    expect(validateRequest(values({ ...valid, radius: '', height: '' }), 'en', TODAY)).toEqual({});
-    const errors = validateRequest(values({ ...valid, radius: 'x', height: '٠' }), 'en', TODAY);
+    expect(validateRequest(values({ ...valid, radius: '', height: '' }), en, TODAY)).toEqual({});
+    const errors = validateRequest(values({ ...valid, radius: 'x', height: '٠' }), en, TODAY);
     expect(errors.radius).toBe(en.form.fields.radius.format);
     expect(errors.height).toBe(en.form.fields.height.format);
   });
@@ -88,16 +88,16 @@ describe('validateRequest', () => {
   it('enforces the length limits from the deck', () => {
     const errors = validateRequest(
       values({ ...valid, name: 'a'.repeat(81), company: 'b'.repeat(121), site: 'c'.repeat(201), message: 'd'.repeat(1001) }),
-      'en',
+      en,
       TODAY,
     );
     expect(Object.keys(errors)).toEqual(['name', 'company', 'site', 'message']);
-    expect(validateRequest(values({ ...valid, name: 'a'.repeat(80), message: 'd'.repeat(1000) }), 'en', TODAY)).toEqual({});
+    expect(validateRequest(values({ ...valid, name: 'a'.repeat(80), message: 'd'.repeat(1000) }), en, TODAY)).toEqual({});
   });
 
   it('refuses a start date in the past', () => {
-    expect(validateRequest(values({ ...valid, start: '2026-11-03' }), 'en', TODAY).start).toBe(en.form.fields.start.past);
-    expect(validateRequest(values({ ...valid, start: TODAY }), 'en', TODAY)).toEqual({});
+    expect(validateRequest(values({ ...valid, start: '2026-11-03' }), en, TODAY).start).toBe(en.form.fields.start.past);
+    expect(validateRequest(values({ ...valid, start: TODAY }), en, TODAY)).toEqual({});
   });
 });
 
@@ -141,7 +141,7 @@ describe('buildRequestMessage', () => {
 describe('bidi-safe phone', () => {
   it('accepts a phone pasted with direction marks and cleans it', () => {
     const phone = '\u202A+218 91 234 5678\u202C';
-    expect(validateRequest(values({ ...valid, phone }), 'en', TODAY)).toEqual({});
+    expect(validateRequest(values({ ...valid, phone }), en, TODAY)).toEqual({});
     expect(requestVars(values({ ...valid, phone }), en).phone).toBe('+218 91 234 5678');
     expect(buildRequestMessage(values({ ...valid, phone: '\u200E0912345678\u200E' }), ar)).toContain('\u200E0912345678\u200E');
     expect(buildRequestMessage(values({ ...valid, phone: '\u200E0912345678\u200E' }), ar)).not.toContain('\u200E\u200E');

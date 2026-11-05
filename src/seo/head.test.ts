@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import arHtml from '../../index.html?raw';
 import enHtml from '../../en/index.html?raw';
 import { parseHead } from '../../scripts/lib/head.mjs';
-import { getCopy } from '@/content';
+import { getCopy } from '@/content/all';
 import type { Lang } from '@/content/types';
 
 const PAGES: { lang: Lang; html: string; path: string; dir: string; locale: string; altLocale: string; siteName: string }[] = [
@@ -51,7 +51,7 @@ describe.each(PAGES)('$lang page head', (p) => {
   it('keeps the prerender markers and the module entry', () => {
     expect(p.html).toContain('<div id="root"><!--app--></div>');
     expect(p.html.match(/<!--head-->/g)).toHaveLength(1);
-    expect(p.html).toContain('<script type="module" src="/src/main.tsx"></script>');
+    expect(p.html).toContain(`<script type="module" src="/src/main-${p.lang}.tsx"></script>`);
   });
 });
 

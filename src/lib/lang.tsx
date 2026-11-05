@@ -1,5 +1,4 @@
 import { createContext, useContext, useMemo, type JSX, type ReactNode } from 'react';
-import { getCopy } from '@/content';
 import type { Copy, Lang } from '@/content/types';
 
 export interface LangValue {
@@ -12,16 +11,16 @@ export interface LangValue {
 
 const LangContext = createContext<LangValue | null>(null);
 
-export function LangProvider({ lang, children }: { lang: Lang; children: ReactNode }): JSX.Element {
+export function LangProvider({ lang, copy, children }: { lang: Lang; copy: Copy; children: ReactNode }): JSX.Element {
   const value = useMemo<LangValue>(
     () => ({
       lang,
       dir: lang === 'ar' ? 'rtl' : 'ltr',
-      copy: getCopy(lang),
+      copy,
       otherLang: lang === 'ar' ? 'en' : 'ar',
       otherHref: lang === 'ar' ? '/en/' : '/',
     }),
-    [lang],
+    [lang, copy],
   );
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }

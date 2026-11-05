@@ -198,7 +198,7 @@ function RequestFormBody() {
   const update = (key: RequestField) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const next: RequestValues = { ...values, [key]: event.target.value };
     setValues(next);
-    if (attempts > 0) setErrors(validateRequest(next, lang, today));
+    if (attempts > 0) setErrors(validateRequest(next, copy, today));
     if (key === 'crane') {
       const crane = craneFromOption(event.target.value);
       if (crane !== getRequestedCrane()) setRequestedCrane(crane);
@@ -208,7 +208,7 @@ function RequestFormBody() {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === 'sending' || Date.now() < lockedUntil.current) return;
-    const found = validateRequest(values, lang, today);
+    const found = validateRequest(values, copy, today);
     setErrors(found);
     setAttempts((n) => n + 1);
     if (Object.keys(found).length > 0) return;

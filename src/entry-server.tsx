@@ -3,16 +3,17 @@ import { StrictMode } from 'react';
 import { renderToString } from 'react-dom/server';
 import { App } from '@/App';
 import { siteInfo } from '@/content';
+import { getCopy } from '@/content/all';
 import type { Lang } from '@/content/types';
 import { env } from '@/env';
 import { LangProvider } from '@/lib/lang';
 import { buildJsonLd, jsonLdScript } from '@/seo/jsonld';
 
-/** Static HTML for one page: the same tree src/main.tsx hydrates. */
+/** Static HTML for one page: the same tree src/boot.tsx hydrates. */
 export function render(lang: Lang): string {
   return renderToString(
     <StrictMode>
-      <LangProvider lang={lang}>
+      <LangProvider lang={lang} copy={getCopy(lang)}>
         <App />
       </LangProvider>
     </StrictMode>,
