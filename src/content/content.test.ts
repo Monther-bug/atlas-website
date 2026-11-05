@@ -19,7 +19,7 @@ describe('cranes', () => {
       ['rt700e', 'Grove', 'RT700E', 'rough-terrain'],
       ['atf60-3', 'Tadano Faun', 'ATF 60-3', 'all-terrain'],
       ['ac200-1', 'Terex', 'AC200-1', 'all-terrain'],
-      ['quy250', 'Fuwa (FW.China)', 'QUY250', 'crawler'],
+      ['quy250', 'Fuwa', 'QUY250', 'crawler'],
       ['gmk6350', 'Grove', 'GMK6350', 'all-terrain'],
       ['cke2500', 'Kobelco', 'CKE2500', 'crawler'],
     ]);

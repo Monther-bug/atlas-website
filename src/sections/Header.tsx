@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { Button } from '@/components/Button';
 import { ArrowIcon, CloseIcon, MenuIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
 import { Logo } from '@/components/Logo';
-import { sheetTrigger } from '@/components/ui/Sheet';
+import { sheetTrigger } from '@/components/ui/sheet-trigger';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';

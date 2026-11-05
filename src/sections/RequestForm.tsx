@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type Rea
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { Fill } from '@/components/Fill';
 import { HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
-import { Chip, Reveal, Section, SectionHeader, fieldClass, reveal } from '@/components/ui';
+import { Chip } from '@/components/ui/Chip';
+import { fieldClass } from '@/components/ui/Field';
+import { Reveal, reveal } from '@/components/ui/Reveal';
+import { Section, SectionHeader } from '@/components/ui/Section';
 import { siteInfo, visibleCranes } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';

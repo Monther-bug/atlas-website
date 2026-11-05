@@ -183,7 +183,24 @@ export interface Copy {
     count: { one: string; two: string; few: string; many: string }; // few = 3–10, many = 11+
     empty: string;
     showAll: string;
-    card: { type: string; capacity: string; request: string; formLink: string }; // the model code is the card's heading
+    card: {
+      type: string;
+      capacity: string;
+      request: string;
+      formLink: string;
+      details: string; // opens the detail sheet; the model is appended for screen readers
+      rating: string; // "Manufacturer rating": the capacity is the maker's figure, not Atlas's
+      atRadius: string; // {radius}
+      boomMax: string; // key spec label: the longest main boom
+      secondary: string; // footnote for a key spec taken from a spec database (marked *)
+    }; // the model code is the card's heading
+    /** v2: second sentence of the heading, in the muted tone (Stripe two-tone). */
+    continuation: string;
+    /** v2: header action → the comparison below. */
+    compareLink: string;
+    /** v2: card status while a load is typed in the load check (the rest of its copy is in crane-list-copy.ts). */
+    fits: string; // {load}
+    below: string; // {load}
   };
 
   /** v2: About Atlas (new section, copy deck §3a). Written from confirmed facts only; needs Atlas's approval. */
@@ -354,5 +371,55 @@ export type SpecFieldId =
   | 'trackWidth'
   | 'groundPressure'
   | 'country';
+
+/**
+ * v2 «اعثر على رافعتك»: copy of the parts that load on demand (load check, detail sheet, comparison). It lives in
+ * src/content/crane-list-copy.ts, outside `Copy`, so it ships in those lazy chunks and not in the initial bundle.
+ */
+export interface CraneListCopy {
+  /** v2 load check. Max ratings only: it never promises a lift. */
+  load: {
+    title: string;
+    label: string;
+    unit: string;
+    caveat: string; // always shown: the rating applies at the shortest radius
+    cta: string; // → #request
+    clear: string; // icon button name
+    invalid: string;
+    result: { none: string; one: string; two: string; few: string; many: string }; // {n} {load}
+  };
+  /** v2 detail sheet. */
+  sheet: {
+    whatsapp: string;
+    compareWith: string;
+    photos: string; // {name}
+    noteHeading: string;
+    sourcesHeading: string;
+  };
+  /** v2 comparison table. */
+  compare: {
+    title: string;
+    lead: string;
+    pickerLabel: string;
+    limit: string; // after a pick on a full table replaced the oldest one
+    request: string; // short "Request" in each model's column header; the model is appended for screen readers
+    needTwo: string;
+    tableName: string;
+    missing: string; // screen-reader text of an empty cell
+    missingNote: string;
+    secondary: string; // screen-reader text of the * mark
+    secondaryNote: string;
+    notesHeading: string;
+  };
+  /** v2: spec groups in the sheet and the comparison. */
+  groups: Record<SpecGroupId, string>;
+  /** v2: overall dimensions, one row each (the comparison reads them across models). */
+  dims: { length: string; width: string; height: string };
+  /** v2: what each maximum rating means, from the notes in crane-specs.ts (shown in the sheet and under the comparison). */
+  capacityNotes: Record<Exclude<CraneId, 'cke2500'>, string>;
+}
+
+/** v2: groups of spec rows in the detail sheet and the comparison (src/sections/crane-list/lineup-data.ts). */
+export type SpecGroupId = 'lifting' | 'boom' | 'carrier' | 'engine' | 'dimensions';
 
 export type SpecUnit = 't' | 'm' | 'kw' | 'kmh' | 'pct' | 'mpa';

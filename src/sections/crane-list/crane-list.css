@@ -1,0 +1,918 @@
+/* «اعثر على رافعتك» (src/sections/crane-list). v2 tokens and surface variables only (no colours, fonts or radii of
+   its own), so palette and type changes in styles.css / ui.css flow through. Reduced motion: the global rule in
+   styles.css removes every transition here; the motion layer (src/motion/lineup.ts) never loads. */
+
+@layer components {
+  .crane-list {
+    --lineup-pad: clamp(1rem, 4vw, 3.5rem); /* = .shell padding: the carousel bleeds by exactly this much */
+    --lineup-sticky: 4.5rem; /* fixed header height: the comparison's model row sticks under it */
+  }
+  .lineup-top {
+    padding-block: var(--space-section) calc(var(--space-section) * 0.75);
+  }
+
+  /* ── Toolbar: type track, band chips (verified only), live count ── */
+  .lineup-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+  }
+  .lineup-bands {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .lineup-count {
+    margin: 0;
+    margin-inline-start: auto;
+    color: var(--surface-fg-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .lineup-count:focus-visible {
+    border-radius: var(--radius-xs);
+  }
+
+  /* The segmented track with toggle buttons (TypeFilter.tsx): the same look as ui-seg's radios. */
+  /* Navy is the selection accent on light grounds (v2 palette): the thumb, and the pressed label in white. */
+  .lineup-seg .ui-seg__thumb {
+    background-color: var(--color-brand);
+    box-shadow: var(--shadow-e1);
+  }
+  .lineup-seg .ui-seg__option[aria-pressed='true'] {
+    color: var(--color-white);
+    background-color: var(--color-brand);
+  }
+  .lineup-seg[data-measured] .ui-seg__option[aria-pressed='true'] {
+    background-color: transparent;
+  }
+  .lineup-seg:not([data-measured]) .ui-seg__thumb {
+    opacity: 0;
+  }
+  .lineup-seg .ui-seg__option {
+    transition:
+      color var(--dur-state) var(--ease-ui),
+      background-color var(--dur-state) var(--ease-ui);
+  }
+  .lineup-seg .ui-seg__option:focus-visible {
+    outline: 2px solid var(--ring, var(--color-navy));
+    outline-offset: 2px;
+  }
+  .lineup-seg .ui-seg__option:active {
+    scale: 0.98;
+  }
+  /* Phones: four options fit the track (no hidden "Crawler"). */
+  @media (width < 40rem) {
+    .lineup-seg .ui-seg__option {
+      padding-inline: 0.75rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  /* ── Load check: a dark instrument strip ── */
+  .lineup-load {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem 3rem;
+    margin-block: 1.5rem 2rem;
+    padding: var(--space-tile);
+    border-radius: var(--radius-xl);
+  }
+  /* A dark panel inside a light section: its own focus ring and caret (the light-ground rule would paint navy, 1.5:1). */
+  .lineup-load,
+  .lineup-load * {
+    --ring: var(--color-white);
+    caret-color: var(--color-red-bright);
+  }
+  .lineup-load__title {
+    margin: 0;
+  }
+  .lineup-load__note {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .lineup-load__note > * {
+    margin: 0;
+  }
+  /* Phones read title → field → caveat; from 64 rem the caveat sits under the title, the field beside them. */
+  @media (width >= 64rem) {
+    .lineup-load {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      grid-template-areas: 'title field' 'note field';
+      align-items: start;
+      row-gap: 0.75rem;
+    }
+    .lineup-load__title {
+      grid-area: title;
+    }
+    .lineup-load__field {
+      grid-area: field;
+    }
+    .lineup-load__note {
+      grid-area: note;
+    }
+  }
+  .lineup-load__caveat {
+    max-inline-size: 38rem;
+    color: var(--surface-fg-2);
+  }
+  /* Links: navy on light, white on black (--surface-accent). */
+  .lineup-load__cta,
+  .lineup-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    font-weight: 600;
+    color: var(--surface-accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    transition: text-decoration-color var(--dur-state) var(--ease-ui);
+  }
+  .lineup-load__cta:hover,
+  .lineup-link:hover {
+    text-decoration-color: currentColor;
+  }
+  .lineup-load__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .lineup-load__label {
+    font-weight: 600;
+    color: var(--surface-fg-2);
+  }
+  .lineup-load__control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 4.25rem;
+    padding-inline: 1.25rem 0.5rem;
+    border: 1px solid var(--surface-control);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-raised);
+    transition:
+      border-color var(--dur-state) var(--ease-ui),
+      box-shadow var(--dur-state) var(--ease-ui);
+  }
+  .lineup-load__control:hover {
+    border-color: var(--surface-fg-2);
+  }
+  .lineup-load__control:focus-within {
+    border-color: var(--surface-fg);
+    outline: 2px solid var(--ring, var(--color-white));
+    outline-offset: 2px;
+  }
+  .lineup-load__control[data-invalid] {
+    border-color: var(--surface-danger);
+    box-shadow: inset 0 0 0 1px var(--surface-danger);
+  }
+  .lineup-load__input {
+    flex: 1;
+    min-inline-size: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--surface-fg);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .lineup-load__input:focus-visible {
+    outline: none; /* the whole control carries the ring (:focus-within above) */
+  }
+  .lineup-load__unit {
+    color: var(--surface-fg-2);
+  }
+  .lineup-load__clear {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 999px;
+    color: var(--surface-fg);
+    background-color: rgb(255 255 255 / 0.1);
+    transition:
+      background-color var(--dur-state) var(--ease-ui),
+      scale var(--dur-press) var(--ease-ui);
+  }
+  .lineup-load__clear:hover {
+    background-color: rgb(255 255 255 / 0.2);
+  }
+  .lineup-load__clear:active {
+    scale: 0.95;
+  }
+  .lineup-load__result {
+    min-block-size: 1.6em;
+    margin: 0;
+    color: var(--surface-fg);
+  }
+  .lineup-load__result[data-state='invalid'] {
+    color: var(--surface-danger);
+  }
+
+  /* ── Lineup grid: 1 → 2 (40 rem) → 3 (64 rem) columns. The last card widens to close its row, so every filter
+     result fills whole rows (5 = 3 + wide 2; 4 = 3 + full; 1 = full). Phones: a snap carousel bleeding to the edge. ── */
+  .lineup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .lineup > li {
+    container: lineup-card / inline-size;
+    display: flex;
+    min-inline-size: 0;
+  }
+  @media (width < 40rem) {
+    .lineup {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: min(84%, 22rem);
+      margin-inline: calc(-1 * var(--lineup-pad));
+      padding: 0.25rem var(--lineup-pad) 1.25rem;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: var(--lineup-pad);
+      scrollbar-width: none;
+    }
+    .lineup::-webkit-scrollbar {
+      display: none;
+    }
+    .lineup > li {
+      scroll-snap-align: start;
+    }
+  }
+  @media (width >= 40rem) {
+    .lineup {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .lineup > li:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (width >= 64rem) {
+    .lineup {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .lineup > li:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+    .lineup > li:last-child:nth-child(3n + 2) {
+      grid-column: span 2;
+    }
+    .lineup > li:last-child:nth-child(3n + 1) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ── Card ── */
+  .lineup-card {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100%;
+    overflow: clip;
+    border-radius: var(--radius-xl);
+    transition:
+      box-shadow var(--dur-ui) var(--ease-ui),
+      transform var(--dur-ui) var(--ease-ui),
+      outline-color var(--dur-state) var(--ease-ui);
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+  }
+  .lineup-card[data-on-hook] {
+    outline-color: var(--color-red);
+  }
+  .lineup-card__media {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    aspect-ratio: 16 / 10;
+    background-color: var(--surface-sunken);
+  }
+  .lineup-card__photo {
+    position: absolute;
+    inset: 0;
+  }
+  .lineup-card__photo img {
+    transition:
+      transform var(--dur-focal) var(--ease-set),
+      filter var(--dur-ui) var(--ease-ui),
+      opacity var(--dur-ui) var(--ease-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .lineup-card:hover .lineup-card__photo img {
+      transform: scale(1.045);
+    }
+  }
+  /* Over the photo: a glass chip on the ground, never over the sky (v2 §7). ui-chip's own fill is overridden here. */
+  .lineup-card .lineup-card__type {
+    position: absolute;
+    inset-block-end: 0.75rem;
+    inset-inline-start: 0.75rem;
+    color: var(--color-white);
+    background-color: rgb(10 10 10 / 0.62);
+  }
+  .lineup-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--space-tile);
+  }
+  .lineup-card__body > p,
+  .lineup-card__body > h3,
+  .lineup-card__body > dl {
+    margin: 0;
+  }
+  .lineup-card__name {
+    color: var(--surface-fg-2);
+  }
+  .lineup-card__capacity {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0.75rem 0 0;
+  }
+  .lineup-card__figure {
+    display: inline-grid;
+    justify-items: end;
+  }
+  .lineup-card__figure > * {
+    grid-area: 1 / 1;
+  }
+  .lineup-card__ghost {
+    visibility: hidden;
+  }
+  .lineup-card__unit {
+    color: var(--surface-fg-2);
+  }
+  .lineup-card__rating {
+    padding-block-end: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.625rem;
+    margin-block-start: 0.5rem !important;
+    color: var(--surface-fg-2);
+  }
+  .lineup-card__kind {
+    margin-block-start: 0.25rem !important;
+    color: var(--surface-fg-3);
+  }
+  /* Pushed to the bottom, so key specs line up across a row even when a rating label wraps. */
+  .lineup-card__specs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-block-start: auto !important;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--surface-line);
+  }
+  .lineup-card__specs > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 0.125rem;
+    min-inline-size: 0;
+  }
+  .lineup-card__specs dt {
+    color: var(--surface-fg-3);
+  }
+  .lineup-card__specs dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--surface-fg);
+  }
+  .lineup-card__foot {
+    margin-block-start: 0.75rem !important;
+    color: var(--surface-fg-3);
+  }
+  /* The load check's note on each card: neutral, never a pass/fail mark (a maximum rating is not a lift plan). */
+  .lineup-card__fit {
+    margin-block-start: 1.25rem !important;
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-sunken);
+    color: var(--surface-fg-2);
+  }
+  .lineup-card__fit[data-fit='yes'] {
+    background-color: var(--color-brand-50);
+    color: var(--color-brand);
+  }
+  .lineup-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    padding-block-start: 1.75rem;
+  }
+  .lineup-card__actions > * {
+    white-space: nowrap;
+  }
+  .lineup-card__actions > :first-child {
+    flex: 1 1 auto;
+  }
+  /* Without JS the sheet cannot open; every figure is in the comparison table instead. */
+  html:not(.js) [data-details] {
+    display: none;
+  }
+
+  /* Wide card (the one that closes a row): photo beside the text. */
+  @container lineup-card (width >= 44rem) {
+    .lineup-card {
+      flex-direction: row;
+    }
+    .lineup-card__media {
+      flex: 0 0 54%;
+      aspect-ratio: auto;
+      min-block-size: 24rem;
+    }
+    .lineup-card__body {
+      justify-content: center;
+      padding: calc(var(--space-tile) * 1.25);
+    }
+    .lineup-card__specs {
+      margin-block-start: 0 !important;
+    }
+    .lineup-card__actions {
+      margin-block-start: 0;
+    }
+    .lineup-card__actions {
+      flex-wrap: nowrap;
+    }
+    .lineup-card__actions > :first-child {
+      flex: 0 1 auto;
+    }
+  }
+
+  /* ── Detail sheet ── */
+  .lineup-sheet .ui-carousel__track {
+    padding-block-start: 0;
+  }
+  .lineup-sheet__photo {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
+  }
+  .lineup-sheet__type {
+    margin: 1.25rem 0 0;
+    color: var(--surface-fg-2);
+  }
+  .lineup-sheet__type strong {
+    color: var(--surface-fg);
+    font-weight: 600;
+  }
+  .lineup-sheet__rating {
+    margin-block-start: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background-color: var(--surface-sunken);
+  }
+  .lineup-sheet__rating .lineup-card__capacity {
+    margin: 0;
+  }
+  .lineup-sheet__note {
+    margin-block-start: 1rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--surface-line);
+  }
+  .lineup-sheet__note > * {
+    margin: 0;
+  }
+  .lineup-sheet__note h3 {
+    font-weight: 600;
+    color: var(--surface-fg);
+  }
+  .lineup-sheet__note p {
+    margin-block-start: 0.25rem;
+    color: var(--surface-fg-2);
+  }
+  .lineup-sheet__specs {
+    margin-block-start: 2.5rem;
+  }
+  .lineup-sheet__specs-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin: 0;
+  }
+  .lineup-sheet__muted,
+  .lineup-compare__muted {
+    color: var(--surface-fg-3);
+  }
+  .lineup-sheet__specs > p {
+    margin: 0.5rem 0 0;
+  }
+  .lineup-sheet__group {
+    margin-block-start: 1.75rem;
+  }
+  .lineup-sheet__group-title {
+    margin: 1.75rem 0 0.5rem;
+    font-weight: 600;
+    color: var(--surface-accent);
+  }
+  .lineup-sheet__group .lineup-sheet__group-title {
+    margin-block-start: 0;
+  }
+  .lineup-sources {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .lineup-sources a {
+    display: inline-flex;
+    min-block-size: 2.75rem;
+    align-items: center;
+    color: var(--surface-accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  }
+  .lineup-sources a:hover {
+    text-decoration-color: currentColor;
+  }
+  .lineup-sheet__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    margin-block-start: 2rem;
+  }
+  .lineup-sheet__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+  .lineup-sheet__actions > * {
+    flex: 1 1 12rem;
+  }
+  /* Opened by a view transition, or closed for the ride: no slide of its own (src/motion/morph.ts). */
+  .ui-sheet[data-snap],
+  .ui-sheet[data-snap]::backdrop {
+    transition: none !important;
+  }
+
+  /* ── Comparison ── */
+  .lineup-compare {
+    padding-block: var(--space-section);
+  }
+  .lineup-compare__head {
+    max-inline-size: 52rem;
+  }
+  .lineup-compare__head > * {
+    margin: 0;
+  }
+  .lineup-compare__lead {
+    margin-block-start: 1rem !important;
+    color: var(--surface-fg-2);
+  }
+  .lineup-compare__head .lineup-compare__muted {
+    margin-block-start: 0.75rem !important;
+  }
+  .lineup-compare__picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-block-start: var(--space-head);
+  }
+  .lineup-compare__label {
+    margin: 0;
+    font-weight: 600;
+    color: var(--surface-fg-2);
+  }
+  .lineup-picks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .lineup-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding-inline: 0.875rem 1.125rem;
+    border: 1px solid var(--surface-control);
+    border-radius: 999px;
+    color: var(--surface-fg);
+    background-color: transparent;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-state) var(--ease-ui),
+      color var(--dur-state) var(--ease-ui),
+      border-color var(--dur-state) var(--ease-ui),
+      opacity var(--dur-state) var(--ease-ui);
+  }
+  .lineup-pick:hover {
+    border-color: var(--surface-fg);
+  }
+  .lineup-pick:active {
+    scale: 0.98;
+  }
+  .lineup-pick[aria-pressed='true'] {
+    border-color: var(--color-brand);
+    background-color: var(--color-brand);
+    color: var(--color-white);
+  }
+  .lineup-pick[aria-disabled='true']:not([aria-pressed='true']) {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .lineup-pick[aria-pressed='true'][aria-disabled='true'] {
+    cursor: default;
+  }
+  .lineup-pick__cap {
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+  }
+  .lineup-compare__status {
+    flex-basis: 100%;
+    min-block-size: 1.5em;
+    margin: 0;
+    color: var(--surface-fg-2);
+  }
+  .lineup-compare__wrap {
+    margin-block-start: 1rem;
+  }
+  /* Live: clip (not a scroll container, so the model row can stick); a column sliding in never adds a scrollbar. */
+  .lineup-compare__wrap {
+    position: relative; /* contains the cells' sr-only spans, so they never widen the page */
+    overflow-x: clip;
+  }
+  html:not(.js) .lineup-compare__wrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .lineup-compare__wrap[role='region']:focus-visible {
+    border-radius: var(--radius-sm);
+  }
+  html:not(.js) .lineup-table {
+    min-inline-size: 48rem;
+  }
+
+  .lineup-table {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+  .lineup-table__caption {
+    caption-side: top;
+    padding-block-end: 1rem;
+    text-align: start;
+    color: var(--surface-fg-2);
+  }
+  .lineup-table__caption {
+    display: table-caption;
+  }
+  .lineup-table__caption > [data-testid='draft-badge'] {
+    margin-inline-start: 0.625rem;
+    vertical-align: middle;
+  }
+  .lineup-table th,
+  .lineup-table td {
+    padding-block: 1rem;
+    padding-inline: 0 1.25rem;
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px solid var(--surface-line);
+  }
+  .lineup-table__corner {
+    inline-size: 28%;
+  }
+  .lineup-table thead th {
+    position: sticky;
+    top: var(--lineup-sticky);
+    z-index: 2;
+    padding-block: 1rem 0.875rem;
+    background-color: var(--surface-raised);
+    border-block-end-color: var(--surface-fg);
+  }
+  .lineup-table__model > * {
+    display: block;
+    text-align: start;
+  }
+  .lineup-table__request {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    margin-block-start: 0.25rem;
+    font-weight: 600;
+    color: var(--color-red);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 0.22em;
+  }
+  .lineup-table__request:hover {
+    text-decoration-color: currentColor;
+  }
+  .lineup-table__make {
+    color: var(--surface-fg-3);
+  }
+  .lineup-table__code {
+    font-weight: 600;
+    color: var(--surface-fg);
+  }
+  .lineup-table__group th {
+    padding-block: 2.25rem 0.75rem;
+    font-weight: 700;
+    color: var(--surface-accent);
+  }
+  .lineup-table tbody:first-of-type .lineup-table__group th {
+    padding-block-start: 1.5rem;
+  }
+  .lineup-table tbody th[scope='row'] {
+    font-weight: 400;
+    color: var(--surface-fg-2);
+  }
+  .lineup-table td {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--surface-fg);
+  }
+  .lineup-num {
+    white-space: nowrap;
+  }
+  .lineup-table td[data-empty] {
+    font-weight: 400;
+    color: var(--surface-fg-3);
+  }
+  .lineup-bar {
+    display: block;
+    max-inline-size: 9rem;
+    block-size: 0.1875rem;
+    margin-block-start: 0.625rem;
+    border-radius: 999px;
+    background-color: var(--surface-line);
+    overflow: clip;
+  }
+  .lineup-bar > span {
+    display: block;
+    block-size: 100%;
+    background-color: var(--surface-accent);
+    transform: scaleX(var(--m, 0));
+    transform-origin: left center;
+  }
+  [dir='rtl'] .lineup-bar > span {
+    transform-origin: right center;
+  }
+  .js .lineup-compare [data-off] {
+    display: none;
+  }
+  /* A model added to the comparison slides in from the reading side (only after hydration: no entry on page load). */
+  .lineup-table[data-ready] [data-col] {
+    transition:
+      opacity var(--dur-layout) var(--ease-set),
+      translate var(--dur-layout) var(--ease-set);
+  }
+  @starting-style {
+    .lineup-table[data-ready] [data-col] {
+      opacity: 0;
+      translate: 1rem 0;
+    }
+    [dir='rtl'] .lineup-table[data-ready] [data-col] {
+      translate: -1rem 0;
+    }
+  }
+
+  /* Phones: each row restacks (label on its own line, values side by side), so up to three models fit with no
+     sideways scroll. Table semantics are kept by the explicit ARIA roles in CompareModels.tsx. */
+  @media (width < 48rem) {
+    .js .lineup-table,
+    .js .lineup-table thead,
+    .js .lineup-table tbody {
+      display: block;
+    }
+    .js .lineup-table tr {
+      display: grid;
+      grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+      column-gap: 1rem;
+      border-block-end: 1px solid var(--surface-line);
+    }
+    .js .lineup-table th,
+    .js .lineup-table td {
+      padding-inline: 0;
+      border-block-end: 0;
+    }
+    .js .lineup-table tbody th[scope='row'],
+    .js .lineup-table .lineup-table__group th {
+      grid-column: 1 / -1;
+      padding-block-end: 0.125rem;
+    }
+    .js .lineup-table tbody td {
+      padding-block-start: 0.25rem;
+    }
+    .js .lineup-table .lineup-num {
+      white-space: normal;
+    }
+    .js .lineup-table td bdi,
+    .js .lineup-table th bdi {
+      overflow-wrap: anywhere;
+    }
+    .js .lineup-table .lineup-table__caption {
+      display: block;
+    }
+    .js .lineup-table .lineup-table__group {
+      border-block-end: 0;
+    }
+    .js .lineup-table .lineup-table__corner {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      padding: 0;
+    }
+    .js .lineup-table thead {
+      position: sticky;
+      top: var(--lineup-sticky);
+      z-index: 2;
+      background-color: var(--surface-raised);
+    }
+    .js .lineup-table thead tr {
+      border-block-end-color: var(--surface-fg);
+    }
+    .js .lineup-table thead th {
+      position: static;
+    }
+  }
+
+  .lineup-compare__foot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block-start: 1.5rem;
+    max-inline-size: 52rem;
+  }
+  .lineup-compare__foot > p {
+    margin: 0;
+  }
+  .lineup-compare__notes-title {
+    margin: 1.5rem 0 0;
+    font-weight: 700;
+  }
+  .lineup-notes {
+    display: grid;
+    gap: 0.875rem;
+    margin: 0;
+  }
+  .lineup-notes > div {
+    display: grid;
+    gap: 0.125rem;
+  }
+  .lineup-notes dd {
+    margin: 0;
+    color: var(--surface-fg-2);
+  }
+  .lineup-compare__sources {
+    margin-block-start: 1rem;
+  }
+  .lineup-compare__sources summary {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .lineup-compare__sources[open] summary {
+    margin-block-end: 0.5rem;
+  }
+}
+
+/* Card photo → sheet photo (src/motion/morph.ts). Exit faster than entry is the sheet's own job; this is entry only. */
+::view-transition-group(crane-photo) {
+  animation-duration: var(--dur-layout);
+  animation-timing-function: var(--ease-set);
+}
+::view-transition-old(crane-photo),
+::view-transition-new(crane-photo) {
+  block-size: 100%;
+  object-fit: cover;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-ui);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lineup-card,
+  .lineup-card__photo img,
+  .lineup-table[data-ready] [data-col] {
+    transition: none !important;
+  }
+  .lineup-card:hover {
+    transform: none;
+  }
+  .lineup-card:hover .lineup-card__photo img {
+    transform: none;
+  }
+}

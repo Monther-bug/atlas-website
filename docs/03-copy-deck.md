@@ -197,7 +197,8 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Element | العربية | English |
 |---|---|---|
 | Title | اعثر على رافعتك *(switch to «أسطولنا» once ownership is confirmed)* | Find your crane *(switch to "Our fleet" once ownership is confirmed)* |
-| Intro | اعرض الرافعات حسب النوع أو السعة، ثم اطلب الرافعة التي تناسبك عبر واتساب. | Filter by type or capacity, then request the crane you need on WhatsApp. |
+| Intro (v2, replaces the v1 intro) | صفِّ الطرازات حسب النوع، وافتح المواصفات الكاملة لكل رافعة، وقارن حتى ثلاث رافعات جنباً إلى جنب. | Filter the models by type, open the full specification of each crane, and compare up to three side by side. |
+| Heading continuation (v2, two-tone, after «اعثر على رافعتك.») | قارن المواصفات، واطلب الرافعة التي تناسب رفعتك. | Compare the specs and request the one that fits your lift. |
 | Availability line | أخبرنا بالتاريخ، ونؤكد لك التوفر. | Tell us your dates and we will confirm availability. |
 | Filter group 1 label | النوع | Type |
 | Chip | الكل | All |
@@ -243,6 +244,80 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | 4 | FW.China QUY250 | رافعة مجنزرة | Crawler crane | [[CAPACITY:QUY250]] | 6380, 6382, 6385 | [[OWNED_OR_PARTNER:QUY250]] |
 | 5 | Kobelco CKE2500 | رافعة مجنزرة | Crawler crane | [[CAPACITY:CKE2500]] | 6367, 6370, 6371 | HIDDEN: carries another company's branding |
 | 6 | Grove GMK6350 | رافعة لكل التضاريس | All-terrain crane | [[CAPACITY:GMK6350]] | 6388, 6389, 6392, 6393 | [[OWNED_OR_PARTNER:GMK6350]] |
+
+---
+
+### 6b. Find your crane v2 additions (lineup, load check, detail sheet, comparison)
+
+Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, sheet and comparison strings load on demand with their code, so they live in `src/content/crane-list-copy.ts` (type `CraneListCopy` in `types.ts`); the same copy rules and font-coverage checks apply (`crane-list-copy.test.ts`). Every figure next to these labels is the manufacturer's, shown with the DRAFT badge until Atlas confirms.
+
+**Card**
+
+| Element | العربية | English |
+|---|---|---|
+| Compare link (header) | قارن الطرازات | Compare models |
+| Details button (+ model for screen readers) | التفاصيل | Details |
+| Rating label | أقصى حمولة · تصنيف الشركة المصنّعة | Max capacity · Manufacturer rating |
+| Radius of the rating (only where the spec states it for the same rating) | على نصف قطر {radius} | at {radius} radius |
+| Key spec: longest main boom | أقصى طول للذراع | Max boom length |
+| Footnote for a spec-database figure (marked *) | من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة | From a spec database, not the manufacturer's own document |
+| Load note: rating at or above the load | مصنّفة لحمولة {load} أو أكثر على أقصر نصف قطر | Rated for {load} or more at its shortest radius |
+| Load note: rating below the load | أقصى حمولة لها أقل من {load} | Its maximum rating is below {load} |
+
+**Load check** (never promises a lift: it compares with maximum ratings and always shows the radius caveat)
+
+| Element | العربية | English |
+|---|---|---|
+| Title | قارن حمولتك بالتصنيفات | Check your load against the ratings |
+| Field label | وزن الحمولة (طن) | Load weight (t) |
+| Caveat (always visible) | أقصى حمولة تنطبق على أقصر نصف قطر فقط. ما ترفعه الرافعة فعلاً يعتمد على نصف القطر وتجهيزها، فأرسل لنا الوزن ونصف القطر لنراجع جدول الأحمال معك. | A maximum rating applies only at the shortest radius. What a crane can really lift depends on the radius and its set-up, so send us the weight and radius and we will check the load chart with you. |
+| Link → form | أرسل الوزن ونصف القطر | Send the weight and radius |
+| Clear (icon button name) | امسح وزن الحمولة | Clear the load weight |
+| Invalid entry | اكتب الوزن بالطن بالأرقام، مثل 25 أو 12.5. | Enter the weight in tonnes, for example 25 or 12.5. |
+| Result, none | لا يوجد طراز هنا تصنيفه الأقصى {load} أو أكثر. أرسل لنا التفاصيل لنراجعها. | No model here has a maximum rating of {load} or more. Send us the details and we will look at them. |
+| Result, 1 | طراز واحد تصنيفه الأقصى {load} أو أكثر. | 1 model has a maximum rating of {load} or more. |
+| Result, 2 | طرازان تصنيفهما الأقصى {load} أو أكثر. | 2 models have a maximum rating of {load} or more. |
+| Result, 3–10 | {n} طرازات تصنيفها الأقصى {load} أو أكثر. | {n} models have a maximum rating of {load} or more. |
+| Result, 11+ | {n} طرازاً تصنيفها الأقصى {load} أو أكثر. | {n} models have a maximum rating of {load} or more. |
+
+**Detail sheet**
+
+| Element | العربية | English |
+|---|---|---|
+| WhatsApp (template B) | اسأل عنها على واتساب | Ask on WhatsApp |
+| Link → comparison | قارنها بطرازات أخرى | Compare with other models |
+| Gallery name | صور {name} | {name} photos |
+| Rating note heading | عن هذا التصنيف | About this rating |
+| Sources heading | مصادر الأرقام | Where the figures come from |
+| Spec groups | الرفع · الذراع الرئيسي والإضافي · الهيكل والقيادة · المحرك والسير · الأبعاد والأوزان | Lifting · Boom and jib · Carrier · Engine and travel · Dimensions and weights |
+| Dimension rows | الطول الكلي · العرض الكلي · الارتفاع الكلي | Overall length · Overall width · Overall height |
+
+**Comparison**
+
+| Element | العربية | English |
+|---|---|---|
+| Title | قارن الطرازات | Compare models |
+| Lead | اختر حتى ثلاث رافعات لتقارن مواصفاتها جنباً إلى جنب. | Choose up to three cranes to compare their specifications side by side. |
+| Picker label | الطرازات في المقارنة | Models in the comparison |
+| A 4th pick replaced the oldest | ثلاث رافعات كحدّ أقصى، فأُزيلت أقدم رافعة اخترتها. | Three at most, so your oldest pick made room. |
+| Only one model left | اختر رافعة ثانية لتبدأ المقارنة. | Choose a second crane to start comparing. |
+| Request (per column, + model for screen readers) | اطلبها | Request |
+| Table name | مقارنة مواصفات الرافعات | Crane specification comparison |
+| Empty cell (screen readers) | غير مذكور في وثيقة الشركة المصنّعة | Not stated by the manufacturer |
+| Empty-cell note | — تعني أن وثيقة الشركة المصنّعة لا تذكر هذا الرقم لهذا الطراز. نتركه فارغاً ولا نقدّره. | — means the manufacturer's document does not state this figure for this model. We leave it blank rather than estimate it. |
+| * mark (screen readers) | من قاعدة بيانات مواصفات | from a spec database |
+| * note | * من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة. | * From a spec database, not from the manufacturer's own document. |
+| Notes heading | ملاحظات على التصنيفات | Notes on the ratings |
+
+**Rating notes** (from the research notes in `crane-specs.ts`; shown in the sheet and under the comparison)
+
+| Model | العربية | English |
+|---|---|---|
+| Grove RT700E | تصنيفها 60 طناً أمريكياً، أي 55 طناً مترياً: الرقمان للتصنيف نفسه بوحدتين مختلفتين. | Rated 60 US tons, which is 55 metric tonnes: the same rating in two units. |
+| Tadano Faun ATF 60-3 | تبلغ 60 طناً على نصف قطر 2.5 م فوق الخلف ومع تجهيزات إضافية؛ وفي نطاق العمل المعتاد يبيّن الجدول 55 طناً على 2.5 م. | 60 t is over the rear at 2.5 m with additional equipment; over the standard working range the chart shows 55 t at 2.5 m. |
+| Terex AC200-1 | تصنيف 200 طن يحتاج تجهيزاً خاصاً، وينطبق على نصف قطر قصير لم نتمكّن من قراءته بدقة من الجدول. | The 200 t rating needs a special attachment and applies at a short radius we could not read reliably from the chart. |
+| Fuwa QUY250 | صفحة Fuwa تذكر 260 طناً، واسم الطراز يقول 250 طناً، وهو الرقم الذي نستخدمه في بقية الصفحة إلى أن تؤكّده أطلس. | Fuwa's page states 260 t; the model name says 250 t, the figure we use elsewhere on this page until Atlas confirms it. |
+| Grove GMK6350 | تصنيفها 350 طناً أمريكياً، أي 317.5 طناً مترياً، محوّلة من 700 ألف رطل على 8 أقدام. | Rated 350 US tons, which is 317.5 metric tonnes, converted from 700,000 lb at 8 ft. |
 
 ---
 

@@ -196,7 +196,7 @@ describe('follow-up, email subject and payload', () => {
   });
 
   it('names the crane or service in the email subject', () => {
-    expect(emailSubject(values({ crane: 'crane:quy250' }), en)).toBe('Website request: Fuwa (FW.China) QUY250');
+    expect(emailSubject(values({ crane: 'crane:quy250' }), en)).toBe('Website request: Fuwa QUY250');
     expect(emailSubject(emptyRequest(), ar)).toBe('طلب من الموقع: لست متأكداً، ساعدوني في الاختيار');
   });
 

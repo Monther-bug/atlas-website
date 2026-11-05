@@ -1,7 +1,8 @@
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { ArrowUpIcon, WhatsAppIcon } from '@/components/Icons';
 import { Logo } from '@/components/Logo';
-import { Section, reveal } from '@/components/ui';
+import { reveal } from '@/components/ui/Reveal';
+import { Section } from '@/components/ui/Section';
 import { siteInfo } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';

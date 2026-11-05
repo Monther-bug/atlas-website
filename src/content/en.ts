@@ -114,7 +114,7 @@ export const en: Copy = {
   // §6 + spec §15.8
   grid: {
     title: 'Find your crane',
-    intro: 'Filter by type or capacity, then request the crane you need on WhatsApp.',
+    intro: 'Filter the models by type, open the full specification of each crane, and compare up to three side by side.',
     availability: 'Tell us your dates and we will confirm availability.',
     typeLabel: 'Type',
     bandLabel: 'Capacity',
@@ -132,7 +132,16 @@ export const en: Copy = {
       capacity: 'Max capacity',
       request: 'Request this crane',
       formLink: 'Or use the request form',
+      details: 'Details',
+      rating: 'Manufacturer rating',
+      atRadius: 'at {radius} radius',
+      boomMax: 'Max boom length',
+      secondary: 'From a spec database, not the manufacturer’s own document',
     },
+    continuation: 'Compare the specs and request the one that fits your lift.',
+    compareLink: 'Compare models',
+    fits: 'Rated for {load} or more at its shortest radius',
+    below: 'Its maximum rating is below {load}',
   },
 
   // §3a (v2, new copy from confirmed facts)

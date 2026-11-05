@@ -107,6 +107,38 @@ function hoistLazy(kind: 'desktop' | 'touch'): MotionModule {
   };
 }
 
+/**
+ * The «اعثر على رافعتك» lineup chunk (card entrance and tickers, Flip reflow on filter, the segmented thumb, desktop
+ * photo drift) loads when #crane-list is within one viewport, like the Hoist. The section's own live DOM arrives
+ * from a lazy island; the chunk binds to it on the island's 'mount' event. Cleanup drops a late import.
+ */
+function lineupLazy(kind: 'desktop' | 'touch'): MotionModule {
+  return (env) => {
+    const section = document.getElementById('crane-list');
+    if (!section) return noop;
+    let dispose: Dispose = noop;
+    let alive = true;
+    const stop = whenNear(section, () => {
+      import('./lineup')
+        .then((m) => {
+          if (!alive) return;
+          try {
+            dispose = m.lineupMotion(section, kind, env);
+          } catch (error) {
+            console.error('[motion] lineup', error);
+          }
+        })
+        .catch((error: unknown) => console.error('[motion] lineup', error));
+    });
+    return () => {
+      alive = false;
+      stop();
+      dispose();
+      dispose = noop;
+    };
+  };
+}
+
 /** Desktop context. Order matters: Lenis first, then the hero intro (it must set its from-states in this same task). */
 const DESKTOP: MotionModule[] = [
   startLenis,
@@ -120,6 +152,7 @@ const DESKTOP: MotionModule[] = [
   startBackToTop,
   startRide,
   hoistLazy('desktop'),
+  lineupLazy('desktop'),
   // v2 shared hooks (reveals.ts): no-ops until a section renders data-reveal / data-ticker / data-magnetic / data-parallax.
   startRevealsDesktop,
   startTickers,
@@ -142,6 +175,7 @@ const TOUCH: MotionModule[] = [
   startBackToTop,
   startRide,
   hoistLazy('touch'),
+  lineupLazy('touch'),
   startRevealsTouch,
   startTickers,
   // S.about: About statement highlight (one pass); On site cards stagger.

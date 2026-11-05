@@ -7,6 +7,8 @@ import { getCopy } from '@/content/all';
 import type { Lang } from '@/content/types';
 import { env } from '@/env';
 import { LangProvider } from '@/lib/lang';
+// The lineup's load check and comparison render into the HTML here; the browser loads them as lazy islands.
+import '@/sections/crane-list/server-islands';
 import { buildJsonLd, jsonLdScript } from '@/seo/jsonld';
 
 /** Static HTML for one page: the same tree src/boot.tsx hydrates. */

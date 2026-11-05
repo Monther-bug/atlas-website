@@ -1,5 +1,8 @@
 import { Fill } from '@/components/Fill';
-import { Card, Chip, Section, SectionHeader, reveal } from '@/components/ui';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { reveal } from '@/components/ui/Reveal';
+import { Section, SectionHeader } from '@/components/ui/Section';
 import { siteInfo } from '@/content/site';
 import type { DocumentFile } from '@/content/types';
 import { useLang } from '@/lib/lang';
