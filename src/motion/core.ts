@@ -7,7 +7,7 @@ import { startRide } from './ride';
 import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mode';
 import { startServiceSetDown, startServiceSlings } from './reveal';
 import { startBackToTop, startFooterPad, startProgressRope } from './rope';
-import { lenisRef, runAll, safely, type Dispose, type MotionEnv, type MotionModule } from './shared';
+import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
 
 /** Motion that starts later than this (ms after navigation) finds the hero already revealed by the CSS failsafe. */
@@ -71,6 +71,38 @@ const startLenis: MotionModule = () => {
   };
 };
 
+/**
+ * The Hoist chunk loads when #cranes is within one viewport (C10): the sticky stage on desktop, the load
+ * stack on touch. whenNear's own cleanup only disconnects its observer, so this also drops a late import
+ * and disposes what the chunk started.
+ */
+function hoistLazy(kind: 'desktop' | 'touch'): MotionModule {
+  return (env) => {
+    const section = document.querySelector<HTMLElement>('[data-hoist]');
+    if (!section) return noop;
+    let dispose: Dispose = noop;
+    let alive = true;
+    const stop = whenNear(section, () => {
+      import('./hoist')
+        .then((m) => {
+          if (!alive) return;
+          try {
+            dispose = kind === 'desktop' ? m.hoistDesktop(section, env.lang, env.rtl) : m.hoistTouch(section, env.lang);
+          } catch (error) {
+            console.error('[motion] hoist', error);
+          }
+        })
+        .catch((error: unknown) => console.error('[motion] hoist', error));
+    });
+    return () => {
+      alive = false;
+      stop();
+      dispose();
+      dispose = noop;
+    };
+  };
+}
+
 /** Desktop context. Order matters: Lenis first, then the hero intro (it must set its from-states in this same task). */
 const DESKTOP: MotionModule[] = [
   startLenis,
@@ -82,10 +114,11 @@ const DESKTOP: MotionModule[] = [
   startFooterPad,
   startBackToTop,
   startRide,
+  hoistLazy('desktop'),
 ];
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
-const TOUCH: MotionModule[] = [heroIntro, heroDock, startServiceSetDown, startFooterPad, startBackToTop, startRide];
+const TOUCH: MotionModule[] = [heroIntro, heroDock, startServiceSetDown, startFooterPad, startBackToTop, startRide, hoistLazy('touch')];
 
 function setMode(mode: MotionMode): void {
   document.documentElement.dataset.motion = mode;

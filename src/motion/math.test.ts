@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   HOIST,
   centerOn,
+  counterLabel,
   counterSteps,
   counterText,
+  coverPositionY,
+  directionalSnap,
   flightDelta,
   hoistPinLength,
   hoistPinUnits,
   hoistSnapPoints,
   hookToBox,
+  nearestSnap,
   viewBoxToBox,
   type Point,
 } from './math';
@@ -144,5 +148,96 @@ describe('flightDelta and centerOn', () => {
 
   it('centres a size on an anchor rect', () => {
     expect(centerOn({ left: 100, top: 100, width: 200, height: 50 }, { width: 80, height: 30 })).toEqual({ left: 160, top: 110, width: 80, height: 30 });
+  });
+});
+
+describe('nearestSnap', () => {
+  it('returns the closest snap point to the current progress', () => {
+    expect(nearestSnap([0, 0.25, 0.5, 1], 0.3)).toBe(0.25);
+    expect(nearestSnap([0, 0.25, 0.5, 1], 0.4)).toBe(0.5);
+    expect(nearestSnap([0, 0.25, 0.5, 1], 0.97)).toBe(1);
+  });
+
+  it('returns the progress itself when there are no points', () => {
+    expect(nearestSnap([], 0.3)).toBe(0.3);
+  });
+});
+
+describe('directionalSnap', () => {
+  const points = [0, 0.25, 0.5, 1];
+
+  it('goes on to the next point in the direction of the last scroll', () => {
+    expect(directionalSnap(points, 0.3, 1)).toBe(0.5);
+    expect(directionalSnap(points, 0.3, -1)).toBe(0.25);
+    expect(directionalSnap(points, 0.26, 1)).toBe(0.5);
+    expect(directionalSnap(points, 0.49, -1)).toBe(0.25);
+  });
+
+  it('stays on a point that is within the tolerance, whatever the direction', () => {
+    expect(directionalSnap(points, 0.252, 1, 0.005)).toBe(0.25);
+    expect(directionalSnap(points, 0.248, -1, 0.005)).toBe(0.25);
+  });
+
+  it('never runs past the first or last point', () => {
+    expect(directionalSnap(points, 1.2, 1)).toBe(1);
+    expect(directionalSnap(points, -0.1, -1)).toBe(0);
+  });
+
+  it('falls back to the nearest point without a direction, and to the progress without points', () => {
+    expect(directionalSnap(points, 0.3, 0)).toBe(0.25);
+    expect(directionalSnap([], 0.3, 1)).toBe(0.3);
+  });
+});
+
+describe('coverPositionY (keep a hook point inside a top-anchored cover crop)', () => {
+  const rect = { left: 0, top: 0, width: 4240, height: 2385 };
+  const hook = { x: 885, y: 1868 }; // IMG_6389, the GMK6350's real hook
+
+  it('stays top-anchored (0) when the hook is already high enough', () => {
+    // 1328×821: scale = max(0.3132, 0.3442) = 0.3442 → hook at 643 of 821 (78 %)
+    expect(coverPositionY(hook, rect, { width: 1328, height: 821 }, 0.8)).toBe(0);
+  });
+
+  it('moves the crop down just enough to lift the hook to the limit', () => {
+    const box = { width: 1328, height: 629 };
+    const y = coverPositionY(hook, rect, box, 0.8);
+    expect(y).toBeGreaterThan(0);
+    expect(y).toBeLessThan(1);
+    expect(hookToBox(hook, rect, box, { x: 0.5, y }).y).toBeCloseTo(0.8 * 629, 6);
+  });
+
+  it('is 0 when nothing is cut vertically, and never more than 1', () => {
+    expect(coverPositionY(hook, rect, { width: 400, height: 900 }, 0.5)).toBe(0);
+    expect(coverPositionY({ x: 885, y: 2380 }, rect, { width: 4240, height: 400 }, 0.1)).toBe(1);
+  });
+});
+
+describe('counterLabel (whole tonnes mid-run, the exact rating at the end)', () => {
+  const gmk = { from: 250, to: 317.5 }; // the GMK6350's metric rating
+
+  it('lands on the exact final value, decimals included, in both languages', () => {
+    expect(counterLabel(317.5, gmk, 'en')).toBe('317.5');
+    expect(counterLabel(317.5, gmk, 'ar')).toBe('317.5');
+    expect(counterLabel(55, { from: 0, to: 55 }, 'ar')).toBe('55');
+  });
+
+  it('shows whole tonnes in between, never one past the final value', () => {
+    expect(counterLabel(290.4, gmk, 'en')).toBe('290');
+    expect(counterLabel(317.3, gmk, 'en')).toBe('317');
+    expect(counterLabel(317.49, gmk, 'en')).toBe('317'); // Math.round would say 318
+  });
+
+  it('starts on the exact previous value and clamps outside the run', () => {
+    expect(counterLabel(317.5, { from: 317.5, to: 400 }, 'en')).toBe('317.5');
+    expect(counterLabel(317.6, { from: 317.5, to: 400 }, 'en')).toBe('318');
+    expect(counterLabel(-5, { from: 0, to: 55 }, 'en')).toBe('0');
+    expect(counterLabel(400, gmk, 'en')).toBe('317.5');
+  });
+
+  it('also runs downwards, and never throws on a non-finite value', () => {
+    expect(counterLabel(57.6, { from: 60, to: 55 }, 'en')).toBe('58');
+    expect(counterLabel(55, { from: 60, to: 55 }, 'en')).toBe('55');
+    expect(counterLabel(Number.NaN, gmk, 'en')).toBe('250');
+    expect(counterLabel(Number.POSITIVE_INFINITY, gmk, 'en')).toBe('250');
   });
 });
