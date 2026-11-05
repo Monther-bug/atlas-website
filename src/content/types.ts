@@ -133,6 +133,7 @@ export interface Copy {
     request: string;
     call: { text: string; label: string }; // label has {phone}
     menu: { open: string; close: string; whatsapp: string };
+    theme: string; // accessible name of the dark-mode toggle (aria-pressed), header and menu
   };
 
   /** Copy deck §3 + spec §5.2 and §15.1. */

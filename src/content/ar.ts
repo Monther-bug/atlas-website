@@ -29,6 +29,7 @@ export const ar: Copy = {
     request: 'اطلب رافعة',
     call: { text: 'اتصل', label: 'اتصل بنا على {phone}' },
     menu: { open: 'القائمة', close: 'إغلاق القائمة', whatsapp: 'راسلنا على واتساب' },
+    theme: 'الوضع الداكن',
   },
 
   // §3 + spec §5.2, §15.1

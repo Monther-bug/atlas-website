@@ -68,6 +68,19 @@ export function MenuIcon(props: IconProps) {
   );
 }
 
+/** Theme toggle: a sun in the light theme, a moon in the dark one (CSS picks the shape from html[data-theme]). */
+export function ThemeIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <g className="dark:hidden">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2" />
+      </g>
+      <path className="hidden dark:block" d="M20 15A8.5 8.5 0 1 1 9 4a7 7 0 0 0 11 11z" />
+    </Svg>
+  );
+}
+
 /** 'forward' points the reading direction (mirrored in RTL); 'back' the opposite; 'down' never mirrors. */
 export function ArrowIcon({ direction = 'forward', className = '', ...props }: IconProps & { direction?: 'forward' | 'back' | 'down' }) {
   const turn = direction === 'down' ? 'rotate-90' : direction === 'back' ? '-scale-x-100 rtl:scale-x-100' : 'rtl:-scale-x-100';

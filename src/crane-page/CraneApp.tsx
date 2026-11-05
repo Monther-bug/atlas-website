@@ -80,7 +80,7 @@ export function CraneApp({ crane }: { crane: Crane }) {
     <>
       <a
         href="#main"
-        className="fixed start-3 top-3 z-50 -translate-y-24 bg-white px-5 py-3 font-semibold text-ink transition-transform focus:translate-y-0"
+        className="fixed start-3 top-3 z-50 -translate-y-24 bg-(--surface-raised) px-5 py-3 font-semibold text-(--surface-fg) transition-transform focus:translate-y-0"
       >
         {copy.header.skipLink}
       </a>

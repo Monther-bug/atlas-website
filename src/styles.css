@@ -2,6 +2,9 @@
 @import './fonts.css';
 @import './components/ui/ui.css';
 
+/* `dark:` follows the visitor's choice (html[data-theme='dark']), never the OS setting (Tailwind's default). */
+@custom-variant dark (&:where([data-theme='dark'] *));
+
 /* ── Tokens (spec §6). Only these colours exist: the default palette is cleared,
    so a stray `bg-yellow-400` simply does not compile to anything. ─────────── */
 @theme static {
@@ -110,8 +113,61 @@
   --grad-night: radial-gradient(110% 85% at 50% -12%, rgb(46 42 153 / 0.55) 0%, rgb(35 32 122 / 0.22) 42%, rgb(10 10 10 / 0) 72%);
   /* Brand ground: brand navy at the top deepening to brand-950 (white 11:1 at the lightest point). */
   --grad-brand: radial-gradient(120% 100% at 50% -10%, #2e2a99 0%, #23207a 35%, #100e3d 85%);
-  /* Tile ramp: white to mist, top to bottom. */
-  --grad-tile: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
+  /* Tile ramp: white to mist, top to bottom (graphite in the dark theme). */
+  --grad-tile: linear-gradient(180deg, var(--yard-raised), var(--ground-mist));
+
+  /* ── Theme. Light is the default and is never taken from the OS (user: "make the default theme the light, not
+     based on the system"). html[data-theme='dark'] (head script, from localStorage; ThemeToggle) remaps only these
+     variables: the light grounds (`yard`: white, mist, tint and the light panels on dark sections) turn graphite and
+     every --surface-* role in ui.css follows. Dark grounds (black, night, navy, brand) are the same in both themes. ── */
+  color-scheme: light;
+  --page: var(--color-mist);
+  --ground-white: var(--color-white);
+  --ground-mist: var(--color-mist);
+  --ground-tint: var(--color-neutral-100);
+  --yard-fg: var(--color-ink);
+  --yard-fg-2: var(--color-ink-2);
+  --yard-fg-3: var(--color-ink-3);
+  --yard-line: var(--color-line);
+  --yard-control: var(--color-line-control);
+  --yard-raised: var(--color-white);
+  --yard-sunken: var(--color-mist);
+  --yard-track: var(--color-neutral-100);
+  --yard-accent: var(--color-brand);
+  --yard-on-accent: var(--color-white);
+  --yard-accent-hover: var(--color-brand-600);
+  --yard-wash: var(--color-brand-50);
+  --yard-wash-2: var(--color-brand-100);
+  --yard-red: var(--color-red);
+  --yard-red-wash: var(--color-red-50);
+  --yard-ok: var(--color-ok);
+}
+/* Dark theme (contrast on the raised step #282828, the worst case: fg 12.6, fg-2 9.9, fg-3 5.8, accent 6.4,
+   red-bright 4.8, control white/40 3.6). Grounds step up from the black of the chart sections, which stay black, so the
+   page keeps its rhythm instead of turning into one black slab: page/black #0a0a0a, mist #141414, white #1e1e1e
+   (1.11:1 against mist, 1.19:1 against black), tint #232323, raised #282828. */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --page: var(--color-black);
+  --ground-white: #1e1e1e;
+  --ground-mist: #141414;
+  --ground-tint: #232323;
+  --yard-fg: var(--color-neutral-100);
+  --yard-fg-2: var(--color-neutral-300);
+  --yard-fg-3: var(--color-neutral-400);
+  --yard-line: var(--color-line-dark);
+  --yard-control: rgb(255 255 255 / 0.4);
+  --yard-raised: #282828;
+  --yard-sunken: #0e0e0e;
+  --yard-track: rgb(255 255 255 / 0.1);
+  --yard-accent: var(--color-brand-300);
+  --yard-on-accent: var(--color-black);
+  --yard-accent-hover: var(--color-brand-200);
+  --yard-wash: rgb(165 163 245 / 0.12);
+  --yard-wash-2: rgb(165 163 245 / 0.2);
+  --yard-red: var(--color-red-bright);
+  --yard-red-wash: rgb(255 90 79 / 0.12);
+  --yard-ok: var(--color-ok-bright);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────── */
@@ -123,7 +179,7 @@
   /* Themed browser surfaces (spec §15.5). */
   :root {
     caret-color: var(--color-red);
-    scrollbar-color: var(--color-neutral-600) var(--color-mist);
+    scrollbar-color: var(--color-neutral-600) var(--page);
     accent-color: var(--color-red);
   }
   ::selection {
@@ -148,6 +204,15 @@
   :is(.bg-white, .bg-mist, .bg-neutral-100, .bg-brand-50, [data-ground='light']) * {
     --ring: var(--color-brand);
     caret-color: var(--color-red);
+  }
+  /* Dark theme: every ground is dark, so the dark-ground ring, caret and selection apply everywhere. */
+  html[data-theme='dark'] * {
+    --ring: var(--color-white);
+    caret-color: var(--color-red-bright);
+  }
+  html[data-theme='dark'] ::selection {
+    background: var(--color-white);
+    color: var(--color-black);
   }
   /* Hairline by default: a bare `border` is not ink. */
   *,
@@ -180,8 +245,8 @@
     font-family: var(--font-body);
     font-size: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
     line-height: 1.6;
-    background: var(--color-mist);
-    color: var(--color-ink);
+    background: var(--page);
+    color: var(--yard-fg);
   }
   body:lang(ar) {
     font-size: clamp(1.0625rem, 1.042rem + 0.093vw, 1.125rem);
@@ -279,6 +344,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* The theme switch (src/lib/theme.ts) and the sheet morph: no cross-fade, the new state at once. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {

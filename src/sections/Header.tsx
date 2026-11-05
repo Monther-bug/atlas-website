@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { Button } from '@/components/Button';
 import { ArrowIcon, CloseIcon, MenuIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { sheetTrigger } from '@/components/ui/sheet-trigger';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
 import { homeHref, useLang } from '@/lib/lang';
+import { useDark } from '@/lib/theme';
 import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
 /** C9 nav targets. */
@@ -102,6 +104,7 @@ export function Header() {
   const requestHref = crane ? `${value.home}?crane=${crane}#request` : '#request';
   // A crane page opens on a white hero, so its first paint (before any script) is already the light glass.
   const { atTop, tone, active } = useChromeState(crane ? 'light' : 'dark');
+  const dark = useDark();
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -110,7 +113,8 @@ export function Header() {
   const tel = telHref();
 
   // Over the hero's first pixels the bar is clear and white-on-black; everywhere else it is glass in the ground's tone.
-  const onLight = !atTop && tone === 'light';
+  // In the dark theme every ground is dark, so the bar stays black glass.
+  const onLight = !dark && !atTop && tone === 'light';
   const fg = onLight ? 'text-ink' : 'text-white';
   const fg2 = onLight ? 'text-ink-2 hover:text-ink' : 'text-neutral-300 hover:text-white';
   const wash = onLight ? 'hover:bg-black/[0.06]' : 'hover:bg-white/10';
@@ -241,6 +245,10 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1 justify-self-end sm:gap-2">
+          <ThemeToggle
+            label={copy.header.theme}
+            className={`hidden size-11 shrink-0 items-center justify-center rounded-full transition-colors duration-(--dur-state) ease-ui sm:inline-flex dark:bg-white/[0.12] ${fg2} ${wash}`}
+          />
           <a
             href={otherHref}
             hrefLang={otherLang}
@@ -334,17 +342,25 @@ export function Header() {
                 {copy.header.call.text}
               </Button>
             )}
-            <a
-              href={otherHref}
-              hrefLang={otherLang}
-              lang={otherLang}
-              aria-label={copy.header.langSwitch.label}
-              data-testid="menu-lang-switch"
-              onClick={() => track('lang_switch')}
-              className="inline-flex min-h-11 items-center justify-center self-center rounded-full px-5 font-semibold text-neutral-300 transition-colors duration-(--dur-state) ease-ui hover:text-white"
-            >
-              {copy.header.langSwitch.text}
-            </a>
+            {/* The close button stays the dialog's first stop; the theme toggle (named; pressed = the accent fill of a pressed
+                chip on dark) sits with the language switch. */}
+            <div className="flex items-center justify-center gap-2">
+              <ThemeToggle
+                label={copy.header.theme}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white/10 px-5 font-semibold [&>span]:not-sr-only transition-colors duration-(--dur-state) ease-ui hover:bg-white/20 dark:bg-brand-300 dark:text-black"
+              />
+              <a
+                href={otherHref}
+                hrefLang={otherLang}
+                lang={otherLang}
+                aria-label={copy.header.langSwitch.label}
+                data-testid="menu-lang-switch"
+                onClick={() => track('lang_switch')}
+                className="inline-flex min-h-11 items-center justify-center rounded-full px-5 font-semibold text-neutral-300 transition-colors duration-(--dur-state) ease-ui hover:text-white"
+              >
+                {copy.header.langSwitch.text}
+              </a>
+            </div>
           </div>
         </div>
       </dialog>

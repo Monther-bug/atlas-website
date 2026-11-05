@@ -127,7 +127,7 @@ export function ServicesContent() {
 
         {/* Heavy transport: the route diagram, drawn in brand navy; the load is the one red mark. */}
         <BentoTile as="li" span="third" data-service-tile={transport.id} className={cx(TILE, 'p-0')}>
-          <div className="px-(--space-tile) pt-(--space-tile) text-brand">
+          <div className="px-(--space-tile) pt-(--space-tile) text-(--surface-accent)">
             <RouteArt className="block h-auto w-full" />
           </div>
           <ServiceText service={transport} className="p-(--space-tile)" />
@@ -153,7 +153,7 @@ export function ServicesContent() {
         {/* Oil services: no photo until Atlas supplies one (copy deck §5), so a line drawing of a derrick. */}
         <BentoTile as="li" span="two-thirds" data-service-tile={oil.id} className={cx(TILE, 'p-0 @min-[40rem]:flex-row')}>
           <ServiceText service={oil} className="p-(--space-tile) @min-[40rem]:py-[calc(var(--space-tile)*1.25)]" />
-          <SplitMedia className="flex items-end justify-center bg-brand-50 px-(--space-tile) pt-(--space-tile) text-brand">
+          <SplitMedia className="flex items-end justify-center bg-(--surface-wash) px-(--space-tile) pt-(--space-tile) text-(--surface-accent)">
             <DerrickArt className="block h-auto w-full max-w-[11rem] @min-[40rem]:max-w-[21rem]" />
           </SplitMedia>
         </BentoTile>

@@ -30,6 +30,7 @@ export const en: Copy = {
     request: 'Request a crane',
     call: { text: 'Call', label: 'Call us on {phone}' },
     menu: { open: 'Menu', close: 'Close menu', whatsapp: 'Message us on WhatsApp' },
+    theme: 'Dark mode',
   },
 
   // §3 + spec §5.2, §15.1

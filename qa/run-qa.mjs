@@ -13,7 +13,7 @@
 //   QA_TARGET          staging (draft badges + [[CONFIRM]] expected) | production (both forbidden); default staging
 //   QA_FORM_ENDPOINT   the build's VITE_FORM_ENDPOINT; this script answers it (500, then 200) to test failure and
 //                      success. Unset: the form is expected to hand the request off to WhatsApp / email instead.
-//   QA_ONLY            comma list of sections: matrix,controls,keyboard,nojs,seo,truth,csp, and cranes (all of section 8)
+//   QA_ONLY            comma list of sections: matrix,controls,keyboard,nojs,seo,truth,csp,dark, and cranes (all of section 8)
 //                      or one part of it: crane-seo,crane-links,crane-matrix,crane-nojs,crane-flows,crane-keyboard (default: all)
 //   QA_CRANES          crane pages to check (default all five, both languages); QA_CRANE_FLOWS = the cranes whose request
 //                      flows and keyboard walks run (default gmk6350,quy250)
@@ -69,8 +69,8 @@ const EMAIL = 'atlasalsahralibya@gmail.com';
 const want = (section) => !ONLY.length || ONLY.includes(section);
 
 const PAGES = [
-  { id: 'ar', path: '/', lang: 'ar', dir: 'rtl', other: '/en/', otherLang: 'en' },
-  { id: 'en', path: '/en/', lang: 'en', dir: 'ltr', other: '/', otherLang: 'ar' },
+  { id: 'ar', path: '/', lang: 'ar', dir: 'rtl', other: '/en/', otherLang: 'en', themeName: 'الوضع الداكن' },
+  { id: 'en', path: '/en/', lang: 'en', dir: 'ltr', other: '/', otherLang: 'ar', themeName: 'Dark mode' },
 ];
 const VIEWPORTS = [
   { width: 320, height: 640 },
@@ -143,7 +143,7 @@ console.log(`Base ${BASE} · target ${TARGET} · WhatsApp ${PROFILE.whatsapp ? '
  * from leaving the page; gtag.js and the form endpoint are answered locally. `loader: false` (default) marks the
  * first-visit intro as seen, so the page opens as on a repeat visit.
  */
-async function open(urlPath, { width = 1440, height = 900, touch = false, reduced = false, js = true, loader = false, csp = null } = {}) {
+async function open(urlPath, { width = 1440, height = 900, touch = false, reduced = false, js = true, loader = false, csp = null, theme = null, osDark = false } = {}) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   const problems = { console: [], page: [], requests: [], external: [], posts: [] };
@@ -205,11 +205,23 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
   });
   await page.setJavaScriptEnabled(js);
   await page.setViewport({ width, height, isMobile: touch, hasTouch: touch, deviceScaleFactor: 1 });
-  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }]);
-  await page.evaluateOnNewDocument((seen) => {
+  await page.emulateMediaFeatures([
+    { name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' },
+    { name: 'prefers-color-scheme', value: osDark ? 'dark' : 'light' },
+  ]);
+  await page.evaluateOnNewDocument((seen, theme) => {
     try {
       if (seen) sessionStorage.setItem('atlas-intro', '1');
+      // A saved theme (src/lib/theme.ts), seeded only on the first load of this context: a reload keeps what the page stored.
+      if (theme && !sessionStorage.getItem('qa-theme-seeded')) {
+        localStorage.setItem('atlas-theme', theme);
+        sessionStorage.setItem('qa-theme-seeded', '1');
+      }
     } catch {}
+    // What the first frame paints: the theme and the page ground (no flash of the other theme).
+    requestAnimationFrame(() => {
+      window.__firstFrame = { theme: document.documentElement.dataset.theme ?? 'light', bg: document.body ? getComputedStyle(document.body).backgroundColor : '' };
+    });
     window.__opened = [];
     window.__csp = [];
     window.__shifts = [];
@@ -237,7 +249,7 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
         for (const e of list.getEntries()) window.__shifts.push({ value: e.value, startTime: e.startTime, hadRecentInput: e.hadRecentInput });
       }).observe({ type: 'layout-shift', buffered: true });
     } catch {}
-  }, !loader);
+  }, !loader, theme);
   await page.goto(BASE + urlPath, { waitUntil: 'networkidle0', timeout: 60000 });
   await wait(2600); // the hero intro is still by ~1.9 s; the motion core and lazy islands have loaded
   return { page, context, problems, state };
@@ -1430,8 +1442,8 @@ async function controlsFor(p, c) {
 // ── 3. Keyboard walk: focus ring, never under the bar or the header ────────
 /** `minStops`: fewer tab stops than this means the walk got stuck (a crane page has fewer controls than the home page). */
 async function keyboardWalk(p, c, minStops = 40) {
-  const tag = `${p.id} @${c.width}x${c.height} ${c.id}`;
-  const s = await open(p.path, { width: c.width, height: c.height, touch: c.touch, reduced: c.reduced });
+  const tag = `${p.id} @${c.width}x${c.height} ${c.id}${c.theme ? ` ${c.theme}` : ''}`;
+  const s = await open(p.path, { width: c.width, height: c.height, touch: c.touch, reduced: c.reduced, theme: c.theme ?? null });
   const { page } = s;
   try {
     const misses = { ring: [], contrast: [], bar: [], header: [], off: [], faded: [] };
@@ -1708,6 +1720,182 @@ async function cspChecks() {
     } finally {
       await s.context.close();
     }
+    const d = await open(p.path, { width: 1440, height: 900, csp, theme: 'dark' });
+    try {
+      await step('csp', `${p.id} under the vercel.json CSP with a saved dark theme: the head script applies it, no violations`, async () => {
+        const r = await d.page.evaluate(() => ({ theme: document.documentElement.dataset.theme ?? 'light', first: window.__firstFrame?.theme, violations: window.__csp }));
+        return { pass: r.theme === 'dark' && r.first === 'dark' && r.violations.length === 0, detail: JSON.stringify(r) };
+      });
+    } finally {
+      await d.context.close();
+    }
+  }
+}
+
+// ── 9. Dark theme (src/lib/theme.ts) ────────────────────────────────────────
+// Light is the default on a first visit whatever the OS prefers; a saved dark theme paints from the first frame; the
+// dark page passes axe (contrast included) with its open states (menu, detail sheet, lightbox, form errors); the toggle
+// works from the keyboard, changes no layout, is remembered across a reload and across the two languages.
+const themeState = (page) =>
+  page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme ?? 'light',
+    scheme: getComputedStyle(document.documentElement).colorScheme,
+    stored: localStorage.getItem('atlas-theme'),
+    pressed: [...document.querySelectorAll('header button[aria-pressed]')].map((b) => b.getAttribute('aria-pressed')),
+    meta: document.querySelector('meta[name="theme-color"]')?.getAttribute('content') ?? '',
+    first: window.__firstFrame ?? null,
+  }));
+async function axeIn(page, include) {
+  await page.evaluate(axeSource);
+  return page.evaluate(
+    async (tags, include) => {
+      const ctx = include ? { include: [include] } : document;
+      const r = await window.axe.run(ctx, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] });
+      return r.violations.map((v) => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' ; ')}`);
+    },
+    AXE_TAGS,
+    include,
+  );
+}
+async function darkChecks(p, c) {
+  const kase = { page: p.id, width: c.width, mode: `${c.id} dark` };
+  const tag = `${p.id} @${c.width} ${c.id} dark:`;
+  const rec = (area, name, pass, detail) => record(area, `${tag} ${name}`, pass, detail, kase);
+
+  // Light by default, even when the OS prefers dark.
+  const l = await open(p.path, { width: c.width, height: c.height, touch: c.touch, osDark: true });
+  try {
+    const st = await themeState(l.page);
+    rec('theme', 'first visit with the OS in dark mode opens light', st.theme === 'light' && st.scheme === 'light' && st.first?.theme === 'light' && st.pressed.every((x) => x === 'false'), JSON.stringify(st));
+  } finally {
+    await l.context.close();
+  }
+
+  const s = await open(p.path, { width: c.width, height: c.height, touch: c.touch, theme: 'dark' });
+  const { page, problems } = s;
+  try {
+    const st = await themeState(page);
+    rec('theme', 'a saved dark theme paints from the first frame (no light flash), color-scheme dark, toggles pressed',
+      st.first?.theme === 'dark' && st.first?.bg === 'rgb(10, 10, 10)' && st.scheme === 'dark' && st.pressed.length === 2 && st.pressed.every((x) => x === 'true'),
+      JSON.stringify(st));
+    const loadCls = sessionCls(await page.evaluate(() => window.__shifts));
+    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, `CLS ${loadCls}`);
+    await scrollThrough(page);
+    await scrollToY(page, 0);
+    await wait(700);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    rec('layout', 'no horizontal overflow', overflow <= 0, overflow > 0 ? `${overflow}px` : '');
+    const axe = await axeIn(page, null);
+    rec('axe', 'no WCAG 2.2 A/AA violations on the whole page (axe, contrast included)', axe.length === 0, axe.join(' | '));
+    await page.screenshot({ path: `${SCREENS}${p.id}-${c.width}-${c.id}-dark.jpg`, type: 'jpeg', quality: 60 });
+
+    // Open states.
+    if (c.touch) {
+      await step('axe', `${tag} menu open: axe clean, the theme toggle is inside and named`, async () => {
+        const btn = await firstVisible(page, '[data-testid="menu-open"]');
+        await btn.click();
+        await wait(700);
+        const v = await axeIn(page, 'dialog[data-testid="menu-dialog"]');
+        const named = await page.$eval('dialog[data-testid="menu-dialog"] button[aria-pressed]', (b) => b.textContent.trim()).catch(() => '');
+        await page.keyboard.press('Escape');
+        await wait(500);
+        return { pass: v.length === 0 && named === p.themeName, detail: `${v.join(' | ') || 'axe clean'} · name "${named}"` };
+      }, kase);
+    } else {
+      await step('axe', `${tag} detail sheet open: axe clean`, async () => {
+        const btn = await page.$('#crane-list [data-details][data-crane="gmk6350"]');
+        await btn.evaluate((b) => b.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        await wait(300);
+        await btn.click();
+        await wait(1400);
+        // `list` is left out here: the photo carousel in the sheet (src/components/ui/Carousel.tsx) has <li role="group">
+        // in its <ul>, in both themes since before the dark theme (reported, not a colour issue). The whole-page run above
+        // keeps every rule.
+        const v = (await axeIn(page, '#crane-sheet')).filter((x) => !x.startsWith('list '));
+        await page.keyboard.press('Escape');
+        await wait(900);
+        return { pass: v.length === 0, detail: v.join(' | ') || 'axe clean' };
+      }, kase);
+      await step('axe', `${tag} lightbox open: axe clean`, async () => {
+        const photo = await page.$('#sites-track [data-testid="site-photo"]');
+        await photo.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+        await wait(300);
+        await photo.click();
+        await wait(1100);
+        const v = await axeIn(page, 'dialog[data-testid="lightbox"]');
+        await page.keyboard.press('Escape');
+        await wait(900);
+        return { pass: v.length === 0, detail: v.join(' | ') || 'axe clean' };
+      }, kase);
+    }
+    await step('axe', `${tag} form with errors: axe clean`, async () => {
+      await tap(page, '[data-testid="form-submit"]');
+      await wait(700);
+      const v = await axeIn(page, '#request');
+      const shown = await page.$eval('[data-testid="form-error-summary"]', (e) => e.checkVisibility()).catch(() => false);
+      return { pass: shown && v.length === 0, detail: `${shown ? 'error summary shown' : 'no error summary'} · ${v.join(' | ') || 'axe clean'}` };
+    }, kase);
+
+    // The toggle from the keyboard: Enter, then Space; no layout shift; remembered across a reload.
+    await step('theme', `${tag} the toggle works from the keyboard (Enter, Space), shifts nothing, and is remembered after a reload`, async () => {
+      await scrollToY(page, 0);
+      await wait(500);
+      // Reached with Tab, as a keyboard user would: desktop from the last nav link, touch inside the opened menu.
+      const scope = c.touch ? 'dialog[data-testid="menu-dialog"]' : 'header > div';
+      if (c.touch) {
+        await (await firstVisible(page, '[data-testid="menu-open"]')).focus();
+        await page.keyboard.press('Enter');
+        await wait(700);
+      } else await page.focus('header nav a[href="#request"]');
+      let reached = false;
+      for (let i = 0; i < 12 && !reached; i++) {
+        await page.keyboard.press('Tab');
+        reached = await page.evaluate((sel) => !!document.activeElement?.matches(`${sel} button[aria-pressed]`), scope);
+      }
+      const before = await page.evaluate(() => window.__shifts.length);
+      const ring = reached && (await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle !== 'none' && document.activeElement.matches(':focus-visible')));
+      await page.keyboard.press('Enter');
+      await wait(700);
+      const off = await themeState(page);
+      await page.keyboard.press('Space');
+      await wait(700);
+      const on = await themeState(page);
+      const shifts = await page.evaluate((n) => window.__shifts.slice(n).reduce((a, e) => a + e.value, 0), before);
+      if (c.touch) {
+        await page.keyboard.press('Escape');
+        await wait(400);
+      }
+      await page.reload({ waitUntil: 'networkidle0' });
+      await wait(1200);
+      const reloaded = await themeState(page);
+      const pass =
+        ring &&
+        off.theme === 'light' && off.stored === 'light' && off.pressed.every((x) => x === 'false') &&
+        on.theme === 'dark' && on.stored === 'dark' && on.pressed.every((x) => x === 'true') &&
+        shifts === 0 &&
+        reloaded.first?.theme === 'dark' && reloaded.theme === 'dark';
+      return { pass, detail: `focus ring=${ring} · Enter → ${off.theme} (stored ${off.stored}) · Space → ${on.theme} · layout shift ${shifts} · reload: first frame ${reloaded.first?.theme}` };
+    }, kase);
+    rec('errors', 'no console errors, page errors or hydration warnings', !problems.console.length && !problems.page.length, errorsOf(s));
+  } catch (e) {
+    rec('run', 'case completed', false, e instanceof Error ? e.message : String(e));
+  } finally {
+    await s.context.close();
+  }
+}
+
+/** One saved choice serves both languages: dark set on one page is dark on the other. */
+async function darkAcrossLanguages() {
+  const s = await open('/', { width: 1440, height: 900, theme: 'dark' });
+  try {
+    await step('theme', 'dark chosen on the Arabic page is dark on the English page (one origin, one key)', async () => {
+      await s.page.goto(`${BASE}/en/`, { waitUntil: 'networkidle0' });
+      await wait(800);
+      const st = await themeState(s.page);
+      return { pass: st.first?.theme === 'dark' && st.theme === 'dark', detail: JSON.stringify(st) };
+    });
+  } finally {
+    await s.context.close();
   }
 }
 
@@ -2346,6 +2534,17 @@ try {
         { id: 'touch', width: 390, height: 844, touch: true, reduced: false },
       ])
         await keyboardWalk(p, c);
+  if (want('dark')) {
+    for (const p of pagesWanted)
+      for (const c of [
+        { id: 'desktop', width: 1440, height: 900, touch: false },
+        { id: 'touch', width: 390, height: 844, touch: true },
+      ])
+        await darkChecks(p, c);
+    await darkAcrossLanguages();
+    // The keyboard walk again on the dark page: every stop has a visible ring with contrast on graphite and black.
+    for (const p of pagesWanted) await keyboardWalk(p, { id: 'desktop', width: 1440, height: 900, touch: false, reduced: false, theme: 'dark' });
+  }
   // Section 8: the crane pages.
   if (wantCrane('seo')) await craneSeoChecks();
   if (wantCrane('links')) await craneLinkChecks();

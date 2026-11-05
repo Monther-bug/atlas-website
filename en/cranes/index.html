@@ -20,6 +20,10 @@
       (function (d, w) {
         var h = d.documentElement, c = h.classList;
         c.add('js');
+        // The visitor's saved theme (src/lib/theme.ts). Light by default, never from the OS setting.
+        try {
+          localStorage.getItem('atlas-theme') == 'dark' && h.setAttribute('data-theme', 'dark');
+        } catch (e) {}
         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         c.add('motion-ok');
         try {

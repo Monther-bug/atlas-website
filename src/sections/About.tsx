@@ -117,7 +117,7 @@ export function About() {
                 </span>
               )}
             </p>
-            <p className="t-body mt-6 text-ink-2">{a.fieldsLead}</p>
+            <p className="t-body mt-6 text-(--surface-fg-2)">{a.fieldsLead}</p>
             <ul className="mt-3 flex flex-wrap gap-2">
               {copy.services.items.map((service) => (
                 <li key={service.id}>

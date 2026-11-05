@@ -318,7 +318,7 @@ function RequestFormBody() {
             ref={summary}
             tabIndex={-1}
             data-testid="form-error-summary"
-            className="rounded-lg border border-(--surface-danger) bg-red-50 p-5"
+            className="rounded-lg border border-(--surface-danger) bg-(--surface-red-wash) p-5"
           >
             <p className="font-semibold">{f.errorSummary}</p>
             <ul className="mt-3 grid gap-2">
@@ -347,7 +347,7 @@ function RequestFormBody() {
             ref={result}
             tabIndex={-1}
             data-testid="form-failure"
-            className="rounded-lg border border-(--surface-danger) bg-red-50 p-5"
+            className="rounded-lg border border-(--surface-danger) bg-(--surface-red-wash) p-5"
           >
             <p className="font-semibold">{f.failure.title}</p>
             <p className="t-body mt-2">{status === 'offline' ? f.failure.offline : f.failure.text}</p>
@@ -406,7 +406,7 @@ function RequestFormBody() {
             {(a11y) => (
               <>
                 {requested && (
-                  <Chip data-testid="form-hook-chip" className="mb-2 self-start bg-ink text-white">
+                  <Chip data-testid="form-hook-chip" className="mb-2 self-start bg-(--surface-fg) text-(--surface-bg)">
                     <HookIcon className="size-4" />
                     <span>
                       {copy.bar.onHook} <bdi>{craneOrServiceLabel(values.crane, copy)}</bdi>

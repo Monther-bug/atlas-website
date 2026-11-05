@@ -66,7 +66,7 @@ export function Sheet({ id, title, side = 'end', onClose, footer, className, chi
         </div>
         <div className="ui-sheet__scroll">{children}</div>
         {footer ? (
-          <div className="border-t border-(--color-line) px-(--space-tile) pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">{footer}</div>
+          <div className="border-t border-(--surface-line) px-(--space-tile) pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">{footer}</div>
         ) : null}
       </div>
     </dialog>

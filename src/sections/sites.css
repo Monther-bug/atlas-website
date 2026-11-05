@@ -16,9 +16,9 @@
   .sites-card {
     padding: 0.5rem;
     border-radius: var(--radius-xl);
-    background-color: var(--color-white);
+    background-color: var(--surface-raised);
     box-shadow: var(--shadow-e1);
-    color: var(--color-ink);
+    color: var(--surface-fg);
     transition:
       box-shadow var(--dur-ui) var(--ease-ui),
       translate var(--dur-ui) var(--ease-ui),
@@ -46,7 +46,7 @@
     overflow: clip;
     isolation: isolate;
     border-radius: calc(var(--radius-xl) - 0.5rem);
-    background-color: var(--color-mist);
+    background-color: var(--surface-sunken);
   }
   .sites-caption {
     display: block;
@@ -72,13 +72,13 @@
     inset: 0;
     z-index: -1;
     border-radius: inherit;
-    background-color: var(--color-brand);
+    background-color: var(--surface-accent);
     box-shadow: var(--shadow-e1);
     transform-origin: left center;
     opacity: 0;
   }
   .sites-filter .ui-seg__option:has(input:checked) {
-    color: var(--color-white);
+    color: var(--surface-on-accent);
     background-color: transparent;
   }
   .sites-filter .ui-seg__option:has(input:checked)::before {
@@ -205,11 +205,11 @@
 /* Paddles in brand navy while they can move the strip; neutral at the ends. Unlayered on purpose: IconButton's
    tone is a Tailwind utility (utilities layer), and only unlayered rules outrank it without !important. */
 .sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):not([data-sites-motion]) {
-  background-color: var(--color-brand);
-  color: var(--color-white);
+  background-color: var(--surface-accent);
+  color: var(--surface-on-accent);
 }
 .sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):not([data-sites-motion]):hover {
-  background-color: var(--color-brand-600);
+  background-color: var(--surface-accent-hover);
 }
 
 /* Unlayered: IconButton's inline-flex is a utility and would win inside a layer. */

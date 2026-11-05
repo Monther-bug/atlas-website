@@ -39,19 +39,19 @@ const PLAIN_SIZE = 'min-h-11 px-1 text-base';
 // disabled or loading. Every class is spelled out in full: Tailwind only compiles names it can read in the source.
 const ANCHOR: Record<ButtonVariant, string> = {
   primary: 'bg-red text-white hover:bg-red-600 active:scale-[0.98]',
-  secondary: 'bg-ink text-white hover:bg-neutral-800 active:scale-[0.98]',
+  secondary: 'bg-(--surface-fg) text-(--surface-bg) hover:bg-(--surface-fg-2) active:scale-[0.98]',
   inverse: 'bg-white text-ink hover:bg-neutral-200 active:scale-[0.98]',
-  'ghost-light': 'border border-ink text-ink hover:bg-ink hover:text-white active:scale-[0.98]',
+  'ghost-light': 'border border-(--surface-fg) text-(--surface-fg) hover:bg-(--surface-fg) hover:text-(--surface-bg) active:scale-[0.98]',
   'ghost-dark': 'border border-white/40 text-white hover:border-white hover:bg-white hover:text-ink active:scale-[0.98]',
   glass: 'glass-dark text-white hover:bg-black/80 active:scale-[0.98]',
   plain: 'text-(--surface-accent) underline-offset-[0.28em] decoration-1 hover:underline active:opacity-80',
 };
 const NATIVE: Record<ButtonVariant, string> = {
   primary: 'bg-red text-white enabled:not-aria-disabled:hover:bg-red-600 enabled:not-aria-disabled:active:scale-[0.98]',
-  secondary: 'bg-ink text-white enabled:not-aria-disabled:hover:bg-neutral-800 enabled:not-aria-disabled:active:scale-[0.98]',
+  secondary: 'bg-(--surface-fg) text-(--surface-bg) enabled:not-aria-disabled:hover:bg-(--surface-fg-2) enabled:not-aria-disabled:active:scale-[0.98]',
   inverse: 'bg-white text-ink enabled:not-aria-disabled:hover:bg-neutral-200 enabled:not-aria-disabled:active:scale-[0.98]',
   'ghost-light':
-    'border border-ink text-ink enabled:not-aria-disabled:hover:bg-ink enabled:not-aria-disabled:hover:text-white enabled:not-aria-disabled:active:scale-[0.98]',
+    'border border-(--surface-fg) text-(--surface-fg) enabled:not-aria-disabled:hover:bg-(--surface-fg) enabled:not-aria-disabled:hover:text-(--surface-bg) enabled:not-aria-disabled:active:scale-[0.98]',
   'ghost-dark':
     'border border-white/40 text-white enabled:not-aria-disabled:hover:border-white enabled:not-aria-disabled:hover:bg-white enabled:not-aria-disabled:hover:text-ink enabled:not-aria-disabled:active:scale-[0.98]',
   glass: 'glass-dark text-white enabled:not-aria-disabled:hover:bg-black/80 enabled:not-aria-disabled:active:scale-[0.98]',

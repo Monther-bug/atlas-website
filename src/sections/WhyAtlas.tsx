@@ -294,7 +294,7 @@ function ChannelsStrip() {
           <ChannelsText />
           {/* filled and shown by useCraneOnHook when a crane is picked anywhere on the page */}
           <p data-why-picked="" hidden className="ui-chip mt-4 self-start">
-            <HookIcon className="size-4 text-red" />
+            <HookIcon className="size-4 text-(--surface-red)" />
             <span>
               {copy.bar.onHook} <bdi lang="en" dir="ltr" className="t-spec" />
             </span>

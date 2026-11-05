@@ -132,6 +132,23 @@ Roughly **80 % black and white grounds, 10 to 15 % brand navy, about 5 % red** (
 
 No yellow in the UI (the cranes supply it). No grey text on coloured grounds. Every foreground/background pair is listed with its contrast ratio in §3; body text is at least 4.5:1, large text and controls at least 3:1.
 
+### Dark theme
+
+The visitor can switch to a dark theme (header toggle from `sm`, and the mobile menu: «الوضع الداكن» / "Dark mode", `aria-pressed`). **Light is the default on every first visit and is never taken from the OS setting**; the choice is kept in `localStorage['atlas-theme']` and applied by the inline head script before first paint (`html[data-theme='dark']`). It is a designed theme, not an inversion, and it is built from variables only (`src/styles.css`, `src/components/ui/ui.css`):
+
+| Role (light → dark) | Light | Dark | Dark contrast (worst ground, raised #282828) |
+|---|---|---|---|
+| `--page` (body) | mist #F5F5F5 | black #0A0A0A | |
+| `--ground-mist` / `-white` / `-tint` | #F5F5F5 / #FFFFFF / #EDEDED | #141414 / #1E1E1E / #232323 | white 1.11 against mist, 1.19 against black |
+| `--yard-raised` / `-sunken` | white / mist | #282828 / #0E0E0E | |
+| `--yard-fg` / `-fg-2` / `-fg-3` | ink / ink-2 / ink-3 | neutral-100 #EDEDED / neutral-300 / neutral-400 | 12.6 / 9.9 / 5.8 |
+| `--yard-line` / `-control` | #E5E5E5 / #8A8A8A | white 14 % / white 40 % | control 3.6 |
+| `--yard-accent` / `-on-accent` | brand / white | brand-300 / black | 6.4 (black on brand-300 8.6) |
+| `--yard-red` (red as text or icon), `--yard-ok` | red / ok | red-bright / ok-bright | 4.8 / 8.0 |
+| `--yard-wash`, `--yard-red-wash` | brand-50, red-50 | brand-300 12 %, red-bright 12 % | |
+
+Dark grounds (`dark`, `night`, `navy`, `brand`) are the same in both themes: they stay black while the light grounds turn graphite, so the page keeps its yard/chart rhythm instead of becoming one black slab. A light panel on a dark stage (the form card, the channels tile) is that stage's spotlight: it lifts to the raised step with a lit top edge (fields #303030), and on the brand band it turns brand-900 with navy-tinted secondary text. The About statement lights up to the off-white text tone in dark (lavender at that size would outshine the red actions). The toggle glyph shows the current theme (sun, moon); pressed = a white 12 % fill in the bar, the brand-300 fill of a pressed chip in the menu, where its name is shown. `theme-color` keeps its one dark value (#0D0C2B) in both themes: the chrome meets the dark header either way. Red stays the action fill (white on red 5.6:1). Photos, the logo badge (white disc), the loader curtain and the Open Graph images do not change. Components never test the theme: they use the `--surface-*` roles (`-bg`, `-fg`, `-fg-2`, `-fg-3`, `-line`, `-control`, `-raised`, `-sunken`, `-track`, `-accent`, `-on-accent`, `-accent-hover`, `-wash`, `-wash-2`, `-danger`, `-red`, `-red-wash`, `-ok`), e.g. `text-(--surface-fg-2)`, `bg-(--surface-raised)`, `border-(--surface-line)`. Hard-coded `bg-white`, `text-ink`, `border-line`, `bg-brand-50`, `text-brand` or `text-red` on a light ground are bugs in the dark theme; keep `white` only for text on red, navy or black. The `dark:` variant exists (it follows the attribute, not the OS) but is for the toggle glyph only.
+
 ## Typography
 
 **Poppins** (Latin and every numeral) and **Tajawal** (Arabic), self-hosted subsets, one stack for display and body. **IBM Plex Mono** only for model codes and machine formulas (GMK6350, 12x6x12) (§4).

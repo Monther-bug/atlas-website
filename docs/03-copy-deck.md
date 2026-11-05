@@ -64,6 +64,7 @@ Character counts were checked (limit 155 per language): title 52 AR / 55 EN; met
 | Mobile menu open | القائمة | Menu |
 | Mobile menu close | إغلاق القائمة | Close menu |
 | WhatsApp link inside mobile menu | راسلنا على واتساب | Message us on WhatsApp |
+| Dark-mode toggle (header icon button: accessible name; mobile menu: visible label; `aria-pressed` gives on/off). The site opens light on a first visit, whatever the device setting; the choice is remembered. | الوضع الداكن | Dark mode |
 
 ---
 

@@ -36,12 +36,12 @@
   /* The segmented track with toggle buttons (TypeFilter.tsx): the same look as ui-seg's radios. */
   /* Navy is the selection accent on light grounds (v2 palette): the thumb, and the pressed label in white. */
   .lineup-seg .ui-seg__thumb {
-    background-color: var(--color-brand);
+    background-color: var(--surface-accent);
     box-shadow: var(--shadow-e1);
   }
   .lineup-seg .ui-seg__option[aria-pressed='true'] {
-    color: var(--color-white);
-    background-color: var(--color-brand);
+    color: var(--surface-on-accent);
+    background-color: var(--surface-accent);
   }
   .lineup-seg[data-measured] .ui-seg__option[aria-pressed='true'] {
     background-color: transparent;
@@ -288,7 +288,7 @@
     outline-offset: -2px;
   }
   .lineup-card[data-on-hook] {
-    outline-color: var(--color-red);
+    outline-color: var(--surface-red);
   }
   .lineup-card__media {
     position: relative;
@@ -400,8 +400,8 @@
     color: var(--surface-fg-2);
   }
   .lineup-card__fit[data-fit='yes'] {
-    background-color: var(--color-brand-50);
-    color: var(--color-brand);
+    background-color: var(--surface-wash);
+    color: var(--surface-accent);
   }
   .lineup-card__actions {
     display: flex;

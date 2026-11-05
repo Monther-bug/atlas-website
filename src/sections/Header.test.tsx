@@ -57,6 +57,22 @@ describe('Header', () => {
     expect(dialog?.querySelector('a[href^="tel:"]')).toBeNull();
   });
 
+  it('has the dark-mode toggle in the bar (from sm) and in the menu, named in the page language', () => {
+    for (const [lang, name] of [
+      ['ar', 'الوضع الداكن'],
+      ['en', 'Dark mode'],
+    ] as const) {
+      const html = renderHtml(<Header />, lang);
+      const bar = html.querySelector('header > div button[aria-pressed]');
+      const menu = html.querySelector('dialog button[aria-pressed]');
+      for (const t of [bar, menu]) {
+        expect(t?.getAttribute('aria-pressed')).toBe('false');
+        expect(t?.textContent).toBe(name);
+        expect(t?.className).toMatch(/size-11|min-h-11/); // 44 px target
+      }
+    }
+  });
+
   it('adds Call to the menu when a phone number is set', () => {
     mockEnv.phone = '+218 91 123 4567';
     const call = renderHtml(<Header />, 'en').querySelector('dialog a[href="tel:+218911234567"]');
@@ -175,8 +191,24 @@ describe('Header behaviour', () => {
     expect(pill().className).not.toContain('bg-red');
     grounds = [addEl('<section data-ground="light"><p></p></section>')];
     await scroll(1200);
-    expect(pill().className).toContain('bg-ink');
+    expect(pill().className).toContain('bg-(--surface-fg)'); // ink on a light ground
     expect(pill().className).not.toContain('bg-red');
+  });
+
+  it('stays black glass over light grounds in the dark theme (every ground is dark there)', async () => {
+    addEl('<section id="top"></section>');
+    document.documentElement.dataset.theme = 'dark';
+    try {
+      const { host } = await mount(<Header />, 'en');
+      grounds = [addEl('<section data-ground="light"><p></p></section>')];
+      await scroll(1200);
+      const header = host.querySelector('header');
+      expect(header?.getAttribute('data-ground')).toBe('dark');
+      expect(header?.querySelector('.glass-dark')?.className).toContain('opacity-100');
+      expect(host.querySelector('[data-testid="header-request"]')?.className).toContain('bg-white');
+    } finally {
+      delete document.documentElement.dataset.theme;
+    }
   });
 
   it('stays glass without a #top element', async () => {

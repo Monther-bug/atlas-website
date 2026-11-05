@@ -15,8 +15,17 @@
     font-size: clamp(1.75rem, 1.25rem + 2.222vw, 3.5rem);
     line-height: 1.14;
     letter-spacing: -0.028em;
-    color: var(--color-brand);
+    --about-lit: var(--surface-accent);
+    color: var(--about-lit);
     text-wrap: pretty;
+  }
+  /* Each word's colour follows its --lit (src/motion/about.ts); unset = lit. */
+  .about-statement [data-about-word] {
+    color: color-mix(in srgb, var(--about-lit) calc(var(--lit, 1) * 100%), var(--color-neutral-500));
+  }
+  /* Dark theme: the words light up to the off-white text tone (lavender this large would outshine the red actions). */
+  [data-theme='dark'] .about-statement {
+    --about-lit: var(--surface-fg);
   }
   .about-statement:lang(ar) {
     font-weight: 700;
@@ -84,13 +93,13 @@
     }
   }
   .about-term {
-    color: var(--color-ink-3);
+    color: var(--surface-fg-3);
   }
 
   /* Facts: hairline above each group, the way a spec sheet reads. */
   .about-facts > div {
     padding-block-start: 1.25rem;
-    border-block-start: 1px solid var(--color-line);
+    border-block-start: 1px solid var(--surface-line);
   }
   /* Doubled class, as below: .t-title (ui.css, same layer) loads later and its 1.25 won, so the Arabic legal name
      on the English page was set tight (Q.1, detector tight-leading). */
@@ -101,8 +110,8 @@
   .ui-chip.about-chip {
     min-block-size: 2.5rem;
     padding-inline: 1.125rem;
-    color: var(--color-brand);
-    background-color: var(--color-brand-50);
+    color: var(--surface-accent);
+    background-color: var(--surface-wash);
     font-size: 0.9375rem;
   }
   .ui-chip.about-chip:lang(ar) {

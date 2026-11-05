@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cx } from './util';
 
 const TONE = {
-  light: 'bg-brand-50 text-brand enabled:not-aria-disabled:hover:bg-brand-100',
+  light: 'bg-(--surface-wash) text-(--surface-accent) enabled:not-aria-disabled:hover:bg-(--surface-wash-2)',
   dark: 'bg-white/10 text-white enabled:not-aria-disabled:hover:bg-white/20',
   glass: 'glass-dark text-white enabled:not-aria-disabled:hover:bg-black/80',
   outline: 'border border-(--surface-control) text-(--surface-fg) enabled:not-aria-disabled:hover:border-(--surface-fg)',

@@ -3,26 +3,47 @@
    at the bottom of this file (and the global reduce rule in styles.css). */
 
 /* ── Surface semantics. Primitives read these variables, so one component works on every ground. ─────────── */
+/* Light grounds read the theme's `yard` roles (styles.css), so the dark theme turns them graphite in one place; a light
+   panel inside a dark section (form card, channels tile, sheet) resets to them as well. */
 :root,
 .surface-white,
 .surface-mist,
 .surface-tint {
-  --surface-fg: var(--color-ink);
-  --surface-fg-2: var(--color-ink-2);
-  --surface-fg-3: var(--color-ink-3);
-  --surface-line: var(--color-line);
-  --surface-control: var(--color-line-control);
-  --surface-raised: var(--color-white);
-  --surface-sunken: var(--color-mist);
-  --surface-accent: var(--color-brand);
-  --surface-on-accent: var(--color-white);
-  --surface-danger: var(--color-red);
-  --surface-ok: var(--color-ok);
+  --surface-fg: var(--yard-fg);
+  --surface-fg-2: var(--yard-fg-2);
+  --surface-fg-3: var(--yard-fg-3);
+  --surface-line: var(--yard-line);
+  --surface-control: var(--yard-control);
+  --surface-raised: var(--yard-raised);
+  --surface-sunken: var(--yard-sunken);
+  --surface-track: var(--yard-track);
+  --surface-accent: var(--yard-accent);
+  --surface-on-accent: var(--yard-on-accent);
+  --surface-accent-hover: var(--yard-accent-hover);
+  --surface-wash: var(--yard-wash);
+  --surface-wash-2: var(--yard-wash-2);
+  --surface-danger: var(--yard-red);
+  --surface-red: var(--yard-red);
+  --surface-red-wash: var(--yard-red-wash);
+  --surface-ok: var(--yard-ok);
+}
+:root {
+  --surface-bg: var(--page);
+}
+.surface-white {
+  --surface-bg: var(--ground-white);
+}
+.surface-mist {
+  --surface-bg: var(--ground-mist);
+}
+.surface-tint {
+  --surface-bg: var(--ground-tint);
 }
 .surface-dark,
 .surface-night,
 .surface-navy,
 .surface-brand {
+  --surface-bg: var(--color-black);
   --surface-fg: var(--color-white);
   --surface-fg-2: var(--color-neutral-300);
   --surface-fg-3: var(--color-neutral-400);
@@ -30,10 +51,16 @@
   --surface-control: rgb(255 255 255 / 0.4);
   --surface-raised: var(--color-neutral-900);
   --surface-sunken: var(--color-black);
+  --surface-track: rgb(255 255 255 / 0.1);
   /* On black the accent is brand-300 (8.6:1): navy itself is 1.5:1 there. */
   --surface-accent: var(--color-brand-300);
   --surface-on-accent: var(--color-black);
+  --surface-accent-hover: var(--color-brand-200);
+  --surface-wash: rgb(165 163 245 / 0.1);
+  --surface-wash-2: rgb(165 163 245 / 0.18);
   --surface-danger: var(--color-red-bright);
+  --surface-red: var(--color-red-bright);
+  --surface-red-wash: rgb(255 90 79 / 0.12);
   --surface-ok: var(--color-ok-bright);
 }
 /* Night: secondary text tinted toward the navy glow (13.7:1 on black). */
@@ -44,6 +71,7 @@
    accent brand-300 (5.9:1 on brand, 8:1 on brand-950); raised = brand-900. */
 .surface-navy,
 .surface-brand {
+  --surface-bg: var(--color-brand-950);
   --surface-fg-2: var(--color-brand-100);
   --surface-fg-3: var(--color-brand-200);
   --surface-line: rgb(255 255 255 / 0.16);
@@ -52,19 +80,30 @@
   --surface-accent: var(--color-brand-300);
   --surface-on-accent: var(--color-brand-950);
 }
+.surface-navy {
+  --surface-bg: var(--color-brand);
+}
+/* Dark theme: a light panel on a dark stage (the form card on Request, the channels tile on Why Atlas) is the stage's
+   spotlight. It lifts to the raised step with a lit top edge instead of sinking to graphite; on the brand band it is
+   brand-900 with navy-tinted secondary text (never grey on navy). Fields inside: #303030 (placeholder 5.2:1). */
+html[data-theme='dark'] [data-ground='dark'] .surface-white {
+  --surface-bg: var(--yard-raised);
+  --surface-raised: #303030;
+  box-shadow: inset 0 1px rgb(255 255 255 / 0.08);
+}
+html[data-theme='dark'] .surface-brand .surface-white {
+  --surface-bg: var(--color-brand-900);
+  --surface-fg-2: var(--color-brand-100);
+  --surface-fg-3: var(--color-brand-200);
+  --surface-line: rgb(255 255 255 / 0.16);
+}
 
 @layer components {
   /* ── Surfaces (Section sets one of these plus data-ground) ── */
-  .surface-white {
-    background-color: var(--color-white);
-    color: var(--surface-fg);
-  }
-  .surface-mist {
-    background-color: var(--color-mist);
-    color: var(--surface-fg);
-  }
+  .surface-white,
+  .surface-mist,
   .surface-tint {
-    background-color: var(--color-neutral-100);
+    background-color: var(--surface-bg);
     color: var(--surface-fg);
   }
   .surface-dark {
@@ -365,7 +404,7 @@
     gap: 0.25rem;
     padding: 0.25rem;
     border-radius: 999px;
-    background-color: var(--seg-track, var(--color-neutral-100));
+    background-color: var(--seg-track, var(--surface-track));
     max-inline-size: 100%;
     overflow-x: auto;
     scrollbar-width: none;
@@ -380,7 +419,7 @@
     inline-size: var(--seg-w, 0px);
     transform: translateX(var(--seg-x, 0px));
     border-radius: 999px;
-    background-color: var(--seg-thumb, var(--color-brand));
+    background-color: var(--seg-thumb, var(--surface-accent));
     box-shadow: var(--shadow-e1);
     opacity: 0;
     transition:
@@ -412,7 +451,7 @@
     font-size: 0.9375rem;
     line-height: 1.2;
     white-space: nowrap;
-    color: var(--seg-fg, var(--color-ink-2));
+    color: var(--seg-fg, var(--surface-fg-2));
     cursor: pointer;
     transition: color var(--dur-state) var(--ease-ui);
   }
@@ -423,8 +462,8 @@
     color: var(--surface-fg);
   }
   .ui-seg__option:has(input:checked) {
-    color: var(--seg-on, var(--color-white));
-    background-color: var(--seg-thumb, var(--color-brand));
+    color: var(--seg-on, var(--surface-on-accent));
+    background-color: var(--seg-thumb, var(--surface-accent));
   }
   .ui-seg[data-measured] .ui-seg__option:has(input:checked) {
     background-color: transparent;
@@ -518,8 +557,7 @@
     border: 0;
     max-inline-size: none;
     max-block-size: none;
-    color: var(--color-ink);
-    background-color: var(--color-white);
+    background-color: var(--surface-bg);
     box-shadow: var(--shadow-e4);
     overscroll-behavior: contain;
     /* Closed state = the "from" state; [open] = the "to" state; @starting-style animates the entry. */
@@ -607,7 +645,7 @@
     block-size: 0.3125rem;
     margin: 0.5rem auto 0;
     border-radius: 999px;
-    background-color: var(--color-neutral-200);
+    background-color: var(--surface-line);
   }
   @media (width >= 48rem) {
     .ui-sheet[data-side='end'] .ui-sheet__grabber {
@@ -704,12 +742,7 @@
     font-weight: 600;
   }
   .ui-compare [data-highlight] {
-    background-color: var(--color-brand-50);
-  }
-  .surface-dark .ui-compare [data-highlight],
-  .surface-night .ui-compare [data-highlight],
-  .surface-brand .ui-compare [data-highlight] {
-    background-color: rgb(165 163 245 / 0.1);
+    background-color: var(--surface-wash);
   }
   .ui-compare td[data-empty] {
     color: var(--surface-fg-3);
