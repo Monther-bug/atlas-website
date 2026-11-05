@@ -350,12 +350,19 @@ html[data-theme='dark'] {
   ::view-transition-new(*) {
     animation: none !important;
   }
+  /* Transitions are switched off (0s), not shortened. 0.01ms on every element (transition-property is `all` by
+     default) turned on a transition of every property everywhere. When Chrome styles the page before the
+     render-blocking CSS has arrived (a tap, assistive tech or an extension forcing a layout), the arriving CSS is a
+     style change, and inside query containers (the hero) the first frame painted those transitions' start values, the
+     unstyled UA sizes (H1 2em, medium borders): CLS 0.15–0.34 on the first screen (qa/cls-probe.mjs). Nothing here
+     waits for transitionend. */
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
   }
 }
