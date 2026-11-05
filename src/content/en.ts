@@ -132,10 +132,26 @@ export const en: Copy = {
     },
   },
 
+  // §3a (v2, new copy from confirmed facts)
+  about: {
+    title: 'Atlas Alshraa is a Libyan joint-stock company.',
+    statement: 'From smaller cranes to the largest ones, we help you choose the crane that fits your load and your site. Every crane photo on this site is real.',
+    legalLabel: 'Legal name',
+    legalName: 'شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات',
+    fieldsLead: 'The name covers four lines of work:',
+    channelsLabel: 'Contact',
+    facebook: 'Our Facebook page',
+    email: 'Email',
+    photosLink: 'See the site photos',
+    values: [],
+  },
+
   // §7
   sites: {
     title: 'On site',
     intro: 'Every photo on this page is real. They were taken at two places: a building site and a coastal site.',
+    all: 'All',
+    filterLabel: 'Choose a site',
     galleries: { construction: 'Building site', coast: 'Coastal site' },
     swipeHint: 'Swipe for more',
     open: 'View larger',

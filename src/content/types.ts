@@ -156,10 +156,27 @@ export interface Copy {
     card: { type: string; capacity: string; request: string; formLink: string }; // the model code is the card's heading
   };
 
+  /** v2: About Atlas (new section, copy deck §3a). Written from confirmed facts only; needs Atlas's approval. */
+  about: {
+    title: string; // h2: the statement's first sentence
+    statement: string; // the sentences that continue the heading, set at the same size
+    legalLabel: string;
+    legalName: string; // the Arabic legal name; rendered with lang="ar" on the English page
+    fieldsLead: string; // bridge from the legal name to the four lines of work (service chips)
+    channelsLabel: string;
+    facebook: string;
+    email: string; // label before the address
+    photosLink: string; // link to #sites
+    /** HIDDEN UNTIL DATA: mission, vision, values. Empty until Atlas supplies them; each item renders as one fact. */
+    values: readonly { term: string; text: string }[];
+  };
+
   /** Copy deck §7. */
   sites: {
     title: string;
     intro: string;
+    all: string; // segmented option: every photo (deck "Tab: All")
+    filterLabel: string; // accessible name of the site picker
     galleries: Record<SiteGalleryId, string>;
     swipeHint: string;
     open: string;

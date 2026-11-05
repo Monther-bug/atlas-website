@@ -84,6 +84,30 @@ Character counts were checked (limit 155 per language): title 52 AR / 55 EN; met
 
 Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 
+
+---
+
+## 3a. About Atlas (v2, new section)
+
+*New copy for the v2 About section (spec 2026-11-05 §10), written only from confirmed facts: the Arabic legal name, the four lines of work it names, Atlas's own "small to large" claim, the real photos, and the Facebook page and email. It says nothing about ownership, fleet size, years, clients or numbers. Needs Atlas's approval (spec 2026-11-05 §15.3).*
+
+| Element | العربية | English |
+|---|---|---|
+| Statement, heading part (H2) | أطلس الصحراء شركة مساهمة ليبية. | Atlas Alshraa is a Libyan joint-stock company. |
+| Statement, continuation (same size, after the H2) | من الرافعات الصغيرة إلى الكبيرة، نساعدك على اختيار الرافعة التي تناسب حمولتك وموقعك. وكل صور الرافعات في هذا الموقع حقيقية. | From smaller cranes to the largest ones, we help you choose the crane that fits your load and your site. Every crane photo on this site is real. |
+| Fact label | الاسم القانوني | Legal name |
+| Fact value (Arabic on both pages) | شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات | same Arabic text, marked `lang="ar"` |
+| Bridge to the service chips | ويجمع الاسم أربعة مجالات عمل: | The name covers four lines of work: |
+| Chips | the four service titles from section 5 | the four service titles from section 5 |
+| Fact label | تواصل معنا | Contact |
+| Facebook link | صفحتنا على فيسبوك | Our Facebook page |
+| Email label | البريد الإلكتروني | Email |
+| Link → #sites | شاهد صور مواقع العمل | See the site photos |
+| Photo captions (6388, 6396) | the gallery names from section 7: موقع إنشاءات / موقع ساحلي | Building site / Coastal site |
+| Mission, vision, values (HIDDEN UNTIL DATA) | [[MISSION]] · [[VISION]] · [[VALUES]] | [[MISSION]] · [[VISION]] · [[VALUES]] |
+
+*Mission, vision and values are not rendered, not even as staging placeholders: Atlas has supplied none. The code keeps an empty `about.values` list; each item Atlas approves (term + one sentence) renders as one more fact beside the legal name.*
+
 ---
 
 ## 4. The Capacity Scale
@@ -228,6 +252,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Title | من مواقع العمل | On site |
 | Intro | كل الصور في هذه الصفحة حقيقية، التُقطت في موقعين: موقع إنشاءات وموقع ساحلي. | Every photo on this page is real. They were taken at two places: a building site and a coastal site. |
 | Tab | الكل | All |
+| Site picker label (screen readers, v2) | اختر موقع العمل | Choose a site |
 | Tab | موقع إنشاءات | Building site |
 | Tab | موقع ساحلي | Coastal site |
 | Previous | السابق | Previous |
@@ -669,6 +694,8 @@ Every token above, grouped by what it blocks.
 - [ ] `[[CLIENTS_PROJECTS]]`: names they may publish, with written permission.
 - [ ] Documents as PDFs, only those that exist: `[[DOC:PROFILE]]`, `[[DOC:FLEET_LIST]]`, `[[DOC:INSPECTION]]`, `[[DOC:HSE]]`, `[[DOC:ISO]]`, `[[DOC:INSURANCE]]`, `[[DOC:CR]]`. For each: language (Arabic, English or both) and date.
 - [ ] `[[CR_NUMBER]]`: commercial registration number, if they want it in the footer.
+- [ ] `[[MISSION]]`, `[[VISION]]`, `[[VALUES]]`: only if Atlas has them in writing (About section, 3a). Nothing is shown until then.
+- [ ] Approval of the About statement (3a), including "Libyan joint-stock company" and the English reading of the legal name.
 
 **E. Form and replies**
 

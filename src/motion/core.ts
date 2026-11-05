@@ -10,6 +10,8 @@ import { startBackToTop, startProgressRope } from './rope';
 import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
+import { startAboutDesktop, startAboutTouch } from './about';
+import { startSitesDrag, startSitesDrift, startSitesSlidesDesktop, startSitesSlidesTouch } from './sites';
 
 /** Motion that starts later than this (ms after navigation) finds the hero already revealed by the CSS failsafe. */
 const LATE_MS = 2800;
@@ -120,6 +122,11 @@ const DESKTOP: MotionModule[] = [
   startTickers,
   startMagnetic,
   startParallax,
+  // S.about: About statement highlight (scrubbed); On site cards stagger, strip drift and mouse drag.
+  startAboutDesktop,
+  startSitesSlidesDesktop,
+  startSitesDrift,
+  startSitesDrag,
 ];
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
@@ -132,6 +139,9 @@ const TOUCH: MotionModule[] = [
   hoistLazy('touch'),
   startRevealsTouch,
   startTickers,
+  // S.about: About statement highlight (one pass); On site cards stagger.
+  startAboutTouch,
+  startSitesSlidesTouch,
 ];
 
 function setMode(mode: MotionMode): void {

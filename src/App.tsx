@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { RequestBar } from '@/components/RequestBar';
 import { loadAnalytics } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
+import { About } from '@/sections/About';
 import { CraneGrid } from '@/sections/CraneGrid';
 import { Documents } from '@/sections/Documents';
 import { Footer } from '@/sections/Footer';
@@ -34,6 +35,7 @@ export function App() {
       <Header />
       <main id="main" tabIndex={-1} className="outline-none">
         <Hero />
+        <About />
         <Hoist />
         <Services />
         <CraneGrid />

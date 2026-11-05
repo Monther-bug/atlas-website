@@ -1,0 +1,110 @@
+/* About Atlas (v2). Section-only styles; tokens and type roles come from src/styles.css and ui.css.
+   This file is imported by About.tsx, so it can reach the page before Tailwind's own layer statement: declare the
+   same layer order first, or `components` would be ordered below `base` (preflight would reset the shell). */
+@layer theme, base, components, utilities;
+
+@layer components {
+  /* The statement: one paragraph in large type (the H2 is its first sentence, both inline), lit word by word in
+     brand navy by src/motion/about.ts (13.5:1 on white). Rendered lit: the quiet start colour exists only while
+     motion runs.
+     28 -> 52 px Latin (Poppins 600), 30 -> 56 px Arabic (Tajawal 700, which draws smaller per em). */
+  .about-statement {
+    max-inline-size: 64rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.75rem, 1.25rem + 2.222vw, 3.5rem);
+    line-height: 1.14;
+    letter-spacing: -0.028em;
+    color: var(--color-brand);
+    text-wrap: pretty;
+  }
+  .about-statement:lang(ar) {
+    font-weight: 700;
+    font-size: clamp(1.875rem, 1.333rem + 2.407vw, 3.625rem);
+    line-height: 1.45;
+  }
+  /* The logo badge sits in the line like a word, sized to the type. */
+  .about-badge {
+    display: inline-block;
+    inline-size: 1.08em;
+    block-size: 1.08em;
+    margin-inline-end: 0.06em;
+    vertical-align: -0.2em;
+    border-radius: 999px;
+    box-shadow: var(--shadow-e1);
+  }
+  .about-statement:lang(ar) .about-badge {
+    vertical-align: -0.24em;
+  }
+  .about-badge > img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border-radius: inherit;
+    object-fit: contain;
+  }
+
+  /* Grids: photos (two columns on phones, 7+5 / 8+4 of 12 from 48 rem) and facts under them on the same columns. */
+  .about-grid {
+    display: grid;
+    gap: 2.5rem var(--space-gap);
+    margin-block-start: var(--space-head);
+  }
+  .about-media {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    row-gap: var(--space-gap);
+  }
+  @media (width >= 48rem) {
+    .about-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+    .about-wide {
+      grid-column: span 7;
+    }
+    .about-narrow {
+      grid-column: span 5;
+    }
+  }
+  @media (width >= 64rem) {
+    .about-wide {
+      grid-column: span 8;
+    }
+    .about-narrow {
+      grid-column: span 4;
+    }
+  }
+  .about-frame,
+  .about-frame-wide {
+    aspect-ratio: 4 / 5;
+  }
+  @media (width >= 48rem) {
+    .about-frame-wide {
+      aspect-ratio: 16 / 9;
+    }
+  }
+  .about-term {
+    color: var(--color-ink-3);
+  }
+
+  /* Facts: hairline above each group, the way a spec sheet reads. */
+  .about-facts > div {
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--color-line);
+  }
+  .about-legal {
+    line-height: 1.6;
+  }
+  /* Doubled class: ui.css may load after this file, and .ui-chip sits in the same layer. */
+  .ui-chip.about-chip {
+    min-block-size: 2.5rem;
+    padding-inline: 1.125rem;
+    color: var(--color-brand);
+    background-color: var(--color-brand-50);
+    font-size: 0.9375rem;
+  }
+  .ui-chip.about-chip:lang(ar) {
+    font-size: 1.0625rem;
+    font-weight: 500;
+  }
+}

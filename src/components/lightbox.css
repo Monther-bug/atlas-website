@@ -1,0 +1,178 @@
+/* Lightbox (v2): a full-viewport native <dialog>. Black stage, rounded photo frame sized to the photo's aspect,
+   caption on a solid brand-navy plate under the photo (never over the sky). Entry: the scrim and chrome fade with
+   @starting-style while the photo flies out of its thumbnail (Lightbox.tsx, WAAPI). */
+@layer theme, base, components, utilities;
+
+@layer components {
+  /* The dialog sits inside a light section: its own ground wins for the focus ring and caret. */
+  .lb,
+  .lb * {
+    --ring: var(--color-white);
+    caret-color: var(--color-red-bright);
+  }
+  .lb {
+    --lb-bar: 4.5rem;
+    --lb-foot: 6.5rem;
+    position: fixed;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100dvh;
+    max-inline-size: none;
+    max-block-size: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-white);
+    overscroll-behavior: contain;
+  }
+  .lb[open] {
+    display: grid;
+    grid-template-rows: var(--lb-bar) minmax(0, 1fr) auto;
+  }
+  .lb::backdrop {
+    background-color: rgb(10 10 10 / 0.94);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transition:
+      opacity var(--dur-layout) var(--ease-set),
+      overlay var(--dur-layout) allow-discrete,
+      display var(--dur-layout) allow-discrete;
+  }
+  .lb[open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    .lb[open]::backdrop {
+      opacity: 0;
+    }
+  }
+  .lb[data-closing]::backdrop {
+    opacity: 0;
+    transition-duration: 380ms;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .lb::backdrop {
+      background-color: var(--color-black);
+      backdrop-filter: none;
+    }
+  }
+
+  /* Bar, side paddles and caption fade in after the photo starts to move, and out first when it leaves. */
+  .lb__chrome {
+    transition: opacity var(--dur-ui) var(--ease-ui) 120ms;
+  }
+  @starting-style {
+    .lb[open] .lb__chrome {
+      opacity: 0;
+    }
+  }
+  .lb[data-closing] .lb__chrome {
+    opacity: 0;
+    transition-delay: 0ms;
+    transition-duration: 160ms;
+  }
+
+  .lb__bar {
+    inline-size: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .lb__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-block-size: 0;
+    padding-inline: clamp(1rem, 4vw, 3.5rem);
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* The frame takes the photo's own aspect, as large as the stage allows: 16:9, or 4:5 on phones. */
+  .lb__frame {
+    position: relative;
+    overflow: clip;
+    isolation: isolate;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-neutral-900);
+    aspect-ratio: 16 / 9;
+    inline-size: min(100%, calc((100dvh - var(--lb-bar) - var(--lb-foot) - 1rem) * 16 / 9));
+    will-change: transform;
+    cursor: grab;
+  }
+  .lb__frame:active {
+    cursor: grabbing;
+  }
+  .lb__frame img {
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+  @media (width >= 48rem) {
+    .lb__stage {
+      padding-inline: 6rem;
+    }
+  }
+  @media (max-width: 47.99rem) {
+    .lb {
+      --lb-foot: 10rem;
+    }
+    .lb__frame {
+      aspect-ratio: 4 / 5;
+      inline-size: min(100%, calc((100dvh - var(--lb-bar) - var(--lb-foot) - 1rem) * 4 / 5));
+    }
+  }
+
+  /* Paddles: at the stage's sides from 48rem; under the caption on phones. Reading-direction aware. */
+  .lb__side {
+    position: absolute;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+  }
+  .lb__side[data-side='start'] {
+    inset-inline-start: clamp(1rem, 2vw, 2rem);
+  }
+  .lb__side[data-side='end'] {
+    inset-inline-end: clamp(1rem, 2vw, 2rem);
+  }
+  @media (max-width: 47.99rem) {
+    .lb__side {
+      inset-block: auto -3.75rem;
+      translate: none;
+    }
+  }
+
+  .lb__foot {
+    inline-size: 100%;
+    display: flex;
+    justify-content: center;
+    padding-block: 1rem calc(1.25rem + env(safe-area-inset-bottom));
+    min-block-size: var(--lb-foot);
+  }
+  @media (max-width: 47.99rem) {
+    .lb__foot {
+      padding-block-start: 4.75rem;
+    }
+  }
+  /* Solid plate: brand navy holds white text (13.5:1) and brand-100 for the site name (11:1). */
+  .lb__plate {
+    max-inline-size: 44rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-brand);
+    text-align: center;
+  }
+  .lb__plate .lb__site {
+    color: var(--color-brand-100);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lb::backdrop,
+  .lb__chrome {
+    transition: none !important;
+  }
+}

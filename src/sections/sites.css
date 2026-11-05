@@ -1,0 +1,155 @@
+/* On site (v2). Section-only styles over the shared Carousel and SegmentedControl (src/components/ui).
+   Imported by Sites.tsx, so it may reach the page before Tailwind's layer statement: declare the same order. */
+@layer theme, base, components, utilities;
+
+@layer components {
+  #sites {
+    --sites-slide: min(78vw, 21rem);
+  }
+  @media (width >= 64rem) {
+    #sites {
+      --sites-slide: 25rem;
+    }
+  }
+
+  /* Card: a white tile on mist with the photo inset (concentric radii) and the caption on the card itself. */
+  .sites-card {
+    padding: 0.5rem;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-e1);
+    color: var(--color-ink);
+    transition:
+      box-shadow var(--dur-ui) var(--ease-ui),
+      translate var(--dur-ui) var(--ease-ui),
+      scale var(--dur-press) var(--ease-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sites-card:hover {
+      box-shadow: var(--shadow-e2);
+      translate: 0 -2px;
+    }
+  }
+  .sites-card:active {
+    scale: 0.99;
+  }
+  .sites-card:focus-visible {
+    outline-offset: 4px;
+    box-shadow: var(--shadow-e2);
+  }
+  .sites-thumb img {
+    -webkit-user-drag: none;
+  }
+  .sites-thumb {
+    display: block;
+    aspect-ratio: 4 / 5;
+    overflow: clip;
+    isolation: isolate;
+    border-radius: calc(var(--radius-xl) - 0.5rem);
+    background-color: var(--color-mist);
+  }
+  .sites-caption {
+    display: block;
+    padding: 1rem 0.75rem 0.75rem;
+  }
+  .sites-detail {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+  .sites-detail:lang(ar) {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  /* Picker: native radios in the shared .ui-seg look. The pick wears a brand-navy fill (white label, 13.5:1); on a
+     switch the fill glides from the old pick (Sites.tsx animates this ::before). */
+  .sites-filter .ui-seg__option::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-color: var(--color-brand);
+    box-shadow: var(--shadow-e1);
+    transform-origin: left center;
+    opacity: 0;
+  }
+  .sites-filter .ui-seg__option:has(input:checked) {
+    color: var(--color-white);
+    background-color: transparent;
+  }
+  .sites-filter .ui-seg__option:has(input:checked)::before {
+    opacity: 1;
+  }
+  /* Phones: the picker spans the column in three equal parts, so all three sites stay in view. */
+  @media (width < 40rem) {
+    .sites-filter {
+      inline-size: 100%;
+      grid-auto-columns: minmax(0, 1fr);
+    }
+    .sites-filter .ui-seg__option {
+      padding-inline: 0.5rem;
+    }
+  }
+  /* Without JS the picker cannot narrow the strip: hide it and show all twelve photos. */
+  html:not(.js) .sites-filter {
+    display: none;
+  }
+
+  .sites-carousel .ui-carousel__track {
+    padding-block: 0.75rem 1.5rem;
+  }
+
+  /* After a site switch the strip remounts at its start and the first cards settle in, 40 ms apart. */
+  @media (prefers-reduced-motion: no-preference) {
+    .sites-carousel.is-switched .ui-carousel__track > li {
+      animation: sites-settle var(--dur-layout) var(--ease-set) both;
+    }
+    .sites-carousel.is-switched .ui-carousel__track > li:nth-child(2) {
+      animation-delay: 40ms;
+    }
+    .sites-carousel.is-switched .ui-carousel__track > li:nth-child(3) {
+      animation-delay: 80ms;
+    }
+    .sites-carousel.is-switched .ui-carousel__track > li:nth-child(4) {
+      animation-delay: 120ms;
+    }
+    .sites-carousel.is-switched .ui-carousel__track > li:nth-child(n + 5) {
+      animation-delay: 160ms;
+    }
+  }
+
+  /* Mouse drag (desktop motion, src/motion/sites.ts): no snapping or text selection while the pointer pulls. */
+  [data-sites-strip][data-dragging] .ui-carousel__track {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+    cursor: grabbing;
+    user-select: none;
+  }
+}
+
+/* Paddles in brand navy while they can move the strip; neutral at the ends. Unlayered on purpose: IconButton's
+   tone is a Tailwind utility (utilities layer), and only unlayered rules outrank it without !important. */
+.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']) {
+  background-color: var(--color-brand);
+  color: var(--color-white);
+}
+.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):hover {
+  background-color: var(--color-brand-600);
+}
+
+@keyframes sites-settle {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sites-card {
+    transition: none !important;
+  }
+}
