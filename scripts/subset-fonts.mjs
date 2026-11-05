@@ -96,15 +96,37 @@ async function assertCoverage(name, woff2, chars) {
   }
 }
 
+// v2 type system (user decision, 5 Nov 2026): Tajawal for Arabic, Poppins for Latin and every numeral.
+// Measured gaps (cmap of the Fontsource files): Tajawal has no U+066B U+066C (Arabic decimal/thousands
+// separators), U+0671 (alef wasla) or U+06F0-06F9 (Eastern Arabic-Indic digits, typed into the form); Poppins has
+// no U+2191/U+2193. Those code points come from IBM Plex Sans Arabic in two tiny "fill" faces that share the
+// family name and load only when such a character is on screen (unicode-range in src/fonts.css).
+const without = (set, gaps) => [...set].filter((ch) => !gaps.includes(ch)).join('');
+const TAJAWAL_GAPS = '\u066B\u066C\u0671' + range(0x06f0, 0x06f9);
+const POPPINS_GAPS = '\u2191\u2193';
+const TAJAWAL = without(ARABIC, TAJAWAL_GAPS);
+const POPPINS = without(LATIN, POPPINS_GAPS);
+
 /** [output file, Fontsource file, character set] */
 const JOBS = [
-  ['archivo-wght-wdth.woff2', '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2', LATIN],
-  ['kufi-wght.woff2', '@fontsource-variable/noto-kufi-arabic/files/noto-kufi-arabic-arabic-wght-normal.woff2', ARABIC],
-  ['plex-ar-400.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2', ARABIC],
-  ['plex-ar-600.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-600-normal.woff2', ARABIC],
-  ['plex-la-400.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-latin-400-normal.woff2', LATIN],
-  ['plex-la-600.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-latin-600-normal.woff2', LATIN],
+  ['tajawal-ar-400.woff2', '@fontsource/tajawal/files/tajawal-arabic-400-normal.woff2', TAJAWAL],
+  ['tajawal-ar-500.woff2', '@fontsource/tajawal/files/tajawal-arabic-500-normal.woff2', TAJAWAL],
+  ['tajawal-ar-700.woff2', '@fontsource/tajawal/files/tajawal-arabic-700-normal.woff2', TAJAWAL],
+  ['tajawal-ar-800.woff2', '@fontsource/tajawal/files/tajawal-arabic-800-normal.woff2', TAJAWAL],
+  ['poppins-400.woff2', '@fontsource/poppins/files/poppins-latin-400-normal.woff2', POPPINS],
+  ['poppins-500.woff2', '@fontsource/poppins/files/poppins-latin-500-normal.woff2', POPPINS],
+  ['poppins-600.woff2', '@fontsource/poppins/files/poppins-latin-600-normal.woff2', POPPINS],
+  ['poppins-700.woff2', '@fontsource/poppins/files/poppins-latin-700-normal.woff2', POPPINS],
+  ['fill-ar.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2', TAJAWAL_GAPS],
+  ['fill-la.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-latin-400-normal.woff2', POPPINS_GAPS],
+  // Model codes and machine formulas only (Poppins has no tabular/mono figures in these files).
   ['plex-mono-500.woff2', '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2', LATIN],
+];
+
+/** Every script's full set must be covered by its family (main faces plus the fill face). */
+const FAMILIES = [
+  ['Tajawal Atlas', ARABIC, ['tajawal-ar-400.woff2', 'fill-ar.woff2']],
+  ['Poppins Atlas', LATIN, ['poppins-400.woff2', 'fill-la.woff2']],
 ];
 
 const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`.padStart(9);
@@ -112,13 +134,22 @@ const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`.padStart(9);
 await mkdir(OUT, { recursive: true });
 let before = 0;
 let after = 0;
+const built = new Map();
 for (const [out, source, chars] of JOBS) {
   const input = await readFile(require.resolve(source));
   const output = await subsetFont(input, chars, { targetFormat: 'woff2' });
   await assertCoverage(out, output, chars);
   await writeFile(new URL(out, OUT), output);
+  built.set(out, output);
   before += input.length;
   after += output.length;
   console.log(`${out.padEnd(24)} ${kb(input.length)} -> ${kb(output.length)}`);
+}
+for (const [family, chars, files] of FAMILIES) {
+  const have = new Set();
+  for (const f of files) for (const cp of cmapCodepoints(new Uint8Array(await fontverter.convert(built.get(f), 'sfnt')))) have.add(cp);
+  const missing = [...new Set(chars)].map((ch) => ch.codePointAt(0)).filter((cp) => !EXEMPT.has(cp) && !have.has(cp));
+  if (missing.length) throw new Error(`${family}: no glyph for ${missing.map((c) => 'U+' + c.toString(16).toUpperCase()).join(' ')}`);
+  console.log(`${family.padEnd(24)} covers its full set (${files.join(' + ')})`);
 }
 console.log(`${'total'.padEnd(24)} ${kb(before)} -> ${kb(after)}`);

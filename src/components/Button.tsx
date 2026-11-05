@@ -1,46 +1,95 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import { useLang } from '@/lib/lang';
 
-export type ButtonVariant = 'primary-red' | 'outline-on-dark' | 'outline-on-light';
-export type ButtonSize = 'lg' | 'md';
-
 import { CHEVRON_CLASS, CHEVRON_STRIPES } from '@/components/stripes';
 
 export { CHEVRON_STRIPES };
 
+/**
+ * v2 variants (docs/superpowers/specs/2026-11-05-atlas-v2-design.md §8.1). Name = role, plus the ground it sits on:
+ * - primary      red pill: the one action of a view (request, WhatsApp). Never two primaries side by side.
+ * - secondary    black pill on light grounds (v2 palette: white and black, a little red and navy).
+ *   Navy is not a button colour in v2: it stays for the logo, links (plain on light), focus and the tab ink.
+ * - inverse      white pill on dark grounds.
+ * - ghost-light  ink hairline pill on light grounds.
+ * - ghost-dark   white/40 hairline pill on dark grounds.
+ * - glass        frosted pill over photographs (glass-dark).
+ * - plain        text action with a trailing arrow; no fill.
+ * v1 names are aliases until every section migrates: primary-red -> primary, outline-on-dark -> ghost-dark,
+ * outline-on-light -> ghost-light.
+ */
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'inverse'
+  | 'ghost-light'
+  | 'ghost-dark'
+  | 'glass'
+  | 'plain'
+  | 'primary-red'
+  | 'outline-on-dark'
+  | 'outline-on-light';
+export type ButtonSize = 'lg' | 'md' | 'sm';
+
+type V2Variant = Exclude<ButtonVariant, 'primary-red' | 'outline-on-dark' | 'outline-on-light'>;
+const ALIAS: Record<ButtonVariant, V2Variant> = {
+  primary: 'primary',
+  secondary: 'secondary',
+  inverse: 'inverse',
+  'ghost-light': 'ghost-light',
+  'ghost-dark': 'ghost-dark',
+  glass: 'glass',
+  plain: 'plain',
+  'primary-red': 'primary',
+  'outline-on-dark': 'ghost-dark',
+  'outline-on-light': 'ghost-light',
+};
+
 // The focus ring is the global `:focus-visible` rule; its colour comes from `--ring`, set by the ground (A1).
-// Never override the outline colour here.
+// Never override the outline colour here. Press feedback is a 2 % scale (transform), hover is colour only.
 const BASE =
-  'relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-none font-body font-semibold leading-none text-center transition-[background-color,border-color,color,filter] duration-200 [&:lang(ar)]:text-[1.0625rem]';
+  'relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full font-body font-semibold leading-tight text-center transition-[background-color,border-color,color,transform] duration-(--dur-state) ease-ui [&:lang(ar)]:text-[1.0625rem]';
 /**
  * Rendered height of a size="lg" button: 52 px, 56 px from md (typography §4). The hero sling reserves this
  * room under the hook. Tailwind needs literal class names, so SIZES.lg spells the same values (a test checks).
  */
 export const BUTTON_LG_HEIGHT = { base: '3.25rem', md: '3.5rem' } as const;
 const SIZES: Record<ButtonSize, string> = {
-  lg: 'min-h-[3.25rem] px-6 text-base md:min-h-[3.5rem]', // BUTTON_LG_HEIGHT
-  md: 'min-h-12 px-4 text-base', // 48 px, for the 64 px request bar
+  lg: 'min-h-[3.25rem] px-7 text-base md:min-h-[3.5rem]', // BUTTON_LG_HEIGHT
+  md: 'min-h-12 px-5 text-base', // 48 px, for the 64 px request bar
+  sm: 'min-h-11 px-4 text-[0.9375rem]', // 44 px: the tap-target floor
 };
-// Native buttons use enabled: plus not-aria-disabled: so hover and active never fire while disabled or loading;
-// anchors have no disabled state.
-const ANCHOR_VARIANTS: Record<ButtonVariant, string> = {
-  'primary-red': 'bg-red text-white hover:brightness-90 active:brightness-75',
-  'outline-on-dark': 'border border-white/70 text-white hover:border-white hover:bg-white hover:text-navy-950',
-  'outline-on-light': 'border border-navy text-navy hover:bg-navy hover:text-white',
+const PLAIN_SIZE = 'min-h-11 px-1 text-base';
+
+// Anchors: plain hover/active. Native buttons: enabled:not-aria-disabled: so hover and press never fire while
+// disabled or loading. Every class is spelled out in full: Tailwind only compiles names it can read in the source.
+const ANCHOR: Record<V2Variant, string> = {
+  primary: 'bg-red text-white hover:bg-red-600 active:scale-[0.98]',
+  secondary: 'bg-ink text-white hover:bg-neutral-800 active:scale-[0.98]',
+  inverse: 'bg-white text-ink hover:bg-neutral-200 active:scale-[0.98]',
+  'ghost-light': 'border border-ink text-ink hover:bg-ink hover:text-white active:scale-[0.98]',
+  'ghost-dark': 'border border-white/40 text-white hover:border-white hover:bg-white hover:text-ink active:scale-[0.98]',
+  glass: 'glass-dark text-white hover:bg-black/80 active:scale-[0.98]',
+  plain: 'text-(--surface-accent) underline-offset-[0.28em] decoration-1 hover:underline active:opacity-80',
 };
-const NATIVE_VARIANTS: Record<ButtonVariant, string> = {
-  'primary-red':
-    'bg-red text-white enabled:not-aria-disabled:hover:brightness-90 enabled:not-aria-disabled:active:brightness-75',
-  'outline-on-dark':
-    'border border-white/70 text-white enabled:not-aria-disabled:hover:border-white enabled:not-aria-disabled:hover:bg-white enabled:not-aria-disabled:hover:text-navy-950',
-  'outline-on-light':
-    'border border-navy text-navy enabled:not-aria-disabled:hover:bg-navy enabled:not-aria-disabled:hover:text-white',
+const NATIVE: Record<V2Variant, string> = {
+  primary: 'bg-red text-white enabled:not-aria-disabled:hover:bg-red-600 enabled:not-aria-disabled:active:scale-[0.98]',
+  secondary: 'bg-ink text-white enabled:not-aria-disabled:hover:bg-neutral-800 enabled:not-aria-disabled:active:scale-[0.98]',
+  inverse: 'bg-white text-ink enabled:not-aria-disabled:hover:bg-neutral-200 enabled:not-aria-disabled:active:scale-[0.98]',
+  'ghost-light':
+    'border border-ink text-ink enabled:not-aria-disabled:hover:bg-ink enabled:not-aria-disabled:hover:text-white enabled:not-aria-disabled:active:scale-[0.98]',
+  'ghost-dark':
+    'border border-white/40 text-white enabled:not-aria-disabled:hover:border-white enabled:not-aria-disabled:hover:bg-white enabled:not-aria-disabled:hover:text-ink enabled:not-aria-disabled:active:scale-[0.98]',
+  glass: 'glass-dark text-white enabled:not-aria-disabled:hover:bg-black/80 enabled:not-aria-disabled:active:scale-[0.98]',
+  plain:
+    'text-(--surface-accent) underline-offset-[0.28em] decoration-1 enabled:not-aria-disabled:hover:underline enabled:not-aria-disabled:active:opacity-80',
 };
 const IDLE = 'disabled:cursor-not-allowed disabled:opacity-60';
 const BUSY = 'cursor-progress';
 
-export function buttonClass(variant: ButtonVariant = 'primary-red', size: ButtonSize = 'lg', extra = '', native = false): string {
-  return [BASE, SIZES[size], (native ? NATIVE_VARIANTS : ANCHOR_VARIANTS)[variant], extra].filter(Boolean).join(' ');
+export function buttonClass(variant: ButtonVariant = 'primary', size: ButtonSize = 'lg', extra = '', native = false): string {
+  const v = ALIAS[variant];
+  return [BASE, v === 'plain' ? PLAIN_SIZE : SIZES[size], (native ? NATIVE : ANCHOR)[v], extra].filter(Boolean).join(' ');
 }
 
 /** target/rel for http(s) links; mailto: and tel: stay in place. */
@@ -61,6 +110,8 @@ interface CommonProps {
   iconEnd?: ReactNode;
   className?: string;
   children: ReactNode;
+  /** Desktop only: the button leans a few pixels toward the pointer (src/motion/reveals.ts). Primary CTAs only. */
+  magnetic?: boolean;
 }
 
 export type AnchorButtonProps = CommonProps &
@@ -88,10 +139,10 @@ function isAnchor(props: ButtonProps): props is AnchorButtonProps {
   return typeof props.href === 'string';
 }
 
-/** Square-cornered button or link (spec §6). */
+/** Pill button or link (v2 spec §8.1). */
 export function Button(props: ButtonProps) {
   if (isAnchor(props)) {
-    const { variant, size, icon, iconEnd, className, children, external, target, rel, ...rest } = props;
+    const { variant, size, icon, iconEnd, className, children, external, target, rel, magnetic, ...rest } = props;
     const ext = external === true ? externalProps(rest.href) : {};
     const finalTarget = target ?? ext.target;
     const blank = finalTarget === '_blank';
@@ -100,6 +151,7 @@ export function Button(props: ButtonProps) {
         {...rest}
         target={finalTarget}
         rel={blank ? 'noopener noreferrer' : rel}
+        data-magnetic={magnetic ? '' : undefined}
         className={buttonClass(variant, size, className)}
       >
         {icon}
@@ -109,7 +161,21 @@ export function Button(props: ButtonProps) {
       </a>
     );
   }
-  const { variant, size, icon, iconEnd, className, children, loading = false, loadingLabel, disabled, type = 'button', onClick, ...rest } = props;
+  const {
+    variant,
+    size,
+    icon,
+    iconEnd,
+    className,
+    children,
+    loading = false,
+    loadingLabel,
+    disabled,
+    type = 'button',
+    onClick,
+    magnetic,
+    ...rest
+  } = props;
   const guard = (event: MouseEvent<HTMLButtonElement>) => {
     if (loading) {
       event.preventDefault();
@@ -126,6 +192,7 @@ export function Button(props: ButtonProps) {
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
       onClick={guard}
+      data-magnetic={magnetic ? '' : undefined}
       className={buttonClass(variant, size, `${loading ? BUSY : IDLE} ${className ?? ''}`, true)}
     >
       {icon}

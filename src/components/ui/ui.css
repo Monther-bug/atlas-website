@@ -1,0 +1,1032 @@
+/* v2 foundation: type roles, surfaces, glass, frames and the CSS half of the shared primitives in src/components/ui.
+   Spec: docs/superpowers/specs/2026-11-05-atlas-v2-design.md. Every animated rule here has a reduced-motion answer
+   at the bottom of this file (and the global reduce rule in styles.css). */
+
+/* ── Surface semantics. Primitives read these variables, so one component works on every ground. ─────────── */
+:root,
+.surface-white,
+.surface-mist,
+.surface-tint {
+  --surface-fg: var(--color-ink);
+  --surface-fg-2: var(--color-ink-2);
+  --surface-fg-3: var(--color-ink-3);
+  --surface-line: var(--color-line);
+  --surface-control: var(--color-line-control);
+  --surface-raised: var(--color-white);
+  --surface-sunken: var(--color-mist);
+  --surface-accent: var(--color-brand);
+  --surface-danger: var(--color-red);
+  --surface-ok: var(--color-ok);
+}
+.surface-dark,
+.surface-night,
+.surface-navy {
+  --surface-fg: var(--color-white);
+  --surface-fg-2: var(--color-neutral-300);
+  --surface-fg-3: var(--color-neutral-400);
+  --surface-line: var(--color-line-dark);
+  --surface-control: rgb(255 255 255 / 0.4);
+  --surface-raised: var(--color-neutral-900);
+  --surface-sunken: var(--color-black);
+  /* On black the accent is white: navy is 1.5:1 there (v2 palette). */
+  --surface-accent: var(--color-white);
+  --surface-danger: var(--color-red-bright);
+  --surface-ok: var(--color-ok-bright);
+}
+/* On the brand-navy ground, secondary text is tinted from navy, never grey (Impeccable gray-on-color). */
+.surface-navy {
+  --surface-fg-2: var(--color-brand-100);
+  --surface-fg-3: #c4c3e3;
+}
+
+@layer components {
+  /* ── Surfaces (Section sets one of these plus data-ground) ── */
+  .surface-white {
+    background-color: var(--color-white);
+    color: var(--surface-fg);
+  }
+  .surface-mist {
+    background-color: var(--color-mist);
+    color: var(--surface-fg);
+  }
+  .surface-tint {
+    background-color: var(--color-neutral-100);
+    color: var(--surface-fg);
+  }
+  .surface-dark {
+    background-color: var(--color-black);
+    color: var(--surface-fg);
+  }
+  /* `navy` surface = the brand colour as a ground (one accent tile or band at most). */
+  .surface-navy {
+    background-color: var(--color-brand);
+    color: var(--surface-fg);
+  }
+  /* Night: a graphite glow from the top over black, plus a faint load-chart grid that fades out toward the edges. */
+  .surface-night {
+    position: relative;
+    isolation: isolate;
+    background: var(--color-black) var(--grad-night);
+    color: var(--surface-fg);
+  }
+  .surface-night::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+    background-size: 4rem 4rem;
+    background-position: center top;
+    mask-image: radial-gradient(90% 70% at 50% 20%, #000 30%, transparent 80%);
+  }
+
+  /* ── v2 type roles (Latin first, Arabic overrides). v1 .t-* classes stay valid until sections migrate. ── */
+  /* Poppins (Latin, numerals) is wide with a tall x-height: sizes sit below Archivo's and tracking is tighter.
+     Tajawal (Arabic) draws small for its em (x-height 0.45): Arabic sizes are larger and lines looser. */
+  .t-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.5rem, 1.667rem + 3.704vw, 5rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .t-display:lang(ar) {
+    font-weight: 800;
+    font-size: clamp(2.875rem, 2.042rem + 3.704vw, 5.375rem);
+    line-height: 1.25;
+  }
+  .t-headline {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2rem, 1.583rem + 1.852vw, 3.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .t-headline:lang(ar) {
+    font-weight: 700;
+    font-size: clamp(2.125rem, 1.583rem + 2.407vw, 3.75rem);
+    line-height: 1.35;
+  }
+  .t-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 1.083rem + 0.741vw, 1.75rem);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .t-title:lang(ar) {
+    font-weight: 700;
+    font-size: clamp(1.375rem, 1.208rem + 0.741vw, 1.875rem);
+    line-height: 1.45;
+  }
+  /* Subhead / lead under a heading, and the one-line pitch inside a tile (Apple measured 19 -> 28 px). */
+  .t-sub {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.125rem, 1rem + 0.556vw, 1.5rem);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+  .t-sub:lang(ar) {
+    font-weight: 500;
+    font-size: clamp(1.25rem, 1.125rem + 0.556vw, 1.625rem);
+    line-height: 1.65;
+  }
+  /* Mid-size numerals: stat values, spec emphasis. Poppins figures are proportional (no tnum in these files):
+     tickers reserve the final width (Stat), tables align numbers per cell, not per column. */
+  .t-figure {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-size: clamp(2.25rem, 1.667rem + 2.593vw, 4rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .t-caption {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  .t-caption:lang(ar) {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+  /* Two-tone heading: the continuation after the heading's first sentence (Stripe pattern), in the surface's tertiary tone.
+     Large text, so 3:1 is the floor; ink-3 is 4.9:1 on mist and neutral-400 7.9:1 on black. */
+  .t-muted {
+    color: var(--surface-fg-3);
+  }
+
+  /* ── Layout helpers ── */
+  .section-v2 {
+    padding-block: var(--space-section);
+  }
+  .shell-narrow {
+    margin-inline: auto;
+    max-width: 64rem;
+    padding-inline: clamp(1rem, 4vw, 3.5rem);
+  }
+  .shell-wide {
+    margin-inline: auto;
+    max-width: 100rem;
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  /* Rounded media frame. isolation + overflow clip keeps the radius while children scale (Safari). */
+  .frame {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    border-radius: var(--radius-xl);
+    background-color: var(--surface-sunken);
+  }
+  .frame > img,
+  .frame > picture > img,
+  .frame > picture {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  /* ── Glass: only where content moves underneath (header, request bar, controls over photos, sheet backdrop).
+     Alphas are set so the worst background still passes AA: white on glass-dark over white 5.7:1;
+     ink-2 on glass-light over black 5.6:1. Without backdrop-filter the surface is solid. ── */
+  .glass-dark {
+    background-color: rgb(10 10 10 / 0.62);
+    color: var(--color-white);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+  }
+  .glass-light {
+    background-color: rgb(255 255 255 / 0.8);
+    color: var(--color-ink);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-dark {
+      background-color: var(--color-black);
+    }
+    .glass-light {
+      background-color: var(--color-white);
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-dark {
+      background-color: var(--color-black);
+      backdrop-filter: none;
+    }
+    .glass-light {
+      background-color: var(--color-white);
+      backdrop-filter: none;
+    }
+  }
+
+  /* ── Card ── */
+  .ui-card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    color: var(--surface-fg);
+  }
+  .ui-card[data-tone='raised'] {
+    background-color: var(--surface-raised);
+    box-shadow: var(--shadow-e1);
+  }
+  .ui-card[data-tone='outline'] {
+    border: 1px solid var(--surface-line);
+  }
+  .ui-card[data-tone='sunken'] {
+    background-color: var(--surface-sunken);
+  }
+  .ui-card[data-interactive] {
+    transition:
+      box-shadow var(--dur-ui) var(--ease-ui),
+      transform var(--dur-ui) var(--ease-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .ui-card[data-interactive]:hover {
+      box-shadow: var(--shadow-e2);
+      transform: translateY(-2px);
+    }
+  }
+  .ui-card[data-interactive]:has(:focus-visible) {
+    box-shadow: var(--shadow-e2);
+  }
+
+  /* ── Bento: 6 tracks from 64rem; tiles span by name. Container-sized, not viewport-sized. ── */
+  .ui-bento {
+    container-type: inline-size;
+  }
+  .ui-bento__grid {
+    display: grid;
+    gap: var(--space-gap);
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row dense;
+  }
+  @container (width >= 40rem) {
+    .ui-bento__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ui-bento__tile[data-span='full'],
+    .ui-bento__tile[data-span='two-thirds'],
+    .ui-bento__tile[data-span='half-wide'] {
+      grid-column: span 2;
+    }
+  }
+  @container (width >= 60rem) {
+    .ui-bento__grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .ui-bento__tile[data-span='third'] {
+      grid-column: span 2;
+    }
+    .ui-bento__tile[data-span='half'],
+    .ui-bento__tile[data-span='half-wide'] {
+      grid-column: span 3;
+    }
+    .ui-bento__tile[data-span='two-thirds'] {
+      grid-column: span 4;
+    }
+    .ui-bento__tile[data-span='full'] {
+      grid-column: span 6;
+    }
+    .ui-bento__tile[data-rows='2'] {
+      grid-row: span 2;
+    }
+  }
+  .ui-bento__tile {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 16rem;
+    padding: var(--space-tile);
+    border-radius: var(--radius-xl);
+    color: var(--surface-fg);
+  }
+  .ui-bento__tile[data-tone='raised'] {
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-e1);
+  }
+  .ui-bento__tile[data-tone='tile'] {
+    background: var(--grad-tile);
+    box-shadow: var(--shadow-e1);
+  }
+  .ui-bento__tile[data-tone='night'] {
+    background: var(--color-black) var(--grad-night);
+  }
+  .ui-bento__tile[data-tone='navy'] {
+    background: var(--color-brand);
+  }
+  .ui-bento__tile[data-tone='photo'] {
+    padding: 0;
+    background: var(--color-black);
+  }
+
+  /* ── Segmented control: a pill track; the thumb slides under the checked option (measured by JS).
+     Before hydration or without JS, the checked option paints its own fill, so there is never a frame without a selection. ── */
+  .ui-seg {
+    position: relative;
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(max-content, 1fr);
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    background-color: var(--seg-track, var(--color-neutral-100));
+    max-inline-size: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ui-seg[data-tone='dark'] {
+    --seg-track: rgb(255 255 255 / 0.1);
+  }
+  .ui-seg__thumb {
+    position: absolute;
+    inset-block: 0.25rem;
+    left: 0;
+    inline-size: var(--seg-w, 0px);
+    transform: translateX(var(--seg-x, 0px));
+    border-radius: 999px;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-e1);
+    opacity: 0;
+    transition:
+      transform var(--dur-ui) var(--ease-ui),
+      inline-size var(--dur-ui) var(--ease-ui);
+    pointer-events: none;
+  }
+  .ui-seg[data-tone='dark'] .ui-seg__thumb {
+    background-color: var(--color-white);
+  }
+  .ui-seg[data-measured] .ui-seg__thumb {
+    opacity: 1;
+  }
+  .ui-seg__option {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding-inline: 1.125rem;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--seg-fg, var(--color-ink-2));
+    cursor: pointer;
+    transition: color var(--dur-state) var(--ease-ui);
+  }
+  .ui-seg[data-tone='dark'] .ui-seg__option {
+    --seg-fg: var(--color-neutral-300);
+  }
+  .ui-seg__option:hover {
+    color: var(--surface-fg);
+  }
+  .ui-seg__option:has(input:checked) {
+    color: var(--color-ink);
+    background-color: var(--color-white);
+  }
+  .ui-seg[data-measured] .ui-seg__option:has(input:checked) {
+    background-color: transparent;
+  }
+  .ui-seg__option:has(input:focus-visible) {
+    outline: 2px solid var(--ring, var(--color-brand));
+    outline-offset: 2px;
+  }
+  .ui-seg__option input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  /* ── Tabs: underline indicator slides to the selected tab. ── */
+  .ui-tabs__list {
+    position: relative;
+    display: flex;
+    gap: 0.25rem;
+    border-block-end: 1px solid var(--surface-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ui-tabs__tab {
+    position: relative;
+    min-block-size: 3rem;
+    padding-inline: 1rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    color: var(--surface-fg-3);
+    transition: color var(--dur-state) var(--ease-ui);
+  }
+  .ui-tabs__tab:hover,
+  .ui-tabs__tab[aria-selected='true'] {
+    color: var(--surface-fg);
+  }
+  .ui-tabs__tab:focus-visible {
+    outline-offset: -2px;
+  }
+  /* Fallback indicator (pre-measure): a bar under the selected tab itself. */
+  .ui-tabs__tab[aria-selected='true']::after {
+    content: '';
+    position: absolute;
+    inset-inline: 1rem;
+    inset-block-end: -1px;
+    block-size: 2px;
+    background-color: var(--surface-accent);
+  }
+  .ui-tabs__list[data-measured] .ui-tabs__tab::after {
+    content: none;
+  }
+  .ui-tabs__ink {
+    position: absolute;
+    inset-block-end: -1px;
+    left: 0;
+    block-size: 2px;
+    inline-size: var(--tab-w, 0px);
+    transform: translateX(var(--tab-x, 0px));
+    background-color: var(--surface-accent);
+    opacity: 0;
+    transition:
+      transform var(--dur-ui) var(--ease-ui),
+      inline-size var(--dur-ui) var(--ease-ui);
+  }
+  .ui-tabs__list[data-measured] .ui-tabs__ink {
+    opacity: 1;
+  }
+  /* No JS: tabs cannot switch, so the list hides and every panel shows (each panel carries its own heading). */
+  html:not(.js) .ui-tabs__list {
+    display: none;
+  }
+  .js .ui-tabs__panel[data-inactive] {
+    display: none;
+  }
+  .ui-tabs__panel:focus-visible {
+    outline-offset: 6px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ── Sheet (a <dialog>): from the inline-end edge on wide screens, from the bottom on phones. ── */
+  .ui-sheet {
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    max-inline-size: none;
+    max-block-size: none;
+    color: var(--color-ink);
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-e4);
+    overscroll-behavior: contain;
+    /* Closed state = the "from" state; [open] = the "to" state; @starting-style animates the entry. */
+    transition:
+      transform var(--dur-layout) var(--ease-set),
+      opacity var(--dur-layout) var(--ease-set),
+      overlay var(--dur-layout) allow-discrete,
+      display var(--dur-layout) allow-discrete;
+  }
+  .ui-sheet::backdrop {
+    background-color: rgb(10 10 10 / 0.5);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition:
+      opacity var(--dur-layout) var(--ease-set),
+      overlay var(--dur-layout) allow-discrete,
+      display var(--dur-layout) allow-discrete;
+    opacity: 0;
+  }
+  .ui-sheet[open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    .ui-sheet[open]::backdrop {
+      opacity: 0;
+    }
+  }
+  /* Bottom sheet (default, phones). */
+  .ui-sheet {
+    inset: auto 0 0 0;
+    inline-size: 100%;
+    block-size: min(92dvh, 52rem);
+    border-start-start-radius: var(--radius-2xl);
+    border-start-end-radius: var(--radius-2xl);
+    transform: translateY(100%);
+  }
+  .ui-sheet[open] {
+    transform: none;
+  }
+  @starting-style {
+    .ui-sheet[open] {
+      transform: translateY(100%);
+    }
+  }
+  @media (width >= 48rem) {
+    .ui-sheet[data-side='end'] {
+      inset-block: 0.75rem;
+      inset-inline: auto 0.75rem;
+      inline-size: min(40rem, calc(100vw - 1.5rem));
+      block-size: auto;
+      border-radius: var(--radius-2xl);
+      transform: translateX(calc(100% + 1rem));
+    }
+    [dir='rtl'] .ui-sheet[data-side='end'] {
+      transform: translateX(calc(-100% - 1rem));
+    }
+    .ui-sheet[data-side='end'][open] {
+      transform: none;
+    }
+    @starting-style {
+      .ui-sheet[data-side='end'][open] {
+        transform: translateX(calc(100% + 1rem));
+      }
+      [dir='rtl'] .ui-sheet[data-side='end'][open] {
+        transform: translateX(calc(-100% - 1rem));
+      }
+    }
+  }
+  .ui-sheet__body {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+  }
+  .ui-sheet__scroll {
+    flex: 1;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline: var(--space-tile);
+    padding-block-end: calc(var(--space-tile) + env(safe-area-inset-bottom));
+  }
+  .ui-sheet__grabber {
+    display: block;
+    inline-size: 2.5rem;
+    block-size: 0.3125rem;
+    margin: 0.5rem auto 0;
+    border-radius: 999px;
+    background-color: var(--color-neutral-200);
+  }
+  @media (width >= 48rem) {
+    .ui-sheet[data-side='end'] .ui-sheet__grabber {
+      display: none;
+    }
+  }
+
+  /* ── Spec list (one machine) and compare table (several). ── */
+  .ui-spec {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-spec__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+    padding-block: 0.875rem;
+    border-block-end: 1px solid var(--surface-line);
+  }
+  .ui-spec__row:first-child {
+    border-block-start: 1px solid var(--surface-line);
+  }
+  .ui-spec__term {
+    color: var(--surface-fg-2);
+  }
+  .ui-spec__value {
+    text-align: end;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 600;
+    color: var(--surface-fg);
+  }
+  .ui-spec__note {
+    grid-column: 1 / -1;
+    color: var(--surface-fg-3);
+  }
+
+  .ui-compare {
+    position: relative;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--surface-line);
+    background-color: var(--surface-raised);
+    scrollbar-width: thin;
+  }
+  .ui-compare:focus-visible {
+    outline-offset: 3px;
+  }
+  .ui-compare table {
+    inline-size: 100%;
+    min-inline-size: 44rem;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .ui-compare caption {
+    text-align: start;
+    padding: 1rem 1.25rem 0.5rem;
+    color: var(--surface-fg-2);
+  }
+  .ui-compare th,
+  .ui-compare td {
+    padding: 0.875rem 1.25rem;
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px solid var(--surface-line);
+  }
+  .ui-compare tbody tr:last-child > * {
+    border-block-end: 0;
+  }
+  .ui-compare thead th {
+    position: sticky;
+    top: 0;
+    background-color: var(--surface-raised);
+    font-weight: 700;
+    color: var(--surface-fg);
+  }
+  .ui-compare tbody th[scope='row'] {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background-color: var(--surface-raised);
+    font-weight: 400;
+    color: var(--surface-fg-2);
+    min-inline-size: 11rem;
+  }
+  .ui-compare thead th:first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+  }
+  .ui-compare td {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 600;
+  }
+  .ui-compare [data-highlight] {
+    background-color: var(--color-brand-50);
+  }
+  .surface-dark .ui-compare [data-highlight],
+  .surface-night .ui-compare [data-highlight] {
+    background-color: rgb(255 255 255 / 0.06);
+  }
+  .ui-compare td[data-empty] {
+    color: var(--surface-fg-3);
+    font-weight: 400;
+  }
+
+  /* ── Carousel: native scroll-snap; flows in the reading direction. ── */
+  .ui-carousel__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--slide-w, min(85%, 22rem));
+    gap: var(--space-gap);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--carousel-inset, 0px);
+    padding-inline: var(--carousel-inset, 0px);
+    padding-block: 0.5rem 1rem;
+    scrollbar-width: none;
+    list-style: none;
+    margin: 0;
+  }
+  .ui-carousel__track::-webkit-scrollbar {
+    display: none;
+  }
+  .ui-carousel__track > li {
+    scroll-snap-align: start;
+    min-inline-size: 0;
+  }
+  .ui-carousel__track:focus-visible {
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ui-carousel__track {
+      scroll-behavior: smooth;
+    }
+  }
+  .ui-carousel__controls {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+  }
+  html:not(.js) .ui-carousel__controls {
+    display: none;
+  }
+
+  /* ── Marquee: two copies of the list; the rail moves only with scroll (scroll-driven animation, no loop).
+     Without support for animation-timeline, or with reduced motion, the items wrap as a static list. ── */
+  .ui-marquee {
+    position: relative;
+    overflow: clip;
+  }
+  .ui-marquee__rail {
+    display: flex;
+    inline-size: max-content;
+  }
+  .ui-marquee__list {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--marquee-gap, 3rem);
+    padding-inline-end: var(--marquee-gap, 3rem);
+    margin: 0;
+    list-style: none;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .ui-marquee {
+        mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+      }
+      .ui-marquee__rail {
+        animation: ui-marquee-scroll linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+      .ui-marquee:dir(rtl) .ui-marquee__rail {
+        animation-name: ui-marquee-scroll-rtl;
+      }
+    }
+  }
+  @supports not (animation-timeline: view()) {
+    .ui-marquee__rail {
+      inline-size: auto;
+    }
+    .ui-marquee__list {
+      flex-shrink: 1;
+      flex-wrap: wrap;
+      row-gap: 0.75rem;
+    }
+    .ui-marquee__list[aria-hidden='true'] {
+      display: none;
+    }
+  }
+
+  /* ── Chips ── */
+  .ui-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2rem;
+    padding-inline: 0.875rem;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--surface-fg-2);
+    background-color: var(--surface-sunken);
+  }
+  .surface-dark .ui-chip,
+  .surface-night .ui-chip,
+  .surface-navy .ui-chip {
+    background-color: rgb(255 255 255 / 0.08);
+  }
+  button.ui-chip {
+    min-block-size: 2.75rem;
+    padding-inline: 1.125rem;
+    border: 1px solid var(--surface-control);
+    background-color: transparent;
+    color: var(--surface-fg);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-state) var(--ease-ui),
+      color var(--dur-state) var(--ease-ui),
+      border-color var(--dur-state) var(--ease-ui);
+  }
+  button.ui-chip:hover {
+    border-color: var(--surface-fg);
+  }
+  button.ui-chip[aria-pressed='true'] {
+    background-color: var(--surface-fg);
+    border-color: var(--surface-fg);
+    color: var(--surface-sunken);
+  }
+  .surface-dark button.ui-chip[aria-pressed='true'],
+  .surface-night button.ui-chip[aria-pressed='true'] {
+    color: var(--color-black);
+  }
+
+  /* ── Form fields (v2) ── */
+  .ui-field__control {
+    display: block;
+    inline-size: 100%;
+    min-block-size: 3.25rem;
+    padding-inline: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--surface-control);
+    background-color: var(--surface-raised);
+    color: var(--surface-fg);
+    font-size: 1rem;
+    transition:
+      border-color var(--dur-state) var(--ease-ui),
+      box-shadow var(--dur-state) var(--ease-ui);
+  }
+  textarea.ui-field__control {
+    padding-block: 0.875rem;
+    min-block-size: 8rem;
+    resize: vertical;
+  }
+  .ui-field__control:hover {
+    border-color: var(--surface-fg-2);
+  }
+  .ui-field__control:focus-visible {
+    outline: 2px solid var(--ring, var(--color-brand));
+    outline-offset: 2px;
+    border-color: var(--surface-fg);
+  }
+  .ui-field__control[aria-invalid='true'] {
+    border-color: var(--surface-danger);
+    box-shadow: inset 0 0 0 1px var(--surface-danger);
+  }
+  .ui-field__control::placeholder {
+    color: var(--surface-fg-3);
+    opacity: 1;
+  }
+
+  /* ── StickyStory: steps scroll past a sticky media stage from 64rem; inline media below that. ── */
+  .ui-story__steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--space-head);
+  }
+  .ui-story__inline-media {
+    margin-block-end: 1.25rem;
+  }
+  .ui-story__inline-media > * {
+    border-radius: var(--radius-xl);
+    overflow: clip;
+  }
+  .ui-story__stage {
+    display: none;
+  }
+  @media (width >= 64rem) {
+    .ui-story {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(2rem, 5vw, 6rem);
+      align-items: start;
+    }
+    .ui-story__steps {
+      gap: 0;
+    }
+    .ui-story__step {
+      min-block-size: 70vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0.35;
+      transition: opacity var(--dur-layout) var(--ease-swap);
+    }
+    .ui-story__step[data-active],
+    html:not(.js) .ui-story__step {
+      opacity: 1;
+    }
+    .ui-story__inline-media {
+      display: none;
+    }
+    .ui-story__stage {
+      display: grid;
+      position: sticky;
+      inset-block-start: 15vh;
+      block-size: 70vh;
+    }
+    .ui-story__frame {
+      grid-area: 1 / 1;
+      opacity: 0;
+      transform: scale(1.04);
+      transition:
+        opacity var(--dur-layout) var(--ease-swap),
+        transform var(--dur-focal) var(--ease-set);
+    }
+    .ui-story__frame[data-active] {
+      opacity: 1;
+      transform: none;
+    }
+    .ui-story__frame > * {
+      block-size: 100%;
+    }
+  }
+
+  /* ── Micro-interactions (hover = fine pointers only; press for everyone). ── */
+  /* Photo settles closer on hover/focus inside a frame or tile: add .ui-zoom to the frame. */
+  .ui-zoom img {
+    transition: transform var(--dur-focal) var(--ease-set);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .ui-zoom:hover img,
+    .ui-zoom:has(:focus-visible) img {
+      transform: scale(1.035);
+    }
+  }
+  /* Arrow nudge: an icon inside a link or button moves 3 px in the reading direction on hover. */
+  .ui-nudge svg {
+    transition: transform var(--dur-state) var(--ease-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .ui-nudge:hover svg:last-child {
+      transform: translateX(3px);
+    }
+    /* ArrowIcon mirrors with the `scale` property (Tailwind v4), which composes with this transform. */
+    [dir='rtl'] .ui-nudge:hover svg:last-child {
+      transform: translateX(-3px);
+    }
+  }
+  /* Underline that draws from the reading start (links in prose and plain actions). */
+  .ui-underline {
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size var(--dur-ui) var(--ease-ui);
+  }
+  [dir='rtl'] .ui-underline {
+    background-position: 100% 100%;
+  }
+  .ui-underline:hover,
+  .ui-underline:focus-visible {
+    background-size: 100% 1px;
+  }
+
+  /* Number ticker: the animated twin is aria-hidden; the final value lives in an sr-only sibling (D-notes #2). */
+  .ui-stat__value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+  }
+}
+
+/* Half of one copy across the strip's whole pass through the viewport: a slow drift tied to scroll. */
+@keyframes ui-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-25%);
+  }
+}
+@keyframes ui-marquee-scroll-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(25%);
+  }
+}
+
+/* ── Reduced motion: final states, no movement. ── */
+@media (prefers-reduced-motion: reduce) {
+  .ui-seg__thumb,
+  .ui-tabs__ink,
+  .ui-card[data-interactive],
+  .ui-sheet,
+  .ui-sheet::backdrop {
+    transition: none !important;
+  }
+  .ui-card[data-interactive]:hover {
+    transform: none;
+  }
+  .ui-story__frame,
+  .ui-story__step,
+  .ui-zoom img,
+  .ui-nudge svg,
+  .ui-underline {
+    transition: none !important;
+  }
+  .ui-zoom:hover img {
+    transform: none !important;
+  }
+  .ui-story__frame {
+    transform: none !important;
+  }
+  .ui-marquee__rail {
+    animation: none !important;
+    inline-size: auto;
+  }
+  .ui-marquee__list[aria-hidden='true'] {
+    display: none;
+  }
+  .ui-marquee__list {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+  }
+}

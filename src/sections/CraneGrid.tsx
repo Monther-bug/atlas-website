@@ -157,7 +157,7 @@ function CraneCard({ crane }: { crane: Crane }) {
               {/* Capacity is the biggest element on the card (spec §5.5). */}
               <span className="font-display text-[clamp(3rem,2.5rem+2.2vw,4.5rem)] leading-[0.9] font-extrabold tabular-nums [font-stretch:75%] text-navy">
                 {formatNumber(crane.capacityT, lang)}
-                {' '}
+                {'\u00A0'}
                 <span className="text-[0.36em] font-bold [font-stretch:100%] text-red">{copy.hoist.unit}</span>
               </span>
               <DraftBadge verified={crane.verified} />

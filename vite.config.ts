@@ -44,6 +44,9 @@ export default defineConfig(({ mode }) => {
     define: { __BUILD_TARGET__: JSON.stringify(target) },
     build: {
       rollupOptions: { input: { ar: path('./index.html'), en: path('./en/index.html') } },
+      // Never inline fonts as base64: the tiny unicode-range fill faces (fill-ar, fill-la) must stay separate files
+      // that load only when one of their characters is on screen, not ride in the CSS for every visitor.
+      assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),
     },
   };
 });

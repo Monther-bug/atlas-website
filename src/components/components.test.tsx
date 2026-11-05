@@ -29,7 +29,7 @@ describe('Button', () => {
     expect(button?.getAttribute('type')).toBe('button');
     expect(button?.className).toContain('hover:');
     expect(button?.className).toContain('disabled:opacity-60');
-    expect(button?.className).toContain('rounded-none');
+    expect(button?.className).toContain('rounded-full'); // v2: pill buttons (v2 spec §8.1)
   });
 
   it('shows a busy state while loading', () => {

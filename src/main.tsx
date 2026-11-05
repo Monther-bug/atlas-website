@@ -20,7 +20,21 @@ const app = (
   </StrictMode>
 );
 
-if (container.firstElementChild) {
+// DEV ONLY: the v2 kitchen (/?v2=kitchen, /en/?v2=kitchen). `import.meta.env.DEV` is false in builds, so the branch and
+// the kitchen chunk are dropped from production.
+const kitchen = import.meta.env.DEV && new URLSearchParams(window.location.search).get('v2') === 'kitchen';
+
+if (kitchen) {
+  void import('./kitchen/Kitchen').then(({ Kitchen }) => {
+    createRoot(container).render(
+      <StrictMode>
+        <LangProvider lang={lang}>
+          <Kitchen />
+        </LangProvider>
+      </StrictMode>,
+    );
+  });
+} else if (container.firstElementChild) {
   // Built pages: the HTML was prerendered by scripts/prerender.mjs, so React adopts it.
   hydrateRoot(container, app, {
     onRecoverableError(error, info) {

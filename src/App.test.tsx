@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderHtml } from '@/test/render';
 import { App } from './App';
+import { REVEAL_KINDS } from '@/components/ui';
 
 describe('App', () => {
   it('renders the skip link, main and the progress rope', () => {
@@ -22,7 +23,7 @@ describe('App', () => {
     expect(ids).toEqual(['top', 'cranes', 'services', 'crane-list', 'sites', 'request']);
   });
 
-  it('meets the spec §15 floor on both pages', () => {
+  it('meets the v2 floor on both pages (spec 2026-11-05 §16)', () => {
     for (const lang of ['ar', 'en'] as const) {
       const html = renderHtml(<App />, lang);
       for (const heading of html.querySelectorAll('main h1, main h2')) {
@@ -30,9 +31,16 @@ describe('App', () => {
       }
       expect(html.querySelector('main')?.textContent).not.toMatch(/\b0[1-9]\b/); // no section numbers
       expect(html.innerHTML).not.toMatch(/[\u2715\u2716\u00D7\u2713\u2192\u2190]/); // icons are SVG, not glyphs
-      const shadowed = [...html.querySelectorAll('[class*="shadow-"]')];
-      expect(shadowed.map((el) => el.getAttribute('data-testid'))).toEqual(['request-bar']);
-      expect(html.querySelectorAll('[data-reveal]')).toHaveLength(0);
+      // v2 floor §16.6 (replaces spec §15.6): shadows only from the elevation scale.
+      for (const el of html.querySelectorAll('[class*="shadow-"]')) {
+        const shadows = el.className.split(/\s+/).filter((c) => /(^|:)shadow-/.test(c));
+        for (const c of shadows) expect(c, el.outerHTML.slice(0, 80)).toMatch(/(^|:)shadow-(e[1-4]|bar|none)$/);
+      }
+      // v2 floor §16.4 (replaces spec §15.4): reveals speak the shared vocabulary and never touch the hero.
+      for (const el of html.querySelectorAll('[data-reveal]')) {
+        expect(REVEAL_KINDS).toContain(el.getAttribute('data-reveal'));
+        expect(el.closest('#top')).toBeNull();
+      }
     }
   });
 

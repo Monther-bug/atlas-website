@@ -255,4 +255,55 @@ export interface Copy {
     draftBadge: string; // spec §4.3
     newTab: string;
   };
+
+  /** v2 shared control labels for src/components/ui (generic UI words, no facts). */
+  ui: {
+    prev: string;
+    next: string;
+    pause: string; // stops the marquee
+    play: string; // restarts it
+    close: string;
+    carousel: string; // aria-roledescription of a carousel region
+    slide: string; // aria-roledescription of one slide
+    slideOf: string; // {i} {n}
+    scrollTable: string; // {name}: label of a table that scrolls sideways
+    details: string; // {name}: opens a crane's detail sheet
+    notStated: string; // screen-reader text for an empty comparison cell
+    specification: string; // corner header of a comparison table
+  };
+
+  /** v2: labels for the manufacturer specification fields (src/content/crane-specs.ts, src/content/spec-rows.ts). */
+  specs: {
+    heading: string;
+    disclaimer: string; // manufacturer figures, not Atlas-confirmed
+    source: string;
+    official: string; // source kind: the manufacturer's own document
+    secondary: string; // source kind: a spec database or seller
+    fields: Record<SpecFieldId, string>;
+    units: Record<SpecUnit, string>;
+  };
 }
+
+/** v2: rows a spec table can show, in display order. */
+export type SpecFieldId =
+  | 'maxCapacity'
+  | 'capacityRadius'
+  | 'boom'
+  | 'tipHeight'
+  | 'jib'
+  | 'tipHeightJib'
+  | 'maxRadius'
+  | 'counterweight'
+  | 'axles'
+  | 'drive'
+  | 'engine'
+  | 'enginePower'
+  | 'travelSpeed'
+  | 'gradeability'
+  | 'transportWeight'
+  | 'dimensions'
+  | 'trackWidth'
+  | 'groundPressure'
+  | 'country';
+
+export type SpecUnit = 't' | 'm' | 'kw' | 'kmh' | 'pct' | 'mpa';
