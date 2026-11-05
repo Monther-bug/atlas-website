@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-no-intro>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0D0C2B" />
+    <meta name="color-scheme" content="light" />
+    <!-- Template of the five Arabic crane pages: scripts/prerender.mjs writes cranes/<id>/index.html from it (title, description,
+         canonical, hreflang, Open Graph, JSON-LD and the hero preload go in at the head marker) and then removes it. -->
+    <link rel="icon" href="/brand/badge.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/brand/badge.png" />
+
+    <script>
+      // Before first paint: `js` = scripts run; `motion-ok` = the visitor allows motion; `data-loader` = the first-visit
+      // intro (#al): once per tab session, never on a deep link, a crane page (data-no-intro), a hidden tab or reduced motion. The hook pays out as the
+      // preloaded fonts and the hero photo arrive (the readout never runs ahead of them), then lifts the curtain. At that
+      // moment data-loader goes and `atlas:loader-done` fires on window (the hero intro starts). Any key, press, wheel or
+      // touch lifts it at once. It is held at most 0.95 s, never past 1.8 s after navigation (gone by 2.5 s), and dropped
+      // unseen if the first frame comes after 1.2 s (slow network: no extra wait). CSS hides it by 2.5 s if this dies.
+      (function (d, w) {
+        var h = d.documentElement, c = h.classList;
+        c.add('js');
+        if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        c.add('motion-ok');
+        try {
+          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
+          sessionStorage.setItem('atlas-intro', 1);
+        } catch (e) {
+          return;
+        }
+        h.setAttribute('data-loader', '');
+        var el, n, t0, last, ok, up, img, dec, p = 0, fonts = d.querySelectorAll('link[rel=preload][as=font]'), evs = ['keydown', 'pointerdown', 'wheel', 'touchstart'];
+        function on(add) {
+          for (var i = 0; i < 4; i++) w[add ? 'addEventListener' : 'removeEventListener'](evs[i], skip, add ? { capture: true, passive: true } : true);
+        }
+        function skip() {
+          lift(380);
+        }
+        function gone() {
+          el && el.remove();
+        }
+        function fin() {
+          dec = 2;
+        }
+        function lift(ms) {
+          if (up) return;
+          up = 1;
+          on(0);
+          el = el || d.getElementById('al');
+          if (el && ms && el.animate) {
+            el.classList.add('up');
+            el.animate([{ transform: 'none' }, { transform: 'translateY(-100%)' }], { duration: ms, easing: 'cubic-bezier(.7,0,.25,1)', fill: 'forwards' });
+            setTimeout(gone, ms + 60);
+          } else gone();
+          h.removeAttribute('data-loader');
+          w.dispatchEvent(new Event('atlas:loader-done'));
+        }
+        function tick(now) {
+          if (up) return;
+          try {
+            el = el || d.getElementById('al');
+            if (el) {
+              // First frame. Painted this late (slow network), the visitor has waited enough: drop it before it paints.
+              if (!t0) {
+                t0 = last = now;
+                if (now > 1200) return lift(0);
+                n = el.querySelector('.al-n');
+              }
+              var k = 0, m = fonts.length + 2, t = now - t0, i;
+              for (i = 0; i < fonts.length; i++) performance.getEntriesByName(fonts[i].href).length && k++;
+              img = img || d.querySelector('img[fetchpriority=high]');
+              if (img ? img.complete : d.readyState != 'loading') {
+                k++;
+                if (!img || dec == 2) k++;
+                else if (!dec) (dec = 1), img.decode ? img.decode().then(fin, fin) : fin();
+              }
+              p = Math.min(k / m, 1 - Math.pow(1 - Math.min(1, t / 600), 3), p + (now - last) / 300);
+              last = now;
+              el.style.setProperty('--p', p);
+              n.textContent = Math.round(p * 100) + '%';
+              if (p == 1 && !ok) (ok = now), el.classList.add('ok');
+              if ((ok && now - ok > 80) || t > 950 || now > 1800) return lift(640);
+            }
+            requestAnimationFrame(tick);
+          } catch (e) {
+            lift(0);
+          }
+        }
+        // The CSS failsafe ended (this loop never ran or stalled): release the page and hand over.
+        d.addEventListener('animationend', function (e) {
+          e.animationName == 'al-x' && lift(0);
+        });
+        on(1);
+        requestAnimationFrame(tick);
+      })(document, window);
+    </script>
+    <!-- Cross-document view transitions (progressive enhancement): inline, so the opt-in is there before the first
+         frame; the timing rules are in src/crane-page/crane-page.css. -->
+    <style>
+      @view-transition{navigation:auto}
+    </style>
+    <!--head-->
+  </head>
+  <body>
+    <div id="root"><!--app--></div>
+    <script type="module" src="/src/main-crane-ar.tsx"></script>
+  </body>
+</html>

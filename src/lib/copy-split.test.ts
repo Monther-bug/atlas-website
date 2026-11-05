@@ -19,12 +19,17 @@ describe('one language per page', () => {
     expect(read('main-ar.tsx')).not.toMatch(/content\/(en|all)'/);
     expect(read('main-en.tsx')).toMatch(/content\/en'/);
     expect(read('main-en.tsx')).not.toMatch(/content\/(ar|all)'/);
+    // The crane pages (/cranes/<id>/) follow the same rule.
+    expect(read('main-crane-ar.tsx')).toMatch(/content\/ar'/);
+    expect(read('main-crane-ar.tsx')).not.toMatch(/content\/(en|all)'/);
+    expect(read('main-crane-en.tsx')).toMatch(/content\/en'/);
+    expect(read('main-crane-en.tsx')).not.toMatch(/content\/(ar|all)'/);
   });
 
   it('only the server entry (and tests) may import the both-languages module or either deck by name', () => {
     const offenders = sourceFiles(SRC)
       .filter((f) => !/[\\/]test[\\/]/.test(f))
-      .filter((f) => !/[\\/](entry-server|main-ar|main-en)\.tsx$/.test(f) && !/[\\/]content[\\/](all|ar|en)\.ts$/.test(f))
+      .filter((f) => !/[\\/](entry-server|main-ar|main-en|main-crane-ar|main-crane-en)\.tsx$/.test(f) && !/[\\/]content[\\/](all|ar|en)\.ts$/.test(f))
       .filter((f) => /content\/(all|ar|en)'|from '\.\/(all|ar|en)'/.test(readFileSync(f, 'utf8')))
       .map((f) => path.relative(SRC, f));
     expect(offenders).toEqual([]);

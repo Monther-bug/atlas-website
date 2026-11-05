@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { BUDGETS, assetRefs, checkBudgets, checkBundle, firstSnippet, median, medianResult, toMarkdown } from './budgets.mjs';
+import { BUDGETS, assetRefs, checkBudgets, checkBundle, checkCraneLoad, checkPageBundles, firstSnippet, lhPages, median, medianResult, pagePath, toMarkdown } from './budgets.mjs';
 
 const GOOD = { performance: 95, accessibility: 100, bestPractices: 100, seo: 100, lcp: 1800, cls: 0.01, tbt: 90 };
 
@@ -77,6 +77,59 @@ describe('checkBundle', () => {
   });
   it('fails a measure that could not be taken', () => {
     expect(checkBundle({ initialJsKB: NaN, cssKB: 1, firstLoadKB: 1, heroMobileKB: 1, heroDesktopKB: 1 })[0].pass).toBe(false);
+  });
+});
+
+describe('pagePath', () => {
+  it('maps a built HTML file to the address it is served at', () => {
+    expect(pagePath('index.html')).toBe('/');
+    expect(pagePath('en/index.html')).toBe('/en/');
+    expect(pagePath('cranes/gmk6350/index.html')).toBe('/cranes/gmk6350/');
+    expect(pagePath('en\\cranes\\rt700e\\index.html')).toBe('/en/cranes/rt700e/');
+  });
+});
+
+describe('lhPages', () => {
+  it('defaults to the two home pages and the GMK6350 crane page in both languages', () => {
+    expect(lhPages(undefined)).toEqual([
+      { id: 'ar', path: '/', lang: 'ar' },
+      { id: 'en', path: '/en/', lang: 'en' },
+      { id: 'ar-gmk6350', path: '/cranes/gmk6350/', lang: 'ar' },
+      { id: 'en-gmk6350', path: '/en/cranes/gmk6350/', lang: 'en' },
+    ]);
+  });
+  it('reads a comma list, adding the slashes a path lacks, without duplicates', () => {
+    expect(lhPages(' /cranes/rt700e, en/cranes/rt700e/ ,/cranes/rt700e/')).toEqual([
+      { id: 'ar-rt700e', path: '/cranes/rt700e/', lang: 'ar' },
+      { id: 'en-rt700e', path: '/en/cranes/rt700e/', lang: 'en' },
+    ]);
+  });
+});
+
+describe('checkPageBundles', () => {
+  it('holds every page to the initial JS and CSS budgets', () => {
+    const rows = checkPageBundles([
+      { page: '/en/', initialJsKB: 101, cssKB: 15 },
+      { page: '/cranes/gmk6350/', initialJsKB: 110.04, cssKB: 25.2 },
+    ]);
+    expect(rows.map((r) => [r.metric, r.value, r.pass])).toEqual([
+      ['initial JS (gzip), /en/', 101, true],
+      ['CSS (gzip), /en/', 15, true],
+      ['initial JS (gzip), /cranes/gmk6350/', 110, false],
+      ['CSS (gzip), /cranes/gmk6350/', 25.2, false],
+    ]);
+  });
+  it('fails a page whose files could not be measured', () => expect(checkPageBundles([{ page: '/x/', initialJsKB: NaN, cssKB: 1 }])[0].pass).toBe(false));
+});
+
+describe('checkCraneLoad', () => {
+  it('holds a crane page to the first-load and hero image budgets', () => {
+    const rows = checkCraneLoad({ page: '/cranes/gmk6350/', firstLoadKB: 420, heroMobileKB: 81, heroDesktopKB: 99 });
+    expect(rows.map((r) => [r.metric, r.pass])).toEqual([
+      ['first load, mobile, /cranes/gmk6350/', true],
+      ['hero image, mobile, /cranes/gmk6350/', false],
+      ['hero image, desktop, /cranes/gmk6350/', true],
+    ]);
   });
 });
 

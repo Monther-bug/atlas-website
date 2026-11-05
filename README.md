@@ -2,7 +2,8 @@
 
 The website of **شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات** ("Atlas Alshraa"): crane hire, heavy transport, handling and oil services in Libya.
 
-- One page, two languages: **Arabic (right to left) at `/`**, **English at `/en/`**. Arabic is the default.
+- One home page in two languages: **Arabic (right to left) at `/`**, **English at `/en/`**. Arabic is the default.
+- A page per crane: **`/cranes/<id>/`** (Arabic) and **`/en/cranes/<id>/`** (English) for the five cranes on the site (`rt700e`, `atf60-3`, `ac200-1`, `quy250`, `gmk6350`; never the hidden Kobelco). See "Crane pages".
 - A visitor can ask for a crane in one tap: WhatsApp, a call, or a short request form with the chosen crane already filled in.
 - The output is **plain static files** (`dist/`). There is no server and no database.
 
@@ -205,6 +206,21 @@ Read [`docs/superpowers/specs/2026-11-05-atlas-v2-design.md`](docs/superpowers/s
 - **First-visit loader contract.** A small inline script in each page's `<head>` sets `js` and `motion-ok` on `<html>` and, only on the first visit of a tab session (not on a deep link, a hidden tab or with reduced motion), sets `data-loader`, which makes the CSS curtain `#al` cover the page. The curtain lifts when the fonts and the hero photo have arrived (held at most 0.95 s, never past 1.8 s after navigation, gone by 2.5 s; any key, press, wheel or touch lifts it at once; dropped unseen on a slow first frame). The moment it lifts, `data-loader` is removed and `atlas:loader-done` fires on `window`. Motion that would play unseen under the curtain waits for that event (`afterLoader` in `src/motion/loader.ts`, with a 2.6 s safety timer). If you add an intro animation, wrap it in `afterLoader`. This script is the one inline script on the page: see "Security headers".
 - **WebGL depth layer** (`src/motion/hero-gl.ts`, raw WebGL, no library, about 2 KB gzip): desktop with a fine pointer and motion allowed only, loaded on idle after the intro as its own chunk. It sits on top of the hero photo (the `<img>` is always underneath and is never the thing being measured), is `aria-hidden`, fades in after its first frame, and removes itself if the first frame takes more than 200 ms or the context is lost. Touch and reduced motion never load it.
 
+## Crane pages
+
+`/cranes/<id>/` and `/en/cranes/<id>/`: one page per visible crane, Apple-product-page style, built from the same data as the home page's lineup. Hero (make and model, the capacity as the big number with its radius and rating label, the lead photo, three ways to ask), key figures set against the other four models, a photo story of all its photos, the full manufacturer specification (grouped, units, notes, sources; missing rows are left out), the honest load question, and the other four cranes.
+
+- **Templates and prerender.** `cranes/index.html` and `en/cranes/index.html` are build inputs (`vite.config.ts`). `scripts/prerender.mjs` renders each crane with `renderCrane()` / `headCrane()` from `src/entry-server.tsx`, writes `dist[/en]/cranes/<id>/index.html`, then deletes the two templates. The dev server serves `/cranes/<id>/` from the template (`vite/crane-pages-dev.ts`).
+- **Static island.** The page body (`src/crane-page/CraneBody.tsx`) is rendered only at build time (and by the dev server and tests, through `src/crane-page/register.ts`). In the browser it stays the prerendered HTML (`CraneIsland.tsx`), so the page ships only React, the header, footer and request bar (about 87 KB gz; home 105 KB). The photo story, click tracking and the view-transition name work on that HTML from `src/crane-page/CraneApp.tsx`; motion (`src/motion/crane.ts`: tickers, meters, reveals, Lenis on desktop) loads on idle. The hero's entrance is CSS.
+- **Head.** `src/crane-page/head.ts`: title, description, canonical, hreflang (ar, en, x-default = Arabic), Open Graph and Twitter with the crane's own photo (`public/og/cranes/<id>.jpg`, made by `npm run og:cranes` from the processed card photo; rerun it after `npm run assets`), one preload for the hero photo (from 768 px), and a `BreadcrumbList`. No `Product` or `Offer` schema: there is no price, and no rating is invented. `sitemap.xml` lists all twelve pages with their hreflang pairs.
+- **Fonts.** Three preloads per crane page, chosen for its first screen (`vite/font-preload.ts`): Plex Mono 500 (the model code), Poppins 700 (the number) and Tajawal 400 / Poppins 400.
+- **No first-visit intro** on a crane page: it is a deep link like a `#section` link (the visitor came for that crane, and the curtain would hold back its first paint). It does not use up the intro either, so a later visit to the home page still gets it once.
+- **Phones** open on the name, the number and the actions; the photo starts at the fold. That keeps the largest paint text (Lighthouse mobile LCP about 0.9 s).
+- **Links from the home page.** Each lineup card's model name links to its page (prerendered, so crawlers find all ten), and the quick view (Details) has "Open the full page". On a crane page the header and footer section links go to `/#section` (or `/en/#section`), the logo to the home page, and the language switch to the same crane in the other language.
+- **Deep links into the home page** (`src/lib/deep-link.ts`): `/?crane=<id>#request` puts the crane on the hook (request bar and the form's crane field); `/?compare=<id>#crane-compare` opens the comparison with it picked. The query is removed from the address bar once read.
+- **View transition.** Where cross-document view transitions run (Chrome/Edge 126+, Safari 18.2+), the clicked card's photo grows into the crane page's hero (`src/lib/view-transition.ts`). The opt-in is an inline `<style>` in each template's head: from the bundled stylesheet Chrome often read it too late and aborted with a console error. Reduced motion: an instant swap.
+- **Truth.** The same gate: the page copy (`src/content/crane-page-copy.ts`) is checked with `ar.ts` / `en.ts`, the prerender's token scan covers all twelve pages, and the capacities carry the DRAFT tag until Atlas confirms them. `/cranes` and `/en/cranes` redirect to the lineup (`vercel.json`).
+
 ## Performance budgets
 
 Checked by `node qa/bundle-budget.mjs` and `npm run lighthouse` (limits in `qa/lib/budgets.mjs`; they exit non-zero on failure):
@@ -228,7 +244,7 @@ GA4 loads only if `VITE_GA4_ID` is set, after the page has loaded and the browse
 
 ## Deploying
 
-The build output is `dist/`: `index.html` (Arabic), `en/index.html`, `assets/` (hashed JS, CSS, fonts), `img/` (hashed photos), `brand/`, `og-*.jpg`, `sitemap.xml`, `robots.txt`. **Any static host works** (Vercel, Netlify, Cloudflare Pages, nginx, S3 + CDN). Requirements for a host: serve `/en/` from `en/index.html`; send long immutable caching for `/assets/*` and `/img/*` (their names contain a content hash) and revalidation for the HTML; add the security headers below.
+The build output is `dist/`: `index.html` (Arabic), `en/index.html`, `cranes/<id>/index.html` and `en/cranes/<id>/index.html` (the ten crane pages), `og/cranes/<id>.jpg`, `assets/` (hashed JS, CSS, fonts), `img/` (hashed photos), `brand/`, `og-*.jpg`, `sitemap.xml`, `robots.txt`. **Any static host works** (Vercel, Netlify, Cloudflare Pages, nginx, S3 + CDN). Requirements for a host: serve `/en/` from `en/index.html`; send long immutable caching for `/assets/*` and `/img/*` (their names contain a content hash) and revalidation for the HTML; add the security headers below.
 
 ### Vercel (config included)
 
@@ -248,7 +264,7 @@ Reproduce `vercel.json` in the host's own format: same headers, same caching, `/
 
 `vercel.json` sends `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, microphone, geolocation, payment, usb off) and `X-Frame-Options: DENY`.
 
-The CSP is strict about scripts: `script-src 'self' 'sha256-...' https://www.googletagmanager.com`. The page has **one** classic inline script (the loader/mode script in `<head>`), and it is **identical in both pages**, so one hash covers both. `'unsafe-inline'` is **not** allowed for scripts. The hash is of the *minified* script in the built HTML, so **whenever the inline script in `index.html` / `en/index.html` changes (or the minifier is upgraded), regenerate the hash or the loader and the `js` / `motion-ok` classes will silently stop working** (the page then shows its no-JavaScript state). Regenerate:
+The CSP is strict about scripts: `script-src 'self' 'sha256-...' https://www.googletagmanager.com`. Every page has **one** classic inline script (the loader/mode script in `<head>`), and it is **identical in all four HTML templates** (`index.html`, `en/index.html`, `cranes/index.html`, `en/cranes/index.html`), so one hash covers all twelve pages. (A crane page's `<html data-no-intro>` is what keeps the first-visit intro off there; the script itself is the same.) `'unsafe-inline'` is **not** allowed for scripts. The hash is of the *minified* script in the built HTML, so **whenever the inline script in `index.html` / `en/index.html` changes (or the minifier is upgraded), regenerate the hash or the loader and the `js` / `motion-ok` classes will silently stop working** (the page then shows its no-JavaScript state). Regenerate:
 
 ```bash
 npm run build
@@ -261,7 +277,7 @@ for (const f of ["dist/index.html","dist/en/index.html"]) {
 }'
 ```
 
-Both files must print the same value; put it in the `script-src` of `vercel.json`. (The JSON-LD `<script type="application/ld+json">` is data, not executed, and needs no hash. The module scripts load from `'self'`.)
+Both files must print the same value (and so must any `dist/cranes/<id>/index.html`); put it in the `script-src` of `vercel.json`. (The JSON-LD `<script type="application/ld+json">` is data, not executed, and needs no hash. The module scripts load from `'self'`.)
 
 Other directives and why: `style-src 'self' 'unsafe-inline'` (React writes inline `style` attributes and the page has one inline `<style>`; styles are not a script-execution risk the way scripts are); `img-src 'self' data:` (tiny blurred placeholders are data URIs) plus the Google Analytics hosts; `font-src 'self'`; `connect-src 'self'` plus the GA4 hosts. **If you set `VITE_FORM_ENDPOINT`, add that endpoint's origin to `connect-src`**, or the form's POST is blocked. If you leave GA4 unused you can remove the three Google hosts. `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` and `frame-ancestors 'none'` are fixed.
 

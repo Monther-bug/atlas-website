@@ -1,7 +1,9 @@
 // Functional QA for the Atlas Alshraa v2 site (E.3, adapted to the v2 DOM hooks).
 // Drives the installed Chrome through both pages × 7 viewports × 3 motion modes (desktop, touch, reduced) and no-JS,
 // exercises every control, runs axe-core (WCAG 2.0/2.1/2.2 A + AA rules), and checks the SEO head, the truth gate and
-// the deploy CSP. Writes qa/reports/results.json, qa/reports/summary.md and first-screen JPEGs in qa/reports/screens/.
+// the deploy CSP. Then the ten crane pages (/cranes/<id>/, /en/cranes/<id>/; section 8): head and sitemap, links
+// between the home pages and the crane pages, 3 viewports × 3 modes and no-JS, and the request flows in a browser.
+// Writes qa/reports/results.json, qa/reports/summary.md and first-screen JPEGs in qa/reports/screens/.
 //
 // Usage: build, start the preview, then `npm run qa` (or `node qa/run-qa.mjs [baseUrl]`).
 // Env:
@@ -11,7 +13,10 @@
 //   QA_TARGET          staging (draft badges + [[CONFIRM]] expected) | production (both forbidden); default staging
 //   QA_FORM_ENDPOINT   the build's VITE_FORM_ENDPOINT; this script answers it (500, then 200) to test failure and
 //                      success. Unset: the form is expected to hand the request off to WhatsApp / email instead.
-//   QA_ONLY            comma list of sections: matrix,controls,keyboard,nojs,seo,truth,csp (default: all)
+//   QA_ONLY            comma list of sections: matrix,controls,keyboard,nojs,seo,truth,csp, and cranes (all of section 8)
+//                      or one part of it: crane-seo,crane-links,crane-matrix,crane-nojs,crane-flows,crane-keyboard (default: all)
+//   QA_CRANES          crane pages to check (default all five, both languages); QA_CRANE_FLOWS = the cranes whose request
+//                      flows and keyboard walks run (default gmk6350,quy250)
 //   QA_CONCURRENCY     parallel matrix cases (default 3); QA_PAGES=ar,en QA_WIDTHS=320,1440 QA_MODES=touch narrow the matrix
 //                      and QA_CONTROLS=desktop,touch,reduced the control cases (a partial run is for the fix loop only)
 //   QA_PROD_GATE=0     skip the production truth-gate build; QA_VITE_CONFIG = config file for that build
@@ -21,12 +26,16 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { parseHead } from '../scripts/lib/head.mjs';
+import { parseAttrs, parseHead } from '../scripts/lib/head.mjs';
 import { normalizeSiteUrl } from '../scripts/lib/seo.mjs';
 import {
   CRANES,
   EASTERN_DIGITS,
+  badSpecValues,
   caseTag,
+  craneIdFromPath,
+  cranePagePath,
+  cranePages,
   decodedHref,
   expectedForFilter,
   expectedForLoad,
@@ -34,12 +43,15 @@ import {
   hasDraftToken,
   headingIssues,
   isEncodedHref,
+  linkTarget,
   nextKey,
   normModel,
+  otherCranes,
   photoIdFromUrl,
   prevKey,
   sessionCls,
   smallTargets,
+  toWestern,
 } from './lib/checks.mjs';
 import { summarize } from './lib/report.mjs';
 
@@ -138,14 +150,17 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
   const state = { formStatus: 200 };
   page.on('console', (m) => {
     const text = m.text();
-    // Newer Chrome logs a launched mailto:/whatsapp:/tel: hand-off as an info line, older Chrome as an error.
-    if (m.type() !== 'error' && /Launched external handler for '(mailto|whatsapp|tel):/i.test(text)) problems.external.push(text);
+    // A mailto:/tel:/whatsapp: hand-off by script (the form without an endpoint): Chrome logs that it launched, or
+    // could not launch, the external handler. Either way the page handed the request off: record the URL.
+    const handoff = text.match(/(?:external handler for|Failed to launch) '((?:mailto|tel|whatsapp):[^']*)'/i);
+    if (handoff) {
+      problems.external.push(handoff[1]);
+      return;
+    }
     if (m.type() === 'error') {
-      // Headless Chrome cannot launch mailto:/whatsapp:/tel: handlers; that is a hand-off working, not an error.
-      if (/Failed to launch '(mailto|whatsapp|tel):/i.test(text)) problems.external.push(text);
       // The stubbed endpoint's own 500 (the failure test) is logged by Chrome as a resource error.
-      else if (FORM_STUB && /Failed to load resource/.test(text) && (m.location()?.url ?? '').startsWith(FORM_STUB)) return;
-      else problems.console.push(text);
+      if (FORM_STUB && /Failed to load resource/.test(text) && (m.location()?.url ?? '').startsWith(FORM_STUB)) return;
+      problems.console.push(text);
     } else if (m.type() === 'warning' && /hydrat|did not match|server rendered/i.test(text)) {
       problems.console.push(`warning: ${text}`);
     }
@@ -282,6 +297,89 @@ const barHref = (page) => page.$eval('[data-testid="bar-whatsapp"]', (a) => a.ge
 const formCrane = (page) => page.$eval('[data-testid="request-form"] [name="crane"]', (el) => el.value).catch(() => null);
 
 // ── 1. Matrix: page × viewport × motion mode ────────────────────────────────
+/** In the page: the text the floating request bar sits on (at the very bottom of a page it must sit on none). */
+function barCoversText() {
+  // At the very bottom, the floating bar must not sit on any text (the footer leaves room for it).
+  const bar = document.querySelector('[data-request-bar]');
+  const b = bar?.getBoundingClientRect();
+  const barShown = bar && getComputedStyle(bar).visibility !== 'hidden' && Number(getComputedStyle(bar).opacity) > 0.1;
+  const covered = [];
+  if (b && barShown) {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!n.nodeValue?.trim() || bar.contains(n) || n.parentElement?.closest('.sr-only, [aria-hidden="true"], dialog:not([open])')) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        if (r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom) {
+          covered.push(n.nodeValue.trim().slice(0, 30));
+          break;
+        }
+      }
+    }
+  }
+  return { covered: [...new Set(covered)] };
+}
+
+/**
+ * In the page: what every matrix case checks (overflow, images, lang/dir, reveals, headings, landmarks, targets, digits,
+ * draft tokens and badges). Shared by the home pages and the crane pages.
+ */
+function auditDom() {
+  const visible = (el) => el.checkVisibility({ visibilityProperty: true });
+  const hiddenReveal = [...document.querySelectorAll('[data-reveal]')]
+    .flatMap((el) => (el.dataset.reveal === 'stagger' ? [...el.children] : [el]))
+    .filter((e) => {
+      const cs = getComputedStyle(e);
+      return Number(cs.opacity) < 0.99 || cs.visibility === 'hidden' || /inset\(100%/.test(cs.clipPath);
+    }).length;
+  const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => visible(h) && !h.closest('dialog:not([open])')).map((h) => Number(h.tagName[1]));
+  const scoped = (el) => !el.parentElement?.closest('article, aside, main, nav, section');
+  const landmarks = {
+    banner: [...document.querySelectorAll('header')].filter(scoped).length,
+    main: document.querySelectorAll('main').length,
+    contentinfo: [...document.querySelectorAll('footer')].filter(scoped).length,
+    nav: [...document.querySelectorAll('nav')].filter(visible).length,
+  };
+  // Interactive targets: the visible box of each control (a native radio is measured by its label).
+  const targets = [];
+  for (const el of document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [tabindex="0"]')) {
+    if (el.closest('dialog:not([open]), [inert], .sr-only') || el.matches('.motion-ghost *, .motion-ghost')) continue;
+    const box = el.matches('input[type=radio], input[type=checkbox]') ? (el.closest('label') ?? el) : el;
+    if (!visible(box)) continue;
+    const r = box.getBoundingClientRect();
+    if (r.width <= 2 || r.height <= 2) continue;
+    if (el.matches('[tabindex="0"]') && r.width > 200 && r.height > 200) continue; // scroll regions
+    const cs = getComputedStyle(el);
+    const block = el.parentElement?.closest('p, li, dd, td, figcaption, span') ?? null;
+    const inline = el.tagName === 'A' && cs.display === 'inline' && !!block && block.textContent.trim().length > el.textContent.trim().length + 2;
+    const name = (el.getAttribute('aria-label') || el.textContent || el.getAttribute('name') || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 32);
+    targets.push({ name, width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, inline });
+  }
+  const text = document.body.innerText;
+  const dataAttrs = [...document.querySelectorAll('[data-value], [data-capacity], [data-ticker], [data-lineup-ticker]')]
+    .map((e) => e.getAttribute('data-value') ?? e.getAttribute('data-capacity') ?? e.getAttribute('data-ticker') ?? e.getAttribute('data-lineup-ticker'))
+    .join(' ');
+  return {
+    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    brokenImages: [...document.images].filter((i) => i.complete && i.naturalWidth === 0 && i.checkVisibility()).map((i) => i.currentSrc || i.src),
+    missingAlt: [...document.images].filter((i) => !i.hasAttribute('alt')).map((i) => i.src.slice(-40)),
+    lang: document.documentElement.lang,
+    dir: document.documentElement.dir,
+    hiddenReveal,
+    lenis: document.documentElement.classList.contains('lenis'),
+    levels,
+    landmarks,
+    targets,
+    eastern: (text.match(/[^\s]*[٠-٩۰-۹][^\s]*/g) ?? []).slice(0, 5),
+    easternData: /[٠-٩۰-۹]/.test(dataAttrs),
+    tokens: (text.match(/\[\[[A-Z]+[:\]]/g) ?? []).length,
+    badges: document.querySelectorAll('[data-testid="draft-badge"]').length,
+    ghosts: document.querySelectorAll('.motion-ghost').length,
+  };
+}
+
 async function matrixCase(p, vp, mode) {
   const touch = mode === 'touch';
   const reduced = mode === 'reduced';
@@ -320,86 +418,12 @@ async function matrixCase(p, vp, mode) {
     rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, `CLS ${loadCls}`);
 
     await scrollThrough(page);
-    const end = await page.evaluate(() => {
-      // At the very bottom, the floating bar must not sit on any text (the footer leaves room for it).
-      const bar = document.querySelector('[data-request-bar]');
-      const b = bar?.getBoundingClientRect();
-      const barShown = bar && getComputedStyle(bar).visibility !== 'hidden' && Number(getComputedStyle(bar).opacity) > 0.1;
-      const covered = [];
-      if (b && barShown) {
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-          if (!n.nodeValue?.trim() || bar.contains(n) || n.parentElement?.closest('.sr-only, [aria-hidden="true"], dialog:not([open])')) continue;
-          const range = document.createRange();
-          range.selectNodeContents(n);
-          for (const r of range.getClientRects()) {
-            if (r.width < 1 || r.height < 1) continue;
-            if (r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom) {
-              covered.push(n.nodeValue.trim().slice(0, 30));
-              break;
-            }
-          }
-        }
-      }
-      return { covered: [...new Set(covered)] };
-    });
+    const end = await page.evaluate(barCoversText);
     rec('layout', 'at the end of the page the request bar covers no text', end.covered.length === 0, end.covered.join(' | '));
 
     await scrollToY(page, 0);
     await wait(900);
-    const m = await page.evaluate(() => {
-      const visible = (el) => el.checkVisibility({ visibilityProperty: true });
-      const hiddenReveal = [...document.querySelectorAll('[data-reveal]')]
-        .flatMap((el) => (el.dataset.reveal === 'stagger' ? [...el.children] : [el]))
-        .filter((e) => {
-          const cs = getComputedStyle(e);
-          return Number(cs.opacity) < 0.99 || cs.visibility === 'hidden' || /inset\(100%/.test(cs.clipPath);
-        }).length;
-      const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => visible(h) && !h.closest('dialog:not([open])')).map((h) => Number(h.tagName[1]));
-      const scoped = (el) => !el.parentElement?.closest('article, aside, main, nav, section');
-      const landmarks = {
-        banner: [...document.querySelectorAll('header')].filter(scoped).length,
-        main: document.querySelectorAll('main').length,
-        contentinfo: [...document.querySelectorAll('footer')].filter(scoped).length,
-        nav: [...document.querySelectorAll('nav')].filter(visible).length,
-      };
-      // Interactive targets: the visible box of each control (a native radio is measured by its label).
-      const targets = [];
-      for (const el of document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [tabindex="0"]')) {
-        if (el.closest('dialog:not([open]), [inert], .sr-only') || el.matches('.motion-ghost *, .motion-ghost')) continue;
-        const box = el.matches('input[type=radio], input[type=checkbox]') ? (el.closest('label') ?? el) : el;
-        if (!visible(box)) continue;
-        const r = box.getBoundingClientRect();
-        if (r.width <= 2 || r.height <= 2) continue;
-        if (el.matches('[tabindex="0"]') && r.width > 200 && r.height > 200) continue; // scroll regions
-        const cs = getComputedStyle(el);
-        const block = el.parentElement?.closest('p, li, dd, td, figcaption, span') ?? null;
-        const inline = el.tagName === 'A' && cs.display === 'inline' && !!block && block.textContent.trim().length > el.textContent.trim().length + 2;
-        const name = (el.getAttribute('aria-label') || el.textContent || el.getAttribute('name') || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 32);
-        targets.push({ name, width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, inline });
-      }
-      const text = document.body.innerText;
-      const dataAttrs = [...document.querySelectorAll('[data-value], [data-capacity], [data-ticker], [data-lineup-ticker]')]
-        .map((e) => e.getAttribute('data-value') ?? e.getAttribute('data-capacity') ?? e.getAttribute('data-ticker') ?? e.getAttribute('data-lineup-ticker'))
-        .join(' ');
-      return {
-        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        brokenImages: [...document.images].filter((i) => i.complete && i.naturalWidth === 0 && i.checkVisibility()).map((i) => i.currentSrc || i.src),
-        missingAlt: [...document.images].filter((i) => !i.hasAttribute('alt')).map((i) => i.src.slice(-40)),
-        lang: document.documentElement.lang,
-        dir: document.documentElement.dir,
-        hiddenReveal,
-        lenis: document.documentElement.classList.contains('lenis'),
-        levels,
-        landmarks,
-        targets,
-        eastern: (text.match(/[^\s]*[٠-٩۰-۹][^\s]*/g) ?? []).slice(0, 5),
-        easternData: /[٠-٩۰-۹]/.test(dataAttrs),
-        tokens: (text.match(/\[\[[A-Z]+[:\]]/g) ?? []).length,
-        badges: document.querySelectorAll('[data-testid="draft-badge"]').length,
-        ghosts: document.querySelectorAll('.motion-ghost').length,
-      };
-    });
+    const m = await page.evaluate(auditDom);
     rec('layout', 'no horizontal overflow', m.overflow <= 0, m.overflow > 0 ? `${m.overflow}px wider than the viewport` : '');
     rec('page', `lang="${p.lang}" dir="${p.dir}"`, m.lang === p.lang && m.dir === p.dir, `${m.lang}/${m.dir}`);
     rec('assets', 'images load', m.brokenImages.length === 0, m.brokenImages.join(', '));
@@ -1404,7 +1428,8 @@ async function controlsFor(p, c) {
 }
 
 // ── 3. Keyboard walk: focus ring, never under the bar or the header ────────
-async function keyboardWalk(p, c) {
+/** `minStops`: fewer tab stops than this means the walk got stuck (a crane page has fewer controls than the home page). */
+async function keyboardWalk(p, c, minStops = 40) {
   const tag = `${p.id} @${c.width}x${c.height} ${c.id}`;
   const s = await open(p.path, { width: c.width, height: c.height, touch: c.touch, reduced: c.reduced });
   const { page } = s;
@@ -1531,7 +1556,7 @@ async function keyboardWalk(p, c) {
       if (r.opacity < 0.9) misses.faded.push(`${r.name} ${r.opacity}`);
     }
     const fmt = (xs) => `${xs.length}${xs.length ? `: ${xs.slice(0, 10).join(', ')}` : ''}`;
-    record('keyboard', `${tag} every tab stop shows a focus ring (${stops} stops)`, misses.ring.length === 0 && stops > 40, fmt(misses.ring));
+    record('keyboard', `${tag} every tab stop shows a focus ring (${stops} stops)`, misses.ring.length === 0 && stops > minStops, fmt(misses.ring));
     record('keyboard', `${tag} focus ring contrast ≥ 3:1 against its ground`, misses.contrast.length === 0, fmt(misses.contrast));
     record('keyboard', `${tag} no focused element under the floating request bar`, misses.bar.length === 0, fmt(misses.bar));
     record('keyboard', `${tag} no focused element under the fixed header`, misses.header.length === 0, fmt(misses.header));
@@ -1686,6 +1711,617 @@ async function cspChecks() {
   }
 }
 
+// ── 8. Crane pages (/cranes/<id>/, /en/cranes/<id>/) ────────────────────────
+// QA_ONLY=cranes runs all of this; crane-seo, crane-links, crane-matrix, crane-nojs, crane-flows, crane-keyboard run one
+// part. QA_CRANES=gmk6350,rt700e narrows the pages (QA_PAGES=ar|en, QA_WIDTHS and QA_MODES apply too); QA_CRANE_FLOWS
+// names the cranes whose request flows and keyboard walks run in a browser (default gmk6350, and quy250, which the
+// comparison does not pick by default, so its Compare deep link is a real test).
+const CRANES_ONLY = (process.env.QA_CRANES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const CRANE_PAGES = cranePages(CRANES_ONLY.length ? CRANES_ONLY : undefined).filter((p) => !PAGES_ONLY.length || PAGES_ONLY.includes(p.lang) || PAGES_ONLY.includes(p.id));
+const CRANE_VIEWPORTS = [
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 1440, height: 900 },
+];
+const FLOW_CRANES = (process.env.QA_CRANE_FLOWS ?? 'gmk6350,quy250').split(',').map((s) => s.trim()).filter(Boolean);
+const wantCrane = (part) => want('cranes') || ONLY.includes(`crane-${part}`);
+const requestHref = (p) => `${p.home}?crane=${p.crane}#request`;
+
+/** A served page, fetched once: status, lang, the crane it is about, whether it is a home page, its element ids, its <a> tags. */
+const servedCache = new Map();
+function served(urlPath) {
+  if (!servedCache.has(urlPath)) {
+    servedCache.set(
+      urlPath,
+      (async () => {
+        const res = await fetch(BASE + urlPath);
+        const html = await res.text();
+        const body = html.replace(/<head\b[\s\S]*?<\/head>/i, '');
+        return {
+          status: res.status,
+          html,
+          lang: parseAttrs(html.match(/<html\b[^>]*>/i)?.[0] ?? '<html>').lang ?? null,
+          crane: html.match(/\bdata-crane-page="([^"]+)"/)?.[1] ?? null,
+          home: /\bdata-hero\b/.test(body),
+          ids: new Set([...body.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1])),
+          links: [...body.matchAll(/<a\b[^>]*>/gi)].map((m) => parseAttrs(m[0])),
+        };
+      })(),
+    );
+  }
+  return servedCache.get(urlPath);
+}
+
+/** Problems with one internal link on page `p` (a crane page or a home page): the page it opens and the hash target. */
+async function internalLinkProblems(link, fromPath, fromLang) {
+  const t = linkTarget(link.href, fromPath);
+  if (!t) return [];
+  const target = await served(t.path);
+  const bad = [];
+  if (target.status !== 200) bad.push(`${link.href} → ${target.status}`);
+  const craneId = craneIdFromPath(t.path);
+  if (craneId) {
+    if (target.crane !== craneId) bad.push(`${link.href} does not open the ${craneId} page (got ${target.crane ?? 'no crane page'})`);
+  } else if (t.path === '/' || t.path === '/en/') {
+    if (!target.home || target.lang !== (t.path === '/en/' ? 'en' : 'ar')) bad.push(`${link.href} does not open a home page`);
+  } else if (!/\.(png|jpe?g|webp|avif|svg|pdf|xml|txt)$/i.test(t.path)) {
+    bad.push(`${link.href} leads to an unknown page`);
+  }
+  if (t.hash && !target.ids.has(t.hash)) bad.push(`${link.href}: no #${t.hash} on ${t.path}`);
+  // Links stay in the page's language, except the language switch (and its hreflang names the other language).
+  const lang = t.path.startsWith('/en/') ? 'en' : 'ar';
+  const isSwitch = /lang-switch/.test(link['data-testid'] ?? '') || !!link.hreflang;
+  if (!isSwitch && (t.path === '/' || t.path === '/en/' || craneId) && lang !== fromLang) bad.push(`${link.href} switches language`);
+  return bad;
+}
+
+// Head, sitemap, truth ───────────────────────────────────────────────────────
+async function craneSeoChecks() {
+  for (const p of CRANE_PAGES) {
+    const crane = CRANES[p.crane];
+    await step('crane-seo', `${p.id} head: lang, title, description, canonical, hreflang pair, Open Graph image, BreadcrumbList, no invented schema`, async () => {
+      const page = await served(p.path);
+      const h = parseHead(page.html);
+      const bad = [];
+      if (h.lang !== p.lang || h.dir !== p.dir) bad.push(`lang/dir ${h.lang}/${h.dir}`);
+      if (h.title.length < 20 || h.title.length > 70 || !normModel(h.title).includes(normModel(crane.model))) bad.push(`title "${h.title}" (${h.title.length})`);
+      const d = h.meta.description ?? '';
+      if (d.length < 60 || d.length > 160) bad.push(`description length ${d.length}`);
+      if (h.canonical !== SITE + p.path) bad.push(`canonical ${h.canonical}`);
+      if (h.meta['og:url'] !== SITE + p.path) bad.push(`og:url ${h.meta['og:url']}`);
+      const alt = { ar: SITE + cranePagePath(p.crane, 'ar'), en: SITE + cranePagePath(p.crane, 'en'), 'x-default': SITE + cranePagePath(p.crane, 'ar') };
+      for (const [k, v] of Object.entries(alt)) if (h.alternates[k] !== v) bad.push(`hreflang ${k}=${h.alternates[k]}`);
+      if (h.meta['og:image'] !== `${SITE}/og/cranes/${p.crane}.jpg`) bad.push(`og:image ${h.meta['og:image']}`);
+      if (h.meta['og:image:width'] !== '1200' || h.meta['og:image:height'] !== '630') bad.push('og:image size');
+      if (!h.meta['og:image:alt']) bad.push('og:image:alt missing');
+      if (h.meta['twitter:card'] !== 'summary_large_image') bad.push('twitter:card');
+      if (page.html.includes('%SITE_URL%')) bad.push('unfilled %SITE_URL%');
+      if (page.html.includes('<!--app-->') || page.html.includes('<!--head-->')) bad.push('prerender marker left');
+      if (page.crane !== p.crane) bad.push(`not prerendered (data-crane-page=${page.crane})`);
+      if (h.jsonLdErrors.length) bad.push(`JSON-LD ${h.jsonLdErrors.join(', ')}`);
+      const crumbs = h.jsonLd.find((x) => x['@type'] === 'BreadcrumbList');
+      const items = crumbs?.itemListElement ?? [];
+      if (items.length !== 3 || items[0]?.item !== SITE + p.home || items[2]?.item !== SITE + p.path) bad.push(`BreadcrumbList ${JSON.stringify(items.map((i) => i.item))}`);
+      const types = JSON.stringify(h.jsonLd).match(/"@type":"[^"]+"/g) ?? [];
+      const invented = types.filter((t) => /Product|Offer|Rating|Review/.test(t));
+      if (invented.length) bad.push(`schema without facts: ${invented.join(', ')}`);
+      if (EASTERN_DIGITS.test(JSON.stringify(h.jsonLd))) bad.push('Eastern digits in JSON-LD');
+      return { pass: page.status === 200 && bad.length === 0, detail: bad.join('; ') };
+    });
+  }
+  for (const id of [...new Set(CRANE_PAGES.map((p) => p.crane))]) {
+    await step('crane-seo', `/og/cranes/${id}.jpg is served as image/jpeg`, async () => {
+      const r = await fetch(`${BASE}/og/cranes/${id}.jpg`);
+      const ct = r.headers.get('content-type') ?? '';
+      return { pass: r.ok && ct.includes('image/jpeg'), detail: `${r.status} ${ct}` };
+    });
+  }
+  await step('crane-seo', 'the sitemap lists every crane page with its hreflang pair; no page for a hidden crane', async () => {
+    const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    const bad = [];
+    for (const p of cranePages()) {
+      if (!sitemap.includes(`<loc>${SITE}${p.path}</loc>`)) bad.push(`no <loc> ${p.path}`);
+      if (!sitemap.includes(`hreflang="${p.lang}" href="${SITE}${p.path}"`)) bad.push(`no hreflang ${p.lang} ${p.path}`);
+    }
+    if (/cranes\/cke2500/.test(sitemap)) bad.push('the hidden CKE2500 is in the sitemap');
+    const hidden = await served('/cranes/cke2500/');
+    if (hidden.crane) bad.push(`/cranes/cke2500/ serves a crane page (${hidden.crane})`);
+    return { pass: bad.length === 0, detail: bad.join('; ') };
+  });
+  for (const p of CRANE_PAGES) {
+    await step('crane-truth', `${p.id} served HTML: ${TARGET === 'staging' ? 'manufacturer figures carry draft badges (staging)' : 'no draft badge, no [[CONFIRM]] token (production)'}`, async () => {
+      const { html } = await served(p.path);
+      const badges = (html.match(/data-testid="draft-badge"/g) ?? []).length;
+      const tokens = (html.match(/\[\[[A-Z]+[:\]]/g) ?? []).length;
+      return { pass: TARGET === 'staging' ? badges > 0 : badges === 0 && tokens === 0 && !hasDraftToken(html), detail: `${badges} badge(s), ${tokens} token(s)` };
+    });
+  }
+}
+
+// Links between the home pages and the crane pages (served HTML) ─────────────
+async function craneLinkChecks() {
+  for (const p of CRANE_PAGES) {
+    await step('crane-links', `${p.id} every internal link opens the right page in ${p.lang} and its #target exists; external links open a safe new tab`, async () => {
+      const page = await served(p.path);
+      const bad = [];
+      let n = 0;
+      for (const link of page.links) {
+        const href = link.href ?? '';
+        if (!href) continue;
+        if (/^https?:\/\//.test(href) && !href.startsWith(BASE) && !href.startsWith(SITE)) {
+          if (link.target !== '_blank' || !/noopener/.test(link.rel ?? '')) bad.push(`${href.slice(0, 50)} not a safe new tab`);
+          continue;
+        }
+        if (/^(mailto|tel):/.test(href)) continue;
+        n++;
+        bad.push(...(await internalLinkProblems(link, p.path, p.lang)));
+      }
+      return { pass: n > 10 && bad.length === 0, detail: `${n} internal links${bad.length ? `; ${[...new Set(bad)].slice(0, 8).join('; ')}` : ''}` };
+    });
+    await step('crane-links', `${p.id} language switch → ${p.other}; rail → the other four; logo and breadcrumb → ${p.home}; requests pre-select ${p.crane}`, async () => {
+      const page = await served(p.path);
+      const by = (pred) => page.links.filter(pred).map((a) => a.href);
+      const switches = by((a) => /lang-switch/.test(a['data-testid'] ?? ''));
+      const rail = page.links.filter((a) => a['data-crane-link']).map((a) => a.href);
+      const wantRail = otherCranes(p.crane).map((id) => cranePagePath(id, p.lang));
+      const home = by((a) => a.href === p.home).length;
+      const requests = by((a) => ['header-request', 'crane-page-form', 'crane-page-load-form'].includes(a['data-testid']));
+      const compare = by((a) => ['crane-page-compare', 'crane-page-compare-all'].includes(a['data-testid']));
+      const bad = [];
+      if (!switches.length || switches.some((h) => h !== p.other)) bad.push(`switch ${switches.join(',') || 'none'}`);
+      if (rail.join() !== wantRail.join()) bad.push(`rail ${rail.join(',')}`);
+      if (home < 2) bad.push(`${home} link(s) to ${p.home}`);
+      if (requests.length !== 3 || requests.some((h) => h !== requestHref(p))) bad.push(`requests ${requests.join(',')}`);
+      if (compare.length !== 2 || compare.some((h) => h !== `${p.home}?compare=${p.crane}#crane-compare`)) bad.push(`compare ${compare.join(',')}`);
+      return { pass: bad.length === 0, detail: bad.join('; ') };
+    });
+  }
+  for (const home of [...new Set(CRANE_PAGES.map((p) => p.home))]) {
+    const lang = home === '/en/' ? 'en' : 'ar';
+    await step('crane-links', `${lang} home page links to each of its crane pages (${lang}), and they open`, async () => {
+      const page = await served(home);
+      const hrefs = new Set(page.links.map((a) => a.href));
+      const bad = [];
+      for (const p of cranePages().filter((x) => x.lang === lang)) {
+        if (!hrefs.has(p.path)) bad.push(`no link to ${p.path}`);
+        else bad.push(...(await internalLinkProblems({ href: p.path }, home, lang)));
+      }
+      const wrong = [...hrefs].filter((h) => /\/cranes\//.test(h) && (h.startsWith('/en/') ? 'en' : 'ar') !== lang);
+      if (wrong.length) bad.push(`other-language crane links: ${wrong.join(', ')}`);
+      return { pass: bad.length === 0, detail: bad.join('; ') };
+    });
+  }
+}
+
+// Matrix: page × viewport × mode ────────────────────────────────────────────
+/** In the page, after scrolling through: tickers and meters final, the story layout, the specification, rail, photos. */
+function auditCraneBody() {
+  const shown = (el) => !!el && el.checkVisibility({ visibilityProperty: true, opacityProperty: true });
+  const tickers = [...document.querySelectorAll('[data-ticker]')].filter((t) => t.textContent !== t.parentElement?.querySelector('.cp-fig__ghost')?.textContent).map((t) => t.textContent);
+  const meters = [...document.querySelectorAll('[data-meter]')].filter((m) => {
+    const t = getComputedStyle(m).transform;
+    if (t === 'none') return false;
+    const a = Number(t.match(/matrix\(([^,]+)/)?.[1] ?? 1);
+    return a < 0.99;
+  }).length;
+  const stage = document.querySelector('.cp-story__stage');
+  const inline = [...document.querySelectorAll('.cp-story__inline')];
+  const groups = [...document.querySelectorAll('.cp-group')].map((g) => g.querySelectorAll('.cp-row').length);
+  const values = [...document.querySelectorAll('.cp-row__value')].map((v) => v.textContent ?? '');
+  const hero = document.querySelector('[data-crane-hero-photo] img');
+  // Photos: the width of the candidate the browser picked (its file name says it: /img/<id>-<crop>-<width>.<hash>.<ext>;
+  // naturalWidth is density-corrected by srcset, so it cannot tell) against the device pixels of the box it fills
+  // (object-fit: cover, so a box of another shape needs more of the photo's width).
+  const dpr = window.devicePixelRatio || 1;
+  const photos = [...document.querySelectorAll('#crane-body picture img')]
+    .filter((img) => img.complete && img.naturalWidth > 0 && shown(img))
+    .map((img) => {
+      const r = img.getBoundingClientRect();
+      const src = (img.currentSrc || img.src).split('/').pop();
+      const need = Math.max(r.width, r.height * (img.naturalWidth / img.naturalHeight)) * dpr;
+      return { src, natural: Number(src.match(/-(\d+)\.[\w]+\.(?:avif|webp|jpe?g|png)$/)?.[1] ?? NaN), need: Math.round(need), lazy: img.loading === 'lazy', hero: img === hero };
+    });
+  return {
+    crane: document.querySelector('[data-crane-page]')?.dataset.cranePage ?? null,
+    tickers,
+    meters,
+    stage: shown(stage),
+    inline: inline.length > 0 && inline.every(shown),
+    steps: document.querySelectorAll('[data-story-step]').length,
+    groups,
+    values,
+    rail: [...document.querySelectorAll('a[data-crane-link]')].map((a) => a.getAttribute('href')),
+    heroCrop: hero ? ((hero.currentSrc || hero.src).match(/-(mobile_4x5|desktop_16x9)-/)?.[1] ?? null) : null,
+    photos,
+  };
+}
+
+async function craneMatrixCase(p, vp, mode) {
+  const touch = mode === 'touch';
+  const reduced = mode === 'reduced';
+  const kase = { page: p.id, width: vp.width, mode };
+  const tag = caseTag(kase);
+  const rec = (area, name, pass, detail) => record(area, `${tag} ${name}`, pass, detail, kase);
+  const crane = CRANES[p.crane];
+  let s;
+  try {
+    s = await open(p.path, { width: vp.width, height: vp.height, touch, reduced });
+    const { page, problems } = s;
+    const want = expectedMotion({ width: vp.width, touch, reduced });
+    const motion = await page.evaluate(() => document.documentElement.dataset.motion ?? null);
+    rec('motion', `motion context is "${want}"`, motion === want, `data-motion=${motion}`);
+
+    const first = await page.evaluate(() => {
+      const h1 = document.querySelector('h1');
+      const hr = h1?.getBoundingClientRect();
+      const cta = document.querySelector('[data-testid="crane-page-whatsapp"]');
+      const r = cta?.getBoundingClientRect();
+      return {
+        h1: h1?.textContent?.trim() ?? '',
+        h1InView: !!hr && hr.top >= 0 && hr.bottom <= window.innerHeight && hr.left >= -1 && hr.right <= window.innerWidth + 1,
+        readout: document.querySelector('.cp-readout__fig')?.textContent?.trim() ?? '',
+        cta: r ? `${Math.round(r.width)}×${Math.round(r.height)}` : null,
+        ctaOk: !!r && r.width >= 44 && r.height >= 44 && cta.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+      };
+    });
+    rec(
+      'crane',
+      `first screen: H1 names ${crane.model} (in view), readout ${crane.t} t, WhatsApp action ≥ 44 px`,
+      normModel(first.h1).endsWith(normModel(crane.model)) && first.h1InView && Number(toWestern(first.readout)) === crane.t && first.ctaOk,
+      JSON.stringify(first),
+    );
+    const loadCls = sessionCls(await page.evaluate(() => window.__shifts));
+    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, `CLS ${loadCls}`);
+
+    await scrollThrough(page);
+    const end = await page.evaluate(barCoversText);
+    rec('layout', 'at the end of the page the request bar covers no text', end.covered.length === 0, end.covered.join(' | '));
+    const b = await page.evaluate(auditCraneBody);
+
+    await scrollToY(page, 0);
+    await wait(900);
+    const m = await page.evaluate(auditDom);
+    rec('layout', 'no horizontal overflow', m.overflow <= 0, m.overflow > 0 ? `${m.overflow}px wider than the viewport` : '');
+    rec('page', `lang="${p.lang}" dir="${p.dir}"; the ${p.crane} page`, m.lang === p.lang && m.dir === p.dir && b.crane === p.crane, `${m.lang}/${m.dir} ${b.crane}`);
+    rec('assets', 'images load', m.brokenImages.length === 0, m.brokenImages.join(', '));
+    rec('a11y', 'every <img> has alt', m.missingAlt.length === 0, m.missingAlt.join(', '));
+    const hIssues = headingIssues(m.levels);
+    rec('a11y', 'one h1, headings in order', hIssues.length === 0, hIssues.join('; '));
+    const lm = m.landmarks;
+    rec('a11y', 'landmarks: one banner, one main, one contentinfo, a nav', lm.banner === 1 && lm.main === 1 && lm.contentinfo === 1 && lm.nav >= 1, JSON.stringify(lm));
+    const small = smallTargets(m.targets);
+    rec('a11y', 'interactive targets ≥ 44 px', small.length === 0, small.slice(0, 12).map((t) => `${t.name} ${t.width}×${t.height}`).join('; '));
+    rec('data', 'Western digits only (text and data attributes)', m.eastern.length === 0 && !m.easternData, m.eastern.join(' '));
+    if (TARGET === 'staging') rec('truth', 'manufacturer figures carry draft badges (staging)', m.badges > 0, `${m.badges} badges, ${m.tokens} tokens`);
+    else rec('truth', 'no draft badge, no [[CONFIRM]] token (production)', m.badges === 0 && m.tokens === 0, `${m.badges} badges, ${m.tokens} tokens`);
+    if (reduced) rec('motion', 'reduced: all content visible, no smooth scroll', m.hiddenReveal === 0 && !m.lenis, `hidden=${m.hiddenReveal} lenis=${m.lenis}`);
+    else rec('motion', 'reveals have finished after scrolling through; no ghost left', m.hiddenReveal === 0 && m.ghosts === 0, `hidden=${m.hiddenReveal} ghosts=${m.ghosts}`);
+    rec('motion', 'figures show their final values; meters full', b.tickers.length === 0 && b.meters === 0, `tickers off: ${b.tickers.join(', ') || 'none'} · meters short: ${b.meters}`);
+    // The photo story: a sticky stage beside the steps from 64rem (with JavaScript), photos inline in the steps below.
+    const stageWanted = vp.width >= 1024;
+    rec('crane', `photo story ${stageWanted ? 'on the sticky stage' : 'inline in the steps'}`, b.steps > 0 && b.stage === stageWanted && b.inline === !stageWanted, `steps=${b.steps} stage=${b.stage} inline=${b.inline}`);
+    const badValues = badSpecValues(b.values);
+    rec(
+      'truth',
+      'specification: every group has rows, every value is a value (no "—", estimates or "not stated")',
+      b.groups.length > 0 && b.groups.every((n) => n > 0) && b.values.length > 0 && badValues.length === 0,
+      `groups ${b.groups.join('/')} · ${b.values.length} values${badValues.length ? ` · bad: ${badValues.join(' | ')}` : ''}`,
+    );
+    const wantRail = otherCranes(p.crane).map((id) => cranePagePath(id, p.lang));
+    rec('links', 'rail links to the other four crane pages in this language', b.rail.join() === wantRail.join(), b.rail.join(', '));
+    // Photos: the hero's crop follows the viewport; every other photo is lazy; each picks a candidate that fits its box
+    // (sharp: ≥ 90 % of the device pixels it covers, unless it is the largest; light: ≤ 2× them, or the smallest).
+    const heroCrop = vp.width < 768 ? 'mobile_4x5' : 'desktop_16x9';
+    const eager = b.photos.filter((x) => !x.hero && !x.lazy).map((x) => x.src);
+    const blurry = b.photos.filter((x) => !(x.natural >= 0.9 * x.need) && !(x.natural >= 1920)).map((x) => `${x.src} ${x.natural}w for ${x.need}px`);
+    const heavy = b.photos.filter((x) => x.natural > Math.max(640, 2 * x.need)).map((x) => `${x.src} ${x.natural}w for ${x.need}px`);
+    rec(
+      'assets',
+      `photos: hero crop ${heroCrop}; the rest lazy; each sized to its box (sizes)`,
+      b.heroCrop === heroCrop && eager.length === 0 && blurry.length === 0 && heavy.length === 0 && b.photos.length > 2,
+      `hero ${b.heroCrop} · ${b.photos.length} checked · eager ${eager.join(', ') || 'none'} · blurry ${blurry.join(', ') || 'none'} · heavy ${heavy.join(', ') || 'none'}`,
+    );
+    const allCls = sessionCls(await page.evaluate(() => window.__shifts));
+    rec('cls', 'CLS over the whole visit (load + scroll) ≤ 0.05', allCls <= 0.05, `CLS ${allCls}`);
+
+    await page.evaluate(axeSource);
+    const axe = await page.evaluate(async (tags) => {
+      const r = await window.axe.run(document, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] });
+      return r.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length, where: v.nodes.slice(0, 3).map((n) => n.target.join(' ')) }));
+    }, AXE_TAGS);
+    rec('axe', 'no WCAG 2.2 A/AA violations (axe)', axe.length === 0, axe.map((v) => `${v.id} (${v.impact}) ×${v.nodes}: ${v.where.join(' ; ')}`).join(' | '));
+
+    // Desktop story: the stage shows the photo of the step crossing the middle of the screen.
+    if (stageWanted && b.steps > 1) {
+      const out = [];
+      let ok = true;
+      for (let i = 0; i < b.steps; i++) {
+        const y = await page.evaluate((k) => {
+          const el = document.querySelector(`[data-story-step="${k}"]`);
+          const r = el.getBoundingClientRect();
+          return Math.round(window.scrollY + r.top + r.height / 2 - window.innerHeight / 2);
+        }, i);
+        await scrollToY(page, y);
+        await wait(reduced ? 300 : 700);
+        const st = await page.evaluate(() => ({
+          step: [...document.querySelectorAll('[data-story-step][data-active]')].map((e) => e.dataset.storyStep),
+          frame: [...document.querySelectorAll('[data-story-frame][data-active]')].map((e) => e.dataset.storyFrame),
+        }));
+        const good = st.step.join() === String(i) && st.frame.join() === String(i);
+        ok &&= good;
+        out.push(`step ${i}: active ${st.step.join(',') || 'none'} frame ${st.frame.join(',') || 'none'}`);
+      }
+      rec('crane', 'photo story: the stage follows the step in the middle of the screen', ok, out.join('; '));
+    }
+
+    await scrollToY(page, 0);
+    await wait(400);
+    await page.screenshot({ path: `${SCREENS}${p.id}-${vp.width}-${mode}.jpg`, type: 'jpeg', quality: 60 });
+    rec('errors', 'no console errors, page errors or hydration warnings', !problems.console.length && !problems.page.length, errorsOf(s));
+    rec('network', 'no failed requests or 4xx/5xx', problems.requests.length === 0, problems.requests.join(' | '));
+  } catch (e) {
+    rec('run', 'case completed', false, e instanceof Error ? e.message : String(e));
+  } finally {
+    await s?.context.close();
+  }
+}
+
+// Without JavaScript ─────────────────────────────────────────────────────────
+async function craneNoJs(p, width, height) {
+  const tag = `${p.id} @${width} no-JS`;
+  const kase = { page: p.id, width, mode: 'no-js' };
+  const s = await open(p.path, { width, height, touch: width < 1024, js: false });
+  try {
+    await step(
+      'nojs',
+      `${tag} hero, figures, photo story, specification, load question, rail and request bar present and visible`,
+      async () => {
+        const m = await s.page.evaluate(() => ({
+          crane: document.querySelector('[data-crane-page]')?.dataset.cranePage ?? null,
+          h1: (document.querySelector('h1')?.textContent ?? '').trim(),
+          heroImg: !!document.querySelector('[data-crane-hero-photo] img')?.checkVisibility(),
+          tiles: document.querySelectorAll('.cp-tile').length,
+          steps: [...document.querySelectorAll('[data-story-step]')].filter((e) => e.checkVisibility()).length,
+          inline: [...document.querySelectorAll('.cp-story__inline')].filter((e) => e.checkVisibility()).length,
+          rows: document.querySelectorAll('.cp-row').length,
+          load: !!document.getElementById('cp-load-title'),
+          rail: document.querySelectorAll('a[data-crane-link]').length,
+          bar: !!document.querySelector('[data-request-bar]')?.checkVisibility({ visibilityProperty: true }),
+          hidden: [...document.querySelectorAll('[data-reveal], [data-crane-hero-photo] img, .cp-readout__fig, [data-ticker]')].filter((e) => {
+            const cs = getComputedStyle(e);
+            return Number(cs.opacity) < 1 || cs.visibility === 'hidden';
+          }).length,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          levels: [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => h.checkVisibility({ visibilityProperty: true })).map((h) => Number(h.tagName[1])),
+        }));
+        const issues = headingIssues(m.levels);
+        // Without JavaScript the story never moves a stage: every step carries its own photo.
+        const pass =
+          m.crane === p.crane &&
+          normModel(m.h1).endsWith(normModel(CRANES[p.crane].model)) &&
+          m.heroImg &&
+          m.tiles >= 3 &&
+          m.steps > 0 &&
+          m.inline === m.steps &&
+          m.rows > 0 &&
+          m.load &&
+          m.rail === 4 &&
+          m.bar &&
+          m.hidden === 0 &&
+          m.overflow <= 0 &&
+          issues.length === 0;
+        return { pass, detail: `${JSON.stringify({ ...m, levels: undefined })} headings: ${issues.join('; ') || 'ok'}` };
+      },
+      kase,
+    );
+    await s.page.screenshot({ path: `${SCREENS}${p.id}-${width}-nojs.jpg`, type: 'jpeg', quality: 60 });
+  } finally {
+    await s.context.close();
+  }
+}
+
+// Request flows and navigation in a browser ──────────────────────────────────
+/** Clicks a link that loads another page, like a pointer at its centre, and waits for it. */
+async function follow(page, target, settle = 450) {
+  const el = typeof target === 'string' ? await page.$(target) : target;
+  if (!el) throw new Error(`not found: ${target}`);
+  await el.evaluate((e) => e.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+  await wait(settle);
+  // A pointer at the link's centre must reach the link (not a figure, a card or the bar painted over it).
+  const cover = await el.evaluate((a) => {
+    const r = a.getBoundingClientRect();
+    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !top || top === a || a.contains(top) ? null : `<${top.tagName.toLowerCase()} class="${top.getAttribute('class') ?? ''}"${top.dataset.lineupTicker ? ' data-lineup-ticker' : ''}>`;
+  });
+  if (cover) throw new Error(`the centre of ${await el.evaluate((a) => `<a href="${a.getAttribute('href')}">`)} is covered by ${cover}: a click there does not follow the link`);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }), el.click()]);
+  await wait(1500);
+}
+const where = (page) =>
+  page.evaluate(() => ({
+    path: location.pathname,
+    search: location.search,
+    hash: location.hash,
+    lang: document.documentElement.lang,
+    dir: document.documentElement.dir,
+    crane: document.querySelector('[data-crane-page]')?.dataset.cranePage ?? null,
+    home: !!document.querySelector('[data-hero]'),
+    h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+  }));
+
+async function craneWhatsAppCheck(page, p) {
+  const crane = CRANES[p.crane];
+  const el = await page.$('[data-testid="crane-page-whatsapp"]');
+  if (!el) return { pass: false, detail: 'no crane-page-whatsapp' };
+  const info = await el.evaluate((a) => ({ href: a.getAttribute('href') ?? '', target: a.getAttribute('target'), rel: a.getAttribute('rel') ?? '' }));
+  const bar = await barHref(page).catch(() => '');
+  const expected = PROFILE.whatsapp ? /^https:\/\/wa\.me\/\d+\?text=/ : new RegExp(`^mailto:${EMAIL}\\?subject=`);
+  const external = !PROFILE.whatsapp || (info.target === '_blank' && /noopener/.test(info.rel));
+  const names = (href) => normModel(decodedHref(href)).includes(normModel(crane.model));
+  const ga = await gaOn(page);
+  const before = await eventCount(page);
+  await tap(page, el, 300);
+  await wait(300);
+  const opened = await page.evaluate(() => window.__opened.at(-1) ?? '');
+  const ev = ga ? await eventAfter(page, before, 'whatsapp_click', { location: 'crane-page', crane_id: p.crane }) : null;
+  const pass = expected.test(info.href) && isEncodedHref(info.href) && names(info.href) && external && opened.length > 0 && expected.test(bar) && isEncodedHref(bar) && names(bar) && (!ga || !!ev);
+  return {
+    pass,
+    detail: `hero: ${decodedHref(info.href).slice(0, 80).replace(/\n/g, ' / ')} target=${info.target} rel=${info.rel} opened=${!!opened} · bar names the crane=${names(bar)} · analytics=${ga ? JSON.stringify(ev) : 'off'}`,
+  };
+}
+
+/** "Use the request form": the home page opens at the form with this crane on the hook and the query tidied away. */
+async function formDeepLinkCheck(page, p) {
+  await follow(page, '[data-testid="crane-page-form"]');
+  const at = await where(page);
+  await wait(1200);
+  const r = await page.evaluate(() => ({
+    top: Math.round(document.getElementById('request')?.getBoundingClientRect().top ?? -9999),
+    search: location.search,
+    hash: location.hash,
+  }));
+  const form = await formCrane(page);
+  const chip = await barChip(page);
+  const href = await barHref(page).catch(() => '');
+  const model = normModel(CRANES[p.crane].model);
+  const pass =
+    at.path === p.home &&
+    at.home &&
+    at.lang === p.lang &&
+    r.search === '' &&
+    r.hash === '#request' &&
+    r.top >= -4 &&
+    r.top <= 200 &&
+    form === `crane:${p.crane}` &&
+    chip !== null &&
+    normModel(chip).includes(model) &&
+    normModel(decodedHref(href)).includes(model);
+  return { pass, detail: `→ ${at.path}${r.search}${r.hash} (${at.lang}) #request top ${r.top} · form=${form} · chip="${(chip ?? '').trim()}" · bar text names it=${normModel(decodedHref(href)).includes(model)}` };
+}
+
+/** "Compare": the home page's comparison opens with this crane picked. */
+async function compareDeepLinkCheck(page, p) {
+  await follow(page, '[data-testid="crane-page-compare"]');
+  const at = await where(page);
+  await page.$eval('#crane-compare', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' })).catch(() => {});
+  let pressed = [];
+  for (let i = 0; i < 30; i++) {
+    pressed = await page.$$eval('[data-testid="compare-pick"][aria-pressed="true"]', (bs) => bs.map((b) => b.dataset.crane));
+    if (pressed.includes(p.crane)) break;
+    await wait(200);
+  }
+  const cols = await page.$$eval('#crane-compare thead th[data-col]', (ths) => ths.filter((th) => th.checkVisibility()).map((th) => th.dataset.col));
+  const search = await page.evaluate(() => location.search);
+  const pass = at.path === p.home && at.lang === p.lang && search === '' && pressed.includes(p.crane) && cols.includes(p.crane);
+  return { pass, detail: `→ ${at.path}${search}${at.hash} picked ${pressed.join(',')} columns ${cols.join(',')}` };
+}
+
+async function craneLangSwitchCheck(page, p) {
+  await scrollToY(page, 0);
+  await wait(400);
+  let link = await firstVisible(page, '[data-testid="lang-switch"]');
+  if (!link) {
+    const menu = await firstVisible(page, '[data-testid="menu-open"]');
+    await menu?.click();
+    await wait(700);
+    link = await firstVisible(page, '[data-testid="menu-lang-switch"]');
+  }
+  if (!link) return { pass: false, detail: 'no visible language switch' };
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }), link.click()]);
+  await wait(800);
+  const at = await where(page);
+  return { pass: at.path === p.other && at.lang === p.otherLang && at.crane === p.crane, detail: JSON.stringify(at) };
+}
+
+async function craneRailCheck(page, p) {
+  const first = otherCranes(p.crane)[0];
+  await follow(page, `a[data-crane-link="${first}"]`);
+  const at = await where(page);
+  return { pass: at.path === cranePagePath(first, p.lang) && at.crane === first && normModel(at.h1).endsWith(normModel(CRANES[first].model)), detail: JSON.stringify(at) };
+}
+
+async function craneBreadcrumbCheck(page, p) {
+  const link = await page.$(`#crane-hero nav a[href="${p.home}"]`);
+  if (!link) return { pass: false, detail: `no breadcrumb link to ${p.home}` };
+  await follow(page, link);
+  const at = await where(page);
+  return { pass: at.path === p.home && at.home && at.lang === p.lang, detail: JSON.stringify(at) };
+}
+
+/** Phones: the menu is a modal; its links lead to the home page's sections; Esc returns focus. */
+async function craneMenuCheck(page, p) {
+  const btn = await firstVisible(page, '[data-testid="menu-open"]');
+  if (!btn) return { pass: false, detail: 'no visible menu button' };
+  await btn.focus();
+  await page.keyboard.press('Enter');
+  await wait(700);
+  const opened = await page.evaluate((home) => {
+    const d = document.querySelector('dialog[data-testid="menu-dialog"]');
+    const links = d ? [...d.querySelectorAll('nav a[href]')].map((a) => a.getAttribute('href')) : [];
+    return { open: !!d?.open, modal: !!d?.matches(':modal'), links, toHome: links.filter((h) => h.startsWith(`${home}#`)).length, lang: d?.querySelector('[data-testid="menu-lang-switch"]')?.getAttribute('href') ?? null };
+  }, p.home);
+  await page.keyboard.press('Escape');
+  await wait(600);
+  const after = await page.evaluate(() => ({ open: !!document.querySelector('dialog[data-testid="menu-dialog"]')?.open, focus: document.activeElement?.getAttribute('data-testid') ?? document.activeElement?.tagName }));
+  const pass = opened.open && opened.modal && opened.links.length >= 4 && opened.toHome === opened.links.length && opened.lang === p.other && !after.open && after.focus === 'menu-open';
+  return { pass, detail: `open=${JSON.stringify(opened)} esc=${JSON.stringify(after)}` };
+}
+
+/** From the home page: the lineup card's model name opens this crane's page. */
+async function homeToCraneCheck(page, p) {
+  const live = await lineupLive(page);
+  const link = await page.$(`#crane-list a[data-crane-page-link="${p.crane}"]`);
+  if (!link) return { pass: false, detail: `no lineup link to ${p.crane} (island live=${live})` };
+  await follow(page, link);
+  const at = await where(page);
+  return { pass: at.path === p.path && at.crane === p.crane && at.lang === p.lang, detail: JSON.stringify(at) };
+}
+
+async function craneFlowsFor(p, c) {
+  const tag = `${p.id} @${c.width} ${c.id}`;
+  const group = async (name, fn, from = p.path) => {
+    let s;
+    try {
+      s = await open(from, { width: c.width, height: c.height, touch: c.touch, reduced: c.reduced });
+      await fn(s);
+      record('errors', `${tag} ${name}: no console/page errors`, !s.problems.console.length && !s.problems.page.length, errorsOf(s));
+    } catch (e) {
+      record('run', `${tag} ${name} completed`, false, e instanceof Error ? e.message : String(e));
+    } finally {
+      await s?.context.close();
+    }
+  };
+  await group('request', async ({ page }) => {
+    await step('keyboard', `${tag} skip link is the first Tab stop and moves focus to #main`, () => skipLinkCheck(page));
+    await step('request', `${tag} WhatsApp (hero and bar) asks about ${CRANES[p.crane].model}: encoded, safe new tab`, () => craneWhatsAppCheck(page, p));
+    await step('nav', `${tag} back to top returns to scrollY 0`, () => backToTopCheck(page, c.reduced));
+    if (c.width < 1024) await step('menu', `${tag} menu: modal, links lead to the home page's sections, language switch to this crane, Esc returns focus`, () => craneMenuCheck(page, p));
+  });
+  await group('form deep link', async ({ page }) => {
+    await step('request', `${tag} "Use the request form" opens ${p.home}#request with ${p.crane} pre-selected and on the hook`, () => formDeepLinkCheck(page, p));
+  });
+  await group('compare deep link', async ({ page }) => {
+    await step('request', `${tag} "Compare" opens the comparison with ${p.crane} picked`, () => compareDeepLinkCheck(page, p));
+  });
+  await group('navigation', async ({ page }) => {
+    await step('lang', `${tag} language switch opens ${p.other} (the same crane)`, () => craneLangSwitchCheck(page, p));
+  });
+  await group('rail', async ({ page }) => {
+    await step('links', `${tag} a rail card opens that crane's page`, () => craneRailCheck(page, p));
+  });
+  await group('breadcrumb', async ({ page }) => {
+    await step('links', `${tag} breadcrumb leads back to ${p.home}`, () => craneBreadcrumbCheck(page, p));
+  });
+  await group(
+    'from home',
+    async ({ page }) => {
+      await step('links', `${tag} the lineup card on ${p.home} opens ${p.path}`, () => homeToCraneCheck(page, p));
+    },
+    p.home,
+  );
+}
+
 // ── Run ─────────────────────────────────────────────────────────────────────
 const started = Date.now();
 try {
@@ -1710,6 +2346,25 @@ try {
         { id: 'touch', width: 390, height: 844, touch: true, reduced: false },
       ])
         await keyboardWalk(p, c);
+  // Section 8: the crane pages.
+  if (wantCrane('seo')) await craneSeoChecks();
+  if (wantCrane('links')) await craneLinkChecks();
+  if (wantCrane('matrix')) {
+    const cases = CRANE_PAGES.flatMap((p) =>
+      CRANE_VIEWPORTS.filter((vp) => !WIDTHS_ONLY.length || WIDTHS_ONLY.includes(vp.width)).flatMap((vp) => MODES.map((mode) => ({ p, vp, mode }))),
+    );
+    await pool(cases, CONCURRENCY, ({ p, vp, mode }) => craneMatrixCase(p, vp, mode));
+  }
+  if (wantCrane('nojs')) for (const p of CRANE_PAGES) for (const [w, h] of [[390, 844], [1440, 900]]) await craneNoJs(p, w, h);
+  const flowPages = CRANE_PAGES.filter((p) => FLOW_CRANES.includes(p.crane));
+  if (wantCrane('flows')) for (const p of flowPages) for (const c of controlsWanted) await craneFlowsFor(p, c);
+  if (wantCrane('keyboard'))
+    for (const p of flowPages)
+      for (const c of [
+        { id: 'desktop', width: 1440, height: 900, touch: false, reduced: false },
+        { id: 'touch', width: 390, height: 844, touch: true, reduced: false },
+      ])
+        await keyboardWalk(p, c, 30);
 } finally {
   await browser.close();
 }

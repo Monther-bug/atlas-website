@@ -6,6 +6,7 @@ import { fontPreload } from './vite/font-preload.ts';
 import { inlineScriptMinify } from './vite/inline-script.ts';
 import { siteUrl } from './vite/site-url.ts';
 import { truthGate } from './vite/truth-gate.ts';
+import { cranePagesDev } from './vite/crane-pages-dev.ts';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -33,6 +34,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       siteUrl(),
+      cranePagesDev(),
       react(),
       tailwindcss(),
       fontPreload(),
@@ -45,7 +47,15 @@ export default defineConfig(({ mode }) => {
     resolve: { alias: { '@': path('./src') } },
     define: { __BUILD_TARGET__: JSON.stringify(target) },
     build: {
-      rollupOptions: { input: { ar: path('./index.html'), en: path('./en/index.html') } },
+      // The two home pages, and the two crane page templates (scripts/prerender.mjs writes /cranes/<id>/ from them).
+      rollupOptions: {
+        input: {
+          ar: path('./index.html'),
+          en: path('./en/index.html'),
+          'crane-ar': path('./cranes/index.html'),
+          'crane-en': path('./en/cranes/index.html'),
+        },
+      },
       // Never inline fonts as base64: the tiny unicode-range fill faces (fill-ar, fill-la) must stay separate files
       // that load only when one of their characters is on screen, not ride in the CSS for every visitor.
       assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),

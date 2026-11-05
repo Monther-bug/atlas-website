@@ -55,3 +55,13 @@ describe('buildSitemap', () => {
     expect(buildSitemap('https://atlas.example/a&b', '2026-11-13')).toContain('<loc>https://atlas.example/a&amp;b/</loc>');
   });
 });
+
+describe('buildSitemap with the crane pages', () => {
+  it('lists each crane page pair with its own hreflang alternates and x-default on the Arabic page', () => {
+    const xml = buildSitemap('https://atlas.example', '2026-11-13', [[{ lang: 'ar', path: '/cranes/gmk6350/' }, { lang: 'en', path: '/en/cranes/gmk6350/' }]]);
+    expect(xml.match(/<loc>/g)).toHaveLength(4);
+    expect(xml).toContain('<loc>https://atlas.example/en/cranes/gmk6350/</loc>');
+    expect(xml).toContain('<xhtml:link rel="alternate" hreflang="x-default" href="https://atlas.example/cranes/gmk6350/" />');
+    expect(xml).toContain('<xhtml:link rel="alternate" hreflang="en" href="https://atlas.example/en/cranes/gmk6350/" />');
+  });
+});

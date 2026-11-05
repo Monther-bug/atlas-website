@@ -5,7 +5,7 @@ import { Logo } from '@/components/Logo';
 import { sheetTrigger } from '@/components/ui/sheet-trigger';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
-import { useLang } from '@/lib/lang';
+import { homeHref, useLang } from '@/lib/lang';
 import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
 /** C9 nav targets. */
@@ -57,11 +57,12 @@ function sectionAtSpyLine(): string | null {
 /**
  * Scroll state for the bar, read at most once per frame: `atTop` (the first pixels; the bar keeps its dark glass over the hero photo), `tone`
  * (the ground under the bar: black glass over dark sections, white glass over light ones) and `active` (the nav target
- * in view). The server render assumes the first screen: solid dark glass, nothing active.
+ * in view). The server render assumes the first screen: dark glass over the home hero, light glass over a crane page's
+ * white hero, nothing active.
  */
-function useChromeState() {
+function useChromeState(initialTone: Tone) {
   const [atTop, setAtTop] = useState(false);
-  const [tone, setTone] = useState<Tone>('dark');
+  const [tone, setTone] = useState<Tone>(initialTone);
   const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
@@ -94,8 +95,13 @@ function useChromeState() {
 }
 
 export function Header() {
-  const { lang, copy, otherLang, otherHref } = useLang();
-  const { atTop, tone, active } = useChromeState();
+  const value = useLang();
+  const { lang, copy, otherLang, otherHref, crane } = value;
+  // On a crane page every section link leads to the home page; the logo too, and "Request" pre-selects the crane.
+  const toHome = (hash: string) => homeHref(value, hash);
+  const requestHref = crane ? `${value.home}?crane=${crane}#request` : '#request';
+  // A crane page opens on a white hero, so its first paint (before any script) is already the light glass.
+  const { atTop, tone, active } = useChromeState(crane ? 'light' : 'dark');
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -181,11 +187,11 @@ export function Header() {
 
       <div className="shell-wide relative grid h-16 grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]">
         {/* Named by what it shows (both name lines) plus a hidden "back to top", so the name contains the visible label. */}
-        <a href="#top" className="inline-flex min-h-11 items-center justify-self-start rounded-full">
+        <a href={crane ? value.home : '#top'} className="inline-flex min-h-11 items-center justify-self-start rounded-full">
           <Logo tone={onLight ? 'light' : 'dark'} />
           <span className="sr-only">
             {lang === 'ar' ? '، ' : ', '}
-            {copy.header.homeLabel}
+            {crane ? copy.header.homePage : copy.header.homeLabel}
           </span>
         </a>
 
@@ -212,7 +218,7 @@ export function Header() {
             {NAV.map((item) => (
               <li key={item.key}>
                 <a
-                  href={item.href}
+                  href={toHome(item.href)}
                   data-nav={item.key}
                   aria-current={active === item.key ? 'location' : undefined}
                   onPointerEnter={() => {
@@ -242,7 +248,9 @@ export function Header() {
             aria-label={copy.header.langSwitch.label}
             data-testid="lang-switch"
             onClick={() => track('lang_switch')}
-            className={`inline-flex min-h-11 items-center rounded-full px-4 text-[0.9375rem] font-semibold transition-colors duration-(--dur-state) ease-ui ${fg2} ${wash}`}
+            // min-w: «عربي» is set before its font arrives (not preloaded on English pages); the box keeps one width
+            // either way, so nothing beside it moves when the font swaps in (layout shift 0).
+            className={`inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-full px-4 text-[0.9375rem] font-semibold transition-colors duration-(--dur-state) ease-ui ${fg2} ${wash}`}
           >
             {copy.header.langSwitch.text}
           </a>
@@ -250,7 +258,7 @@ export function Header() {
             {/* One look, following the ground like the glass: white on dark, ink on light. Never red: red stays with the
                 actions in the content and the request bar (Q.1: the outline-then-red flip read as a glitch, and a red
                 pill here doubled the bar's red WhatsApp on every desktop screen). */}
-            <Button href="#request" size="sm" variant={onLight ? 'secondary' : 'inverse'} data-testid="header-request">
+            <Button href={requestHref} size="sm" variant={onLight ? 'secondary' : 'inverse'} data-testid="header-request">
               {copy.header.request}
             </Button>
           </div>
@@ -295,7 +303,7 @@ export function Header() {
               {NAV.map((item, index) => (
                 <li key={item.key} className="menu-item border-b border-line-dark" style={{ '--i': index } as CSSProperties}>
                   <a
-                    href={item.href}
+                    href={toHome(item.href)}
                     onClick={closeMenu}
                     className="t-headline group flex min-h-20 items-center justify-between gap-4 transition-colors duration-(--dur-state) ease-ui hover:text-neutral-300"
                   >

@@ -161,7 +161,7 @@ describe('Fill', () => {
 describe('Logo', () => {
   it('sets the name in the page language with the other language beside it', () => {
     const html = renderHtml(<Logo />, 'ar');
-    expect(html.querySelector('img')?.getAttribute('src')).toBe('/brand/badge.png');
+    expect(html.querySelector('img')?.getAttribute('src')).toBe('/brand/badge-128.webp');
     expect(html.textContent).toContain('أطلس الصحراء');
     expect(html.querySelector('img')?.getAttribute('class')).toContain('object-contain');
     expect(html.querySelector('[lang="en"]')?.textContent).toBe('Atlas Alshraa');

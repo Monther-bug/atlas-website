@@ -14,7 +14,8 @@
     "preview": "vite preview --port 4173",
     "qa": "node qa/run-qa.mjs",
     "lighthouse": "node qa/lighthouse.mjs",
-    "pdf": "node scripts/export-pdf.mjs"
+    "pdf": "node scripts/export-pdf.mjs",
+    "og:cranes": "node scripts/build-crane-og.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

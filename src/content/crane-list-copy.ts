@@ -30,6 +30,7 @@ export const craneListCopy: Record<Lang, CraneListCopy> = {
     photos: 'صور {name}',
     noteHeading: 'عن هذا التصنيف',
     sourcesHeading: 'مصادر الأرقام',
+    fullPage: 'افتح الصفحة الكاملة',
   },
   compare: {
     title: 'قارن الطرازات',
@@ -92,6 +93,7 @@ export const craneListCopy: Record<Lang, CraneListCopy> = {
     photos: '{name} photos',
     noteHeading: 'About this rating',
     sourcesHeading: 'Where the figures come from',
+    fullPage: 'Open the full page',
   },
   compare: {
     title: 'Compare models',

@@ -56,4 +56,9 @@ describe('fontPreloadTags', () => {
     const withoutDisplay = BUNDLE.filter((f) => !f.includes('tajawal-ar-800'));
     expect(() => fontPreloadTags('/index.html', withoutDisplay)).toThrow(/tajawal-ar-800/);
   });
+
+  it('preloads the crane pages\' first-screen faces: Plex Mono (the code), Poppins 700 (the readout), body 400', () => {
+    expect(hrefs('/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/tajawal-ar-400-DPfaHKGf.woff2']);
+    expect(hrefs('/en/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/poppins-400-BA30v0Pd.woff2']);
+  });
 });

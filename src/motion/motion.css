@@ -332,3 +332,28 @@ html:not(.js) [data-hoist-request] {
   }
 }
 /* ==== end of the Request form success check ==== */
+
+/* ==== Crane pages: cross-document View Transition (crane-page task) ===================================
+   Progressive enhancement (Chrome/Edge 126+, Safari 18.2+; elsewhere a normal load), motion allowed only. The card
+   photo that was clicked takes the name `crane-hero` (src/lib/view-transition.ts) and grows into the crane page's
+   hero photo, which carries the same name (src/crane-page/crane-page.css). The rest of the page crossfades quickly. */
+/* The opt-in itself, `@view-transition { navigation: auto }`, is an inline <style> in each page's head (index.html,
+   en/index.html, cranes/index.html, en/cranes/index.html): from this stylesheet Chrome often read it too late and
+   aborted the transition with a console error. */
+::view-transition-group(crane-hero) {
+  animation-duration: 0.6s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+}
+/* Reduced motion: the opt-in stays (it must not depend on a media query that DevTools emulation or a settings change
+   can flip mid-navigation, which aborts the transition with a console error); the swap is simply instant. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

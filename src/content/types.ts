@@ -125,6 +125,7 @@ export interface Copy {
   header: {
     skipLink: string;
     homeLabel: string; // logo link: sr-only words after the visible name (WCAG 2.5.3: the name starts with what is seen)
+    homePage: string; // the same, on a crane page, where the logo goes to the home page instead of the top
     name: string; // typeset name beside the badge
     nameAlt: string; // the same name in the other language (second line of the lockup)
     nav: { services: string; cranes: string; sites: string; contact: string };
@@ -310,6 +311,8 @@ export interface Copy {
     tagline: string;
     servicesHeading: string;
     pageHeading: string;
+    /** On a crane page the same links lead to the home page, so the column is named after it. */
+    homeHeading: string;
     pageLinks: { cranes: string; sites: string; request: string };
     contactHeading: string;
     followHeading: string;
@@ -399,6 +402,8 @@ export interface CraneListCopy {
     photos: string; // {name}
     noteHeading: string;
     sourcesHeading: string;
+    /** Link from the quick view to the crane's own page (/cranes/<id>/). */
+    fullPage: string;
   };
   /** v2 comparison: key rows by default, every other row on demand (CompareModels.tsx). */
   compare: {
@@ -437,3 +442,41 @@ export interface CraneListCopy {
 export type SpecGroupId = 'lifting' | 'boom' | 'carrier' | 'engine' | 'dimensions';
 
 export type SpecUnit = 't' | 'm' | 'kw' | 'kmh' | 'pct' | 'mpa';
+
+/** Photos that belong to one crane (the crane pages' story): the visible cranes' photos, Kobelco excluded. */
+export type CranePhotoId = Exclude<PhotoId, '6398'>;
+
+/**
+ * The crane pages (/cranes/<id>/, /en/cranes/<id>/), copy deck §6c. Prerender-only: the page body is a static island
+ * on the client (src/crane-page/), so these strings never ship in a browser bundle. The truth gate checks them too.
+ */
+export interface CranePageCopy {
+  meta: {
+    title: string; // {name} {type}
+    description: string; // {name} {type} {lead} {boom}
+    /** {capacity} {radius}: the rating part of the description; `capacityNoRadius` without a radius. */
+    capacity: string;
+    capacityNoRadius: string;
+  };
+  breadcrumb: { label: string; home: string; cranes: string };
+  hero: { form: string };
+  highlights: {
+    title: string;
+    continuation: string;
+    lineup: string; // caption of the five capacity bars
+    top: { boom: string; jib: string; counterweight: string }; // this crane is the largest of the five
+    other: { boom: string; jib: string; counterweight: string }; // {value} {model}
+  };
+  story: { label: string }; // accessible name of the photo list; the heading is craneListCopy.sheet.photos
+  load: {
+    title: string;
+    lead: string; // {capacity} {radius}
+    leadNoRadius: string; // {capacity}
+    leadNoCapacity: string; // where the shown capacity is not the manufacturer's listed one (QUY250)
+    rest: string;
+    needs: string; // heading of the three figures to send
+  };
+  rail: { title: string };
+  /** The short caption of each crane photo (copy deck §7 where it has one, §6c for the rest); the site comes first. */
+  captions: Record<CranePhotoId, { site: 'construction' | 'coast' | null; text: string }>;
+}

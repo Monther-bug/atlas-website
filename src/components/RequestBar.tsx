@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { CloseIcon, HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
 import { cranes } from '@/content';
+import type { CraneId } from '@/content/types';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
@@ -41,13 +42,15 @@ function useOverHero(): boolean {
  * its classes) looks the same in flight. Opacity and visibility only: the dock and the ride measure this bar's
  * buttons, so nothing here may move with a transform while they land.
  */
-export function RequestBar() {
+export function RequestBar({ defaultCrane = null }: { defaultCrane?: CraneId | null } = {}) {
   const { copy } = useLang();
   const overHero = useOverHero();
   const requested = useRequestedCrane();
   const crane = requested ? (cranes.find((c) => c.id === requested) ?? null) : null;
-  const message = crane
-    ? fillTemplate(copy.whatsapp.crane, { model: `${crane.make} ${crane.model}`, class: copy.craneTypes[crane.type].chip })
+  // A crane page's bar asks about that crane (template B) while nothing else is on the hook; no chip, nothing to clear.
+  const about = crane ?? (defaultCrane ? (cranes.find((c) => c.id === defaultCrane) ?? null) : null);
+  const message = about
+    ? fillTemplate(copy.whatsapp.crane, { model: `${about.make} ${about.model}`, class: copy.craneTypes[about.type].chip })
     : copy.whatsapp.general;
   const tel = telHref();
   const whatsappRef = useRef<HTMLDivElement>(null);

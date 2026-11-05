@@ -74,6 +74,48 @@ export function checkBundle(m, limits = BUNDLE_LIMITS) {
   ];
 }
 
+/** The address a built HTML file is served at: 'cranes/gmk6350/index.html' → '/cranes/gmk6350/'. */
+export function pagePath(file) {
+  const rel = String(file).replace(/\\/g, '/').replace(/(^|\/)index\.html$/, '$1');
+  return `/${rel}`.replace(/\/+/g, '/');
+}
+
+/** Lighthouse's pages (qa/lighthouse.mjs): the two home pages and the GMK6350 crane page in both languages by default. */
+export const LH_DEFAULT_PATHS = ['/', '/en/', '/cranes/gmk6350/', '/en/cranes/gmk6350/'];
+
+/**
+ * The pages for LH_PATHS (a comma list of paths; empty = the defaults): { id, path, lang }. Ids stay 'ar' and 'en'
+ * for the home pages (earlier reports); a crane page is '<lang>-<crane id>' ('ar-gmk6350').
+ */
+export function lhPages(list) {
+  const paths = String(list ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => (s.startsWith('/') ? s : `/${s}`).replace(/\/?$/, '/'));
+  return [...new Set(paths.length ? paths : LH_DEFAULT_PATHS)].map((p) => {
+    const lang = p === '/en/' || p.startsWith('/en/') ? 'en' : 'ar';
+    const rest = p.replace(/^\/(en\/)?/, '').replace(/^cranes\//, '').replace(/\/$/, '').replace(/\//g, '-');
+    return { id: rest ? `${lang}-${rest}` : lang, path: p, lang };
+  });
+}
+
+/** Every built page (each home page and crane page) against the initial JS and CSS budgets. */
+export function checkPageBundles(pages, limits = BUNDLE_LIMITS) {
+  const row = (metric, value, limit) => ({ metric, value: round1(value), limit: `≤ ${limit} KB`, pass: finite(value) && value <= limit });
+  return pages.flatMap((p) => [row(`initial JS (gzip), ${p.page}`, p.initialJsKB, limits.initialJsKB), row(`CSS (gzip), ${p.page}`, p.cssKB, limits.cssKB)]);
+}
+
+/** A crane page's first load on a phone and its hero photo, on the home page's budgets. */
+export function checkCraneLoad(m, limits = BUNDLE_LIMITS) {
+  const row = (metric, value, limit) => ({ metric: `${metric}, ${m.page}`, value: round1(value), limit: `≤ ${limit} KB`, pass: finite(value) && value <= limit });
+  return [
+    row('first load, mobile', m.firstLoadKB, limits.firstLoadKB),
+    row('hero image, mobile', m.heroMobileKB, limits.heroMobileKB),
+    row('hero image, desktop', m.heroDesktopKB, limits.heroDesktopKB),
+  ];
+}
+
 /** First `snippet` string anywhere inside a Lighthouse details object (LCP element). */
 export function firstSnippet(node) {
   if (!node || typeof node !== 'object') return null;

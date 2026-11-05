@@ -10,6 +10,8 @@ import { formatMetres, formatNumber } from '@/lib/numbers';
 import { setRequestedCrane, useRequestedCrane } from '@/lib/request';
 import { fillTemplate } from '@/lib/whatsapp';
 import { craneListCopy } from '@/content/crane-list-copy';
+import { cranePath } from '@/content/crane-pages';
+import { nameForTransition } from '@/lib/view-transition';
 import { keySpecs, ratingDiffers, ratingRadius } from './card-facts';
 import { parseLoad, ratedFor, useLoadText } from './load';
 
@@ -67,10 +69,19 @@ export function LineupCard({ crane, onDetails }: { crane: Crane; onDetails: (cra
       </div>
 
       <div className="lineup-card__body">
+        {/* The model links to the crane's own page (prerendered, so crawlers find all ten pages from here); its photo
+            grows into that page's hero where cross-document view transitions run. Details stays the quick view. */}
         <h3 id={titleId} className="t-spec lineup-card__name">
-          <bdi lang="en" dir="ltr">
-            {crane.make} {crane.model}
-          </bdi>
+          <a
+            href={cranePath(crane.id, lang)}
+            className="lineup-card__link"
+            data-crane-page-link={crane.id}
+            onClick={() => nameForTransition(media.current?.querySelector('[data-lineup-photo]'))}
+          >
+            <bdi lang="en" dir="ltr">
+              {crane.make} {crane.model}
+            </bdi>
+          </a>
         </h3>
 
         <p className="lineup-card__capacity">

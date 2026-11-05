@@ -6,7 +6,7 @@ import { Section } from '@/components/ui/Section';
 import { siteInfo } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
-import { useLang } from '@/lib/lang';
+import { homeHref, useLang } from '@/lib/lang';
 import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
 const LINK =
@@ -15,7 +15,10 @@ const HEADING = 'text-[0.9375rem] font-semibold text-neutral-400 [&:lang(ar)]:te
 
 /** v2 footer: black ground, the closing line set large with the one action, then the columns, then © and back to top. */
 export function Footer() {
-  const { copy, lang } = useLang();
+  const value = useLang();
+  const { copy, lang, crane } = value;
+  // On a crane page the section links lead to the home page, and "Back to top" to this page's main content.
+  const toHome = (hash: string) => homeHref(value, hash);
   const tel = telHref();
   const whatsapp = env.whatsapp ? whatsappHref(copy.whatsapp.general) : null;
 
@@ -28,7 +31,7 @@ export function Footer() {
           {/* Headline size, not display: the closing echo of the H1 must not shout louder than the hero (Q.1). */}
           <p className="t-headline lg:col-span-8">{copy.footer.tagline}</p>
           <div className="flex flex-wrap items-center gap-3 lg:col-span-4 lg:justify-end">
-            <Button href="#request" size="lg" magnetic>
+            <Button href={toHome('#request')} size="lg" magnetic>
               {copy.header.request}
             </Button>
             {whatsapp && (
@@ -59,7 +62,7 @@ export function Footer() {
             <ul className="mt-3">
               {copy.services.items.map((service) => (
                 <li key={service.id}>
-                  <a href="#services" className={LINK}>
+                  <a href={toHome('#services')} className={LINK}>
                     {service.title}
                   </a>
                 </li>
@@ -69,21 +72,21 @@ export function Footer() {
 
           <nav aria-labelledby="footer-page" className="lg:col-span-2">
             <h2 id="footer-page" className={HEADING}>
-              {copy.footer.pageHeading}
+              {crane ? copy.footer.homeHeading : copy.footer.pageHeading}
             </h2>
             <ul className="mt-3">
               <li>
-                <a href="#cranes" className={LINK}>
+                <a href={toHome('#cranes')} className={LINK}>
                   {copy.footer.pageLinks.cranes}
                 </a>
               </li>
               <li>
-                <a href="#sites" className={LINK}>
+                <a href={toHome('#sites')} className={LINK}>
                   {copy.footer.pageLinks.sites}
                 </a>
               </li>
               <li>
-                <a href="#request" className={LINK}>
+                <a href={toHome('#request')} className={LINK}>
                   {copy.footer.pageLinks.request}
                 </a>
               </li>
@@ -141,7 +144,7 @@ export function Footer() {
             {fillTemplate(copy.footer.copyright, { year: String(new Date().getFullYear()) })}
           </p>
           <a
-            href="#top"
+            href={crane ? '#main' : '#top'}
             data-testid="back-to-top"
             data-back-to-top=""
             className="group inline-flex min-h-11 items-center gap-3 self-start rounded-full bg-white/10 ps-5 pe-1.5 font-semibold transition-[background-color,transform] duration-(--dur-state) ease-ui hover:bg-white/20 active:scale-[0.98] sm:self-auto"

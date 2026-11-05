@@ -21,6 +21,7 @@ export const ar: Copy = {
   header: {
     skipLink: 'انتقل إلى المحتوى',
     homeLabel: 'العودة إلى أعلى الصفحة',
+    homePage: 'الصفحة الرئيسية',
     name: 'أطلس الصحراء',
     nameAlt: 'Atlas Alshraa',
     nav: { services: 'الخدمات', cranes: 'الرافعات', sites: 'مواقع العمل', contact: 'تواصل معنا' },
@@ -358,6 +359,7 @@ export const ar: Copy = {
     tagline: 'لكل مشروع رافعته المناسبة.',
     servicesHeading: 'الخدمات',
     pageHeading: 'في هذه الصفحة',
+    homeHeading: 'في الصفحة الرئيسية',
     pageLinks: { cranes: 'الرافعات', sites: 'مواقع العمل', request: 'اطلب رافعة' },
     contactHeading: 'تواصل معنا',
     followHeading: 'تابعنا',

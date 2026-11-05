@@ -155,3 +155,62 @@ export function nearestSnap(snaps, progress) {
 
 /** One readable tag per QA case, e.g. "ar @390 touch". */
 export const caseTag = ({ page, width, mode }) => `${page} @${width} ${mode}`;
+
+// ── Crane pages (/cranes/<id>/, /en/cranes/<id>/; scripts/prerender.mjs, src/content/crane-pages.ts) ──────────────────
+
+const LANGS = { ar: { dir: 'rtl', home: '/' }, en: { dir: 'ltr', home: '/en/' } };
+
+/** '/cranes/gmk6350/' or '/en/cranes/gmk6350/' (the same rule as cranePath in src/content/crane-pages.ts). */
+export const cranePagePath = (id, lang) => `${lang === 'en' ? '/en' : ''}/cranes/${id}/`;
+
+/** One page per visible crane and language (Arabic first, lineup order), with its language twin and its home page. */
+export function cranePages(ids = Object.keys(CRANES)) {
+  return ['ar', 'en'].flatMap((lang) => {
+    const other = lang === 'ar' ? 'en' : 'ar';
+    return ids
+      .filter((id) => CRANES[id] !== undefined)
+      .map((id) => ({
+        id: `${lang}-${id}`,
+        crane: id,
+        path: cranePagePath(id, lang),
+        lang,
+        dir: LANGS[lang].dir,
+        other: cranePagePath(id, other),
+        otherLang: other,
+        home: LANGS[lang].home,
+      }));
+  });
+}
+
+/** The crane a path is about, or null (hidden cranes such as CKE2500 have no page). */
+export function craneIdFromPath(pathname) {
+  const id = /^(?:\/en)?\/cranes\/([a-z0-9-]+)\/?(?:index\.html)?$/.exec(String(pathname ?? ''))?.[1] ?? null;
+  return id !== null && CRANES[id] !== undefined ? id : null;
+}
+
+/** The four other cranes a page's rail links to, in the lineup order. */
+export const otherCranes = (id) => Object.keys(CRANES).filter((k) => k !== id);
+
+/** Where an href on `fromPath` leads on this site: { path, search, hash } (hash without '#'), or null when it leaves. */
+export function linkTarget(href, fromPath) {
+  const base = new URL(fromPath, 'http://qa.local');
+  let url;
+  try {
+    url = new URL(href, base);
+  } catch {
+    return null;
+  }
+  if (url.origin !== base.origin) return null;
+  return { path: url.pathname, search: url.search, hash: decodeURIComponent(url.hash.replace(/^#/, '')) };
+}
+
+/**
+ * Specification values that are not values: empty cells, dash placeholders, "n/a"/"not stated"/"unknown" and
+ * estimates (~, ≈, approx.). The crane pages omit a row the source lacks instead (truth floor, spec §16.17).
+ */
+export function badSpecValues(values) {
+  return values.filter((v) => {
+    const s = String(v ?? '').trim();
+    return !s || /^[—–-]+$/.test(s) || /[~≈]/.test(s) || /\b(n\/a|tbd|tba|approx|unknown|not stated)\b/i.test(s) || /غير (متوفر|معروف|محدد|مذكور)/.test(s);
+  });
+}

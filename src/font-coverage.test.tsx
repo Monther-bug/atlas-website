@@ -8,6 +8,13 @@ import { craneSpecs } from '@/content/crane-specs';
 import { en } from '@/content/en';
 import { Kitchen } from '@/kitchen/Kitchen';
 import { renderHtml } from '@/test/render';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { getCopy } from '@/content/all';
+import { CRANE_PAGES } from '@/content/crane-pages';
+import { LangProvider } from '@/lib/lang';
+import { CraneApp } from '@/crane-page/CraneApp';
+import { craneMeta } from '@/crane-page/head';
+import '@/crane-page/register';
 
 /**
  * Every character the site can render must be inside a subset font's unicode-range (src/fonts.css, built by
@@ -62,6 +69,21 @@ describe('font subset coverage', () => {
     for (const lang of ['ar', 'en'] as const) {
       expect(missing([renderHtml(<App />, lang).textContent ?? ''])).toEqual([]);
       expect(missing([renderHtml(<Kitchen />, lang).textContent ?? ''])).toEqual([]);
+    }
+  });
+
+  it('covers the ten crane pages and their titles and descriptions', () => {
+    for (const lang of ['ar', 'en'] as const) {
+      for (const crane of CRANE_PAGES) {
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(
+          <LangProvider lang={lang} copy={getCopy(lang)} crane={crane.id}>
+            <CraneApp crane={crane} />
+          </LangProvider>,
+        );
+        const meta = craneMeta(crane, getCopy(lang), lang);
+        expect(missing([host.textContent ?? '', meta.title, meta.description]), `${lang} ${crane.id}`).toEqual([]);
+      }
     }
   });
 });

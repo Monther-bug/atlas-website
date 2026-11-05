@@ -22,6 +22,7 @@ export const en: Copy = {
   header: {
     skipLink: 'Skip to content',
     homeLabel: 'back to top',
+    homePage: 'home page',
     name: 'Atlas Alshraa',
     nameAlt: 'أطلس الصحراء',
     nav: { services: 'Services', cranes: 'Cranes', sites: 'On site', contact: 'Contact' },
@@ -360,6 +361,7 @@ export const en: Copy = {
     tagline: 'Every project has the right crane.',
     servicesHeading: 'Services',
     pageHeading: 'On this page',
+    homeHeading: 'On the home page',
     pageLinks: { cranes: 'Cranes', sites: 'On site', request: 'Request a crane' },
     contactHeading: 'Contact',
     followHeading: 'Follow us',

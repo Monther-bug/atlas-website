@@ -44,4 +44,14 @@ describe('LangProvider', () => {
   it('fails loudly outside a provider', () => {
     expect(() => renderToStaticMarkup(<Probe />)).toThrow(/LangProvider/);
   });
+
+  it('points the language switch at the same crane on a crane page', () => {
+    expect(
+      renderToStaticMarkup(
+        <LangProvider lang="ar" copy={ar} crane="gmk6350">
+          <Probe />
+        </LangProvider>,
+      ),
+    ).toBe('<p>ar|rtl|en|/en/cranes/gmk6350/|اطلب رافعة</p>');
+  });
 });

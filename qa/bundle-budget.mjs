@@ -1,6 +1,8 @@
 // Bundle and first-load budget (spec §9). Static part: gzip sizes of the JS/CSS the Arabic page
-// loads up front (from dist/index.html). Network part: every response while the Arabic page
-// loads on a phone (375×812, DPR 2, touch) and on desktop (1440×900), with no scrolling.
+// loads up front (from dist/index.html), and the same for every other built page (the English
+// home page and the ten crane pages, each on the same budgets). Network part: every response
+// while the Arabic page, and the Arabic crane page BUNDLE_CRANE (default gmk6350), load on a
+// phone (375×812, DPR 2, touch) and on desktop (1440×900), with no scrolling.
 // Text responses count as gzip -9 of the built file (vite preview does not compress); binary
 // files count at their real size. Usage (preview running): node qa/bundle-budget.mjs [baseUrl]
 import { readdir, readFile } from 'node:fs/promises';
@@ -8,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import puppeteer from 'puppeteer-core';
-import { assetRefs, checkBundle } from './lib/budgets.mjs';
+import { assetRefs, checkBundle, checkCraneLoad, checkPageBundles, pagePath } from './lib/budgets.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = path.join(ROOT, 'dist');
@@ -29,7 +31,18 @@ async function distFile(urlPath) {
   }
 }
 
-async function capture(browser, base, { width, height, touch }) {
+/** Every built HTML page under dist/ (relative paths), the Arabic home page first. */
+async function htmlPages(dir = DIST, rel = '') {
+  const out = [];
+  for (const entry of await readdir(path.join(dir, rel), { withFileTypes: true })) {
+    const child = path.join(rel, entry.name);
+    if (entry.isDirectory() && entry.name !== 'assets') out.push(...(await htmlPages(dir, child)));
+    else if (entry.isFile() && entry.name === 'index.html') out.push(child);
+  }
+  return out.sort((a, b) => a.split(path.sep).length - b.split(path.sep).length || a.localeCompare(b));
+}
+
+async function capture(browser, base, { width, height, touch }, { pagePath: target = '/', heroSelector = '[data-hero-photo] img' } = {}) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   await page.setViewport({ width, height, isMobile: touch, hasTouch: touch, deviceScaleFactor: touch ? 2 : 1 });
@@ -50,19 +63,19 @@ async function capture(browser, base, { width, height, touch }) {
       })(),
     );
   });
-  await page.goto(`${base}/`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.goto(`${base}${target}`, { waitUntil: 'networkidle0', timeout: 60000 });
   await new Promise((r) => setTimeout(r, 3000)); // motion core loads after hydration
-  const heroSrc = await page.evaluate(() => {
-    const img = document.querySelector('[data-hero-photo] img');
+  const heroSrc = await page.evaluate((selector) => {
+    const img = document.querySelector(selector);
     return img ? new URL(img.currentSrc || img.src, location.href).pathname : null;
-  });
+  }, heroSelector);
   const fontPreloads = await page.$$eval('link[rel="preload"][as="font"]', (ls) => ls.length);
   await Promise.all(pending);
   await context.close();
   return { responses, heroSrc, fontPreloads };
 }
 
-export async function measureBundle({ base = 'http://localhost:4173', chrome = DEFAULT_CHROME } = {}) {
+export async function measureBundle({ base = 'http://localhost:4173', chrome = DEFAULT_CHROME, craneId = process.env.BUNDLE_CRANE ?? 'gmk6350' } = {}) {
   const html = await readFile(path.join(DIST, 'index.html'), 'utf8');
   const refs = assetRefs(html);
   const sized = async (ref) => {
@@ -78,12 +91,27 @@ export async function measureBundle({ base = 'http://localhost:4173', chrome = D
     if (!refs.js.includes(ref)) lazyJs.push({ file: ref, gzipKB: kb(gz(await readFile(path.join(DIST, 'assets', f)))) });
   }
 
+  // Every other page, on the same budgets.
+  const pages = [];
+  for (const file of (await htmlPages()).filter((f) => f !== 'index.html')) {
+    const r = assetRefs(await readFile(path.join(DIST, file), 'utf8'));
+    const js = await Promise.all(r.js.map(sized));
+    const cssFiles = await Promise.all(r.css.map(sized));
+    pages.push({ page: pagePath(file), initialJsKB: sum(js.map((f) => f.gzipKB)), cssKB: sum(cssFiles.map((f) => f.gzipKB)), js: js.map((f) => f.file) });
+  }
+
   const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-first-run'] });
+  const cranePage = `/cranes/${craneId}/`;
+  const craneHero = { pagePath: cranePage, heroSelector: '[data-crane-hero-photo] img' };
   let mobile;
   let desktop;
+  let craneMobile;
+  let craneDesktop;
   try {
     mobile = await capture(browser, base, { width: 375, height: 812, touch: true });
     desktop = await capture(browser, base, { width: 1440, height: 900, touch: false });
+    craneMobile = await capture(browser, base, { width: 375, height: 812, touch: true }, craneHero);
+    craneDesktop = await capture(browser, base, { width: 1440, height: 900, touch: false }, craneHero);
   } finally {
     await browser.close();
   }
@@ -100,12 +128,24 @@ export async function measureBundle({ base = 'http://localhost:4173', chrome = D
     heroMobileKB: heroKB(mobile),
     heroDesktopKB: heroKB(desktop),
   };
+  const crane = {
+    page: cranePage,
+    firstLoadKB: kb(sum(craneMobile.responses.map((r) => r.bytes))),
+    heroMobileKB: heroKB(craneMobile),
+    heroDesktopKB: heroKB(craneDesktop),
+  };
   return {
     measure,
-    rows: checkBundle(measure),
+    rows: [...checkBundle(measure), ...checkPageBundles(pages), ...checkCraneLoad(crane)],
     details: {
       initialJs,
       css,
+      pages,
+      crane: {
+        ...crane,
+        mobile: { requests: craneMobile.responses.length, byTypeKB: byType(craneMobile), hero: craneMobile.heroSrc, fontPreloads: craneMobile.fontPreloads },
+        desktop: { requests: craneDesktop.responses.length, firstLoadKB: kb(sum(craneDesktop.responses.map((r) => r.bytes))), byTypeKB: byType(craneDesktop), hero: craneDesktop.heroSrc },
+      },
       lazyJs,
       mobile: { requests: mobile.responses.length, byTypeKB: byType(mobile), hero: mobile.heroSrc, fontPreloads: mobile.fontPreloads },
       desktop: { requests: desktop.responses.length, firstLoadKB: kb(sum(desktop.responses.map((r) => r.bytes))), byTypeKB: byType(desktop), hero: desktop.heroSrc },

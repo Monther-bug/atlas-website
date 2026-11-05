@@ -36,7 +36,7 @@
 
     <script>
       // Before first paint: `js` = scripts run; `motion-ok` = the visitor allows motion; `data-loader` = the first-visit
-      // intro (#al): once per tab session, never on a deep link, a hidden tab or reduced motion. The hook pays out as the
+      // intro (#al): once per tab session, never on a deep link, a crane page (data-no-intro), a hidden tab or reduced motion. The hook pays out as the
       // preloaded fonts and the hero photo arrive (the readout never runs ahead of them), then lifts the curtain. At that
       // moment data-loader goes and `atlas:loader-done` fires on window (the hero intro starts). Any key, press, wheel or
       // touch lifts it at once. It is held at most 0.95 s, never past 1.8 s after navigation (gone by 2.5 s), and dropped
@@ -47,7 +47,7 @@
         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         c.add('motion-ok');
         try {
-          if (location.hash || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
+          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
           sessionStorage.setItem('atlas-intro', 1);
         } catch (e) {
           return;
@@ -146,6 +146,9 @@
       .al.ok .al-n{color:#fff}
       @keyframes al-in{from{opacity:0;transform:translateY(.75rem);filter:blur(6px)}}
       @keyframes al-x{to{opacity:0;visibility:hidden}}
+      /* Cross-document view transitions into and out of the crane pages (progressive enhancement). Inline, so the
+         browser sees the opt-in before the first frame; the timing rules are in src/motion/motion.css. */
+      @view-transition{navigation:auto}
     </style>
     <!--head-->
   </head>

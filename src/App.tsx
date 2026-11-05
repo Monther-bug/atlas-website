@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { RequestBar } from '@/components/RequestBar';
 import { loadAnalytics } from '@/lib/analytics';
+import { useDeepLink } from '@/lib/deep-link';
 import { useLang } from '@/lib/lang';
 import { About } from '@/sections/About';
 import { CraneGrid } from '@/sections/CraneGrid';
@@ -20,6 +21,8 @@ export function App() {
   const { copy } = useLang();
 
   useSiteMotion();
+  // /?crane=<id>#request and /?compare=<id>#crane-compare, from a crane page (src/lib/deep-link.ts).
+  useDeepLink();
 
   useEffect(() => {
     loadAnalytics();

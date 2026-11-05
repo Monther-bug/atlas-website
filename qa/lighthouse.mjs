@@ -1,27 +1,26 @@
-// Lighthouse medians and performance budgets (spec §1, §9). For both pages it runs mobile and
-// desktop, for a first visit and a repeat visit, LH_RUNS times each (default 3), with a fresh Chrome
-// per run, and takes the median of each metric.
+// Lighthouse medians and performance budgets (spec §1, §9). For each page (LH_PATHS, default the two
+// home pages and the GMK6350 crane page in both languages) it runs mobile and desktop, for a first
+// visit and a repeat visit, LH_RUNS times each (default 3), with a fresh Chrome per run, and takes
+// the median of each metric.
 //   first:  a fresh profile, as Lighthouse always loads: the first-visit loader shows.
 //   repeat: the same tab loads the page once, then Lighthouse loads it again without clearing
 //           storage: the loader was seen this session (it does not show) and the HTTP cache is warm.
-// It adds one applied-throttling Slow 4G run of the Arabic page (first visit, informational) and the
+// It adds one applied-throttling Slow 4G run of each Arabic page (first visit, informational) and the
 // bundle budget. Writes qa/reports/lighthouse.json and lighthouse.md. Exit 1 if any budget fails.
 // Usage (preview running): npm run lighthouse [-- baseUrl]. LH_VISITS=first|repeat|first,repeat.
+// LH_PATHS=/cranes/gmk6350/,/en/cranes/gmk6350/ (comma list of paths) measures only those pages.
 import { mkdir, writeFile } from 'node:fs/promises';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import puppeteer from 'puppeteer-core';
 import { measureBundle } from './bundle-budget.mjs';
-import { BUDGETS, checkBudgets, firstSnippet, medianResult, toMarkdown } from './lib/budgets.mjs';
+import { BUDGETS, checkBudgets, firstSnippet, lhPages, medianResult, toMarkdown } from './lib/budgets.mjs';
 
 const BASE = (process.argv[2] ?? process.env.QA_BASE ?? 'http://localhost:4173').replace(/\/$/, '');
 const CHROME = process.env.CHROME_PATH ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const RUNS = Number(process.env.LH_RUNS ?? 3);
 const OUT = new URL('./reports/', import.meta.url).pathname;
-const PAGES = [
-  { id: 'ar', path: '/' },
-  { id: 'en', path: '/en/' },
-];
+const PAGES = lhPages(process.env.LH_PATHS);
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 const VISITS = (process.env.LH_VISITS ?? 'first,repeat').split(',').filter((v) => v === 'first' || v === 'repeat');
 
@@ -152,14 +151,16 @@ for (const p of PAGES) {
 }
 
 const slow4g = [];
-try {
-  process.stdout.write('ar mobile Slow 4G (applied throttling)… ');
-  const r = await runOnce(`${BASE}/`, CONFIGS.slow4g);
-  slow4g.push({ page: 'ar', result: r, checks: checkBudgets(r, BUDGETS) });
-  console.log(`perf ${r.performance} LCP ${Math.round(r.lcp)} ms`);
-} catch (e) {
-  slow4g.push({ page: 'ar', error: e instanceof Error ? e.message : String(e) });
-  console.log('ERROR');
+for (const p of PAGES.filter((x) => x.lang === 'ar')) {
+  try {
+    process.stdout.write(`${p.id} mobile Slow 4G (applied throttling)… `);
+    const r = await runOnce(BASE + p.path, CONFIGS.slow4g);
+    slow4g.push({ page: p.id, result: r, checks: checkBudgets(r, BUDGETS) });
+    console.log(`perf ${r.performance} LCP ${Math.round(r.lcp)} ms`);
+  } catch (e) {
+    slow4g.push({ page: p.id, error: e instanceof Error ? e.message : String(e) });
+    console.log('ERROR');
+  }
 }
 
 const report = { date: new Date().toISOString(), base: BASE, runsPerConfig: RUNS, budgets: BUDGETS, configs, slow4g, bundle };

@@ -337,6 +337,42 @@ The QUY250's capacity cell reads 250 t with the caption «حسب اسم الطر
 
 ---
 
+### 6c. Crane pages (/cranes/<id>/, /en/cranes/<id>/)
+
+One page per visible crane (five; never the hidden Kobelco). Strings in `src/content/crane-page-copy.ts` (prerender-only: the page body is static HTML in the browser) plus the shared labels below in `ar.ts` / `en.ts`. Every figure comes from `cranes.ts` (the capacity the whole site shows) and `crane-specs.ts`; the copy frames them and claims nothing unconfirmed: no ownership, no availability, no lift promised. The rating labels, notes (GMK6350 US tons, QUY250 250 vs 260 t, ATF 60-3, AC200-1) and spec labels are reused from §6 / §6b exactly as the home page shows them.
+
+| Element | العربية | English |
+|---|---|---|
+| `<title>` | {name} · {type} \| أطلس الصحراء | {name} · {type} \| Atlas Alshraa |
+| Meta description | {name} ({type}): أقصى حمولة {capacity} على نصف قطر {radius}، والذراع الرئيسي {boom}. صور ومواصفات الشركة المصنّعة وطلب عبر واتساب. | {name} ({type}): max capacity {capacity} at {radius}, main boom {boom}. Photos, the manufacturer specification and a request on WhatsApp. |
+| Description where the capacity is still to be confirmed (QUY250) | the same without the capacity part | the same without the capacity part |
+| Breadcrumb name (screen readers) | مسار الصفحة | Breadcrumb |
+| Breadcrumb | الرئيسية · الرافعات · {model} | Home · Cranes · {model} |
+| Hero, primary (WhatsApp, template B) | اطلب هذه الرافعة *(§6)* | Request this crane *(§6)* |
+| Hero, secondary (→ the home form, crane pre-selected) | استخدم نموذج الطلب | Use the request form |
+| Hero, link (→ the comparison, crane picked) | قارنها بطرازات أخرى *(§6b)* | Compare with other models *(§6b)* |
+| Key figures, heading + continuation | أهم الأرقام. من الشركة المصنّعة، إلى جانب الطرازات الأربعة الأخرى. | Key figures. From the manufacturer, beside the other four models. |
+| Capacity bars caption | أقصى حمولة للطرازات الخمسة | Max capacity of the five models |
+| Tile caption, this model is the largest | أطول ذراع رئيسي / أطول ذراع إضافي / أثقل ثقل موازنة بين الطرازات الخمسة. | The longest main boom / The longest jib / The heaviest counterweight of the five models. |
+| Tile caption, another model is | الأطول بين الخمسة: {value}، {model}. / الأثقل بين الخمسة: {value}، {model}. | Longest of the five: {value}, {model}. / Heaviest of the five: {value}, {model}. |
+| Photos, heading | صور {name}. *(§6b)* | {name} photos. *(§6b)* |
+| Photos, list name (screen readers) | صور الرافعة مع وصف كل صورة | Photos of the crane, each with a description |
+| Photo caption | the §7 caption (after «·»); new for 6359, 6363, 6392 (below); the description under it is the §12 alt text; then the site and «{i} من {n}» | the §7 caption (after "·"); new for 6359, 6363, 6392 (below); the §12 alt text under it; then the site and "{i} of {n}" |
+| Caption 6359 (new) | من الأسفل: الكابينة والذراع التلسكوبي والخطاف | From below: the cab, the telescopic boom and the hook |
+| Caption 6363 (new) | الكابينة، والذراع يرتفع فوقها في سماء غائمة | The cab, with the boom rising into a cloudy sky |
+| Caption 6392 (new) | من الزاوية الأمامية، والذراع مرفوع، على أرضية خرسانية | From the front corner, boom raised, on a concrete yard |
+| Load question, heading | هل ترفع حمولتك؟ | Will it lift your load? |
+| Load, lead (with a radius) | أقصى حمولة لها {capacity}، ولا تنطبق إلا على أقصر نصف قطر، وهو {radius}. | {capacity} is its maximum, and only at its shortest radius, {radius}. |
+| Load, lead (no radius stated) | أقصى حمولة لها {capacity}، ولا تنطبق إلا على أقصر نصف قطر. | {capacity} is its maximum, and only at its shortest radius. |
+| Load, lead (capacity to be confirmed, QUY250) | أقصى حمولة لأي رافعة لا تنطبق إلا على أقصر نصف قطر. | A crane’s maximum rating applies only at its shortest radius. |
+| Load, rest | وعلى نصف قطر أطول أو ارتفاع أكبر ترفع أقل. أرسل لنا الوزن ونصف القطر وارتفاع الرفع، ونراجع جدول الأحمال معك. | Further out or higher up, it lifts less. Send us the weight, the radius and the lift height, and we will check the load chart with you. |
+| Load, what we need | ما نحتاجه منك (then the three form labels of §9) | What we need from you (then the three form labels of §9) |
+| Load, actions | أرسل التفاصيل *(§4)* · اسأل عنها على واتساب *(§6b)* | Send the details *(§4)* · Ask on WhatsApp *(§6b)* |
+| Other cranes | رافعات أخرى | Other cranes |
+| Logo link on a crane page (screen readers) | الصفحة الرئيسية | home page |
+| Footer column on a crane page | في الصفحة الرئيسية | On the home page |
+| Quick view → crane page (§6b sheet) | افتح الصفحة الكاملة | Open the full page |
+
 ## 7. Sites gallery
 
 | Element | العربية | English |

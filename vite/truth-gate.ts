@@ -49,8 +49,10 @@ export function truthGate({ target, env }: TruthGateOptions): Plugin {
       const { ar } = await load<{ ar: unknown }>('src/content/ar.ts');
       const { en } = await load<{ en: unknown }>('src/content/en.ts');
       const { cranes } = await load<{ cranes: TruthInput['cranes'] }>('src/content/cranes.ts');
+      // The crane pages' own copy (prerender-only) is held to the same rules.
+      const { cranePageCopy } = await load<{ cranePageCopy: unknown }>('src/content/crane-page-copy.ts');
 
-      const problems = findTruthProblems({ copies: [ar, en], cranes, env });
+      const problems = findTruthProblems({ copies: [ar, en, cranePageCopy], cranes, env });
       if (problems.length === 0) return;
       if (target === 'production') {
         this.error(

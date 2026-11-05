@@ -11,10 +11,20 @@ const PRELOADS = {
   en: ['poppins-700', 'poppins-600', 'poppins-400'],
 } as const;
 
+/**
+ * The crane pages' first screen is set differently: the H1 is the model code in Plex Mono (Latin on both pages), the
+ * capacity is the Poppins 700 readout, the rest is body text (Tajawal 400 / Poppins 400). Still three files.
+ */
+const CRANE_PRELOADS = {
+  ar: ['plex-mono-500', 'poppins-700', 'tajawal-ar-400'],
+  en: ['plex-mono-500', 'poppins-700', 'poppins-400'],
+} as const;
+
 /** Builds the preload tags for one HTML page from the emitted bundle file names. */
 export function fontPreloadTags(htmlPath: string, bundleFiles: string[], base = '/'): HtmlTagDescriptor[] {
   const lang = htmlPath.startsWith('/en/') ? 'en' : 'ar';
-  return PRELOADS[lang].map((name) => {
+  const crane = /(^|\/)cranes\//.test(htmlPath);
+  return (crane ? CRANE_PRELOADS : PRELOADS)[lang].map((name) => {
     const file = bundleFiles.find((f) => f.endsWith('.woff2') && f.split('/').pop()!.startsWith(`${name}-`));
     if (!file) throw new Error(`font-preload: no emitted .woff2 for "${name}". Did src/fonts.css change?`);
     return {

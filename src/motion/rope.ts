@@ -51,7 +51,7 @@ export const startBackToTop: MotionModule = () => {
     glide(lenis, 0, {
       duration: 1.4,
       onComplete: () => {
-        history.replaceState(null, '', '#top');
+        history.replaceState(null, '', link.getAttribute('href') ?? '#top');
         document.querySelector<HTMLElement>('[data-header] a[href], [data-header] button')?.focus({ preventScroll: true });
       },
     });

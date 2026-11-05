@@ -1,9 +1,11 @@
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import type { Copy, Crane } from '@/content/types';
+import { takeCompare } from '@/lib/deep-link';
 import { LangProvider } from '@/lib/lang';
 import { announceLineup } from '@/lib/lineup';
 import { CraneListBody } from './CraneList';
+import { addToCompare, compareStore, defaultCompare } from './compare-store';
 import { loadStore } from './load';
 
 /**
@@ -17,6 +19,9 @@ export function mountLineup(section: HTMLElement, copy: Copy, cranes: readonly C
   if (field?.value) loadStore.set(field.value);
   // The comparison loads later, as its own chunk: until then it stays exactly as prerendered.
   const keptCompare = section.querySelector('#crane-compare')?.outerHTML;
+  // "Compare" on a crane page (/?compare=<id>#crane-compare): the comparison opens with that crane picked.
+  const compare = takeCompare();
+  if (compare && cranes.some((c) => c.id === compare)) compareStore.set(addToCompare(compareStore.get() ?? defaultCompare(cranes), compare));
   const root = createRoot(section);
   flushSync(() =>
     root.render(

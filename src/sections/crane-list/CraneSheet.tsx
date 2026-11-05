@@ -9,6 +9,8 @@ import { SpecList } from '@/components/ui/SpecTable';
 import { fill } from '@/components/ui/util';
 import { visibleCranes } from '@/content';
 import { craneListCopy } from '@/content/crane-list-copy';
+import { cranePath } from '@/content/crane-pages';
+import { nameForTransition } from '@/lib/view-transition';
 import type { Crane, CraneId } from '@/content/types';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
@@ -214,6 +216,15 @@ export default function CraneSheet({ crane, request }: { crane: Crane; request: 
       ) : null}
 
       <div className="lineup-sheet__links">
+        <a
+          href={cranePath(crane.id, lang)}
+          className="t-small lineup-link"
+          data-testid="sheet-full-page"
+          onClick={() => nameForTransition(dialog()?.querySelector('[data-sheet-media]'))}
+        >
+          {extra.sheet.fullPage}
+          <ArrowIcon className="size-4" />
+        </a>
         <a
           href="#crane-compare"
           className="t-small lineup-link"

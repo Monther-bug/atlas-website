@@ -2,7 +2,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   CRANES,
+  badSpecValues,
   caseTag,
+  craneIdFromPath,
+  cranePagePath,
+  cranePages,
   coveredShare,
   decodedHref,
   expectedForFilter,
@@ -11,10 +15,12 @@ import {
   hasDraftToken,
   headingIssues,
   isEncodedHref,
+  linkTarget,
   matchesFilter,
   nearestSnap,
   nextKey,
   normModel,
+  otherCranes,
   overlapArea,
   photoIdFromUrl,
   prevKey,
@@ -188,4 +194,54 @@ describe('nearestSnap', () => {
 
 describe('caseTag', () => {
   it('names a case', () => expect(caseTag({ page: 'ar', width: 390, mode: 'touch' })).toBe('ar @390 touch'));
+});
+
+describe('crane pages', () => {
+  it('lists one page per visible crane and language, Arabic first, in the lineup order', () => {
+    const pages = cranePages();
+    expect(pages).toHaveLength(10);
+    expect(pages.slice(0, 5).map((p) => p.path)).toEqual(['/cranes/rt700e/', '/cranes/atf60-3/', '/cranes/ac200-1/', '/cranes/quy250/', '/cranes/gmk6350/']);
+    expect(pages.find((p) => p.id === 'en-gmk6350')).toEqual({
+      id: 'en-gmk6350',
+      crane: 'gmk6350',
+      path: '/en/cranes/gmk6350/',
+      lang: 'en',
+      dir: 'ltr',
+      other: '/cranes/gmk6350/',
+      otherLang: 'ar',
+      home: '/en/',
+    });
+  });
+  it('narrows to the cranes asked for', () => expect(cranePages(['rt700e']).map((p) => p.id)).toEqual(['ar-rt700e', 'en-rt700e']));
+  it('builds the paths the prerender writes', () => {
+    expect(cranePagePath('quy250', 'ar')).toBe('/cranes/quy250/');
+    expect(cranePagePath('quy250', 'en')).toBe('/en/cranes/quy250/');
+  });
+  it('reads the crane back from a path, only for visible cranes', () => {
+    expect(craneIdFromPath('/en/cranes/gmk6350/')).toBe('gmk6350');
+    expect(craneIdFromPath('/cranes/atf60-3/index.html')).toBe('atf60-3');
+    expect(craneIdFromPath('/cranes/cke2500/')).toBeNull();
+    expect(craneIdFromPath('/en/')).toBeNull();
+  });
+  it('the rail holds the other four cranes in the lineup order', () => {
+    expect(otherCranes('ac200-1')).toEqual(['rt700e', 'atf60-3', 'quy250', 'gmk6350']);
+  });
+});
+
+describe('linkTarget', () => {
+  it('resolves a bare hash against the page it is on', () => expect(linkTarget('#main', '/cranes/gmk6350/')).toEqual({ path: '/cranes/gmk6350/', search: '', hash: 'main' }));
+  it('splits a home page deep link', () => expect(linkTarget('/?crane=gmk6350#request', '/cranes/gmk6350/')).toEqual({ path: '/', search: '?crane=gmk6350', hash: 'request' }));
+  it('keeps a path without a hash', () => expect(linkTarget('/en/cranes/rt700e/', '/en/cranes/gmk6350/')).toEqual({ path: '/en/cranes/rt700e/', search: '', hash: '' }));
+  it('is null for another origin or scheme', () => {
+    expect(linkTarget('https://wa.me/218?text=x', '/')).toBeNull();
+    expect(linkTarget('mailto:a@b.c', '/')).toBeNull();
+    expect(linkTarget('tel:+218', '/')).toBeNull();
+  });
+});
+
+describe('badSpecValues', () => {
+  it('passes real values', () => expect(badSpecValues(['317.5 t', '15.2 m', 'Mercedes-Benz OM 502 LA', '12 × 6 × 12'])).toEqual([]));
+  it('flags empty cells, dash placeholders and estimates', () => {
+    expect(badSpecValues(['', '  ', '—', '–', '-', 'n/a', 'TBD', '~60 t', '≈ 12 m', 'approx. 40 t', 'غير متوفر'])).toHaveLength(11);
+  });
 });
