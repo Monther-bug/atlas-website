@@ -6,10 +6,14 @@ import { cx } from './util';
  * read and requests are made, on black. `night` adds a graphite glow and the faint load-chart grid; `navy` is the
  * brand colour as a ground, for one accent tile or band at most.
  */
-export type Surface = 'white' | 'mist' | 'tint' | 'dark' | 'night' | 'navy';
+/**
+ * `brand` = the signature blue section (brand navy deepening to brand-950): ONE section per page, never the hero,
+ * never behind a photo's sky (v2 spec §5.1). `navy` = flat brand colour for a tile or band.
+ */
+export type Surface = 'white' | 'mist' | 'tint' | 'dark' | 'night' | 'navy' | 'brand';
 export type Ground = 'light' | 'dark';
 
-const DARK: ReadonlySet<Surface> = new Set(['dark', 'night', 'navy']);
+const DARK: ReadonlySet<Surface> = new Set(['dark', 'night', 'navy', 'brand']);
 
 export function groundOf(surface: Surface): Ground {
   return DARK.has(surface) ? 'dark' : 'light';

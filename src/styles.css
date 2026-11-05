@@ -40,11 +40,17 @@
   --color-red-600: #a81b16;
   --color-red-bright: #ff5a4f;
   --color-red-50: #fcedec;
-  /* Brand navy, `brand-*`: a small accent on light grounds only (links, focus ring, tab ink, the picked column, one
-     accent tile). brand on black is 1.5:1: never on dark grounds. */
+  /* Brand navy, `brand-*`: the SECONDARY ACCENT (user, 5 Nov: "add some of the blue"), about 10-15 % of a page's
+     colour; red stays the action. On light grounds: brand (links, focus ring, selected segment/tab/chip, step numbers,
+     icons, data labels, stat units, the picked column). On black: brand-300 (8.6:1), because brand on black is 1.5:1.
+     As a ground: surface `brand` (brand -> brand-950, one section per page) and the navy glow of `night`. */
   --color-brand: #23207a;
+  --color-brand-950: #100e3d;
+  --color-brand-900: #1a1866;
   --color-brand-600: #3b38a0;
   --color-brand-500: #5a57c2;
+  --color-brand-300: #a5a3f5;
+  --color-brand-200: #c4c3e3;
   --color-brand-100: #e7e7f2;
   --color-brand-50: #f3f3f9;
   /* Success: ok on light (5.4:1), ok-bright on black (10.6:1). */
@@ -111,8 +117,11 @@
   --space-head: clamp(2.5rem, 2rem + 2.222vw, 4rem);
   --space-gap: clamp(0.75rem, 0.583rem + 0.741vw, 1.25rem);
   --space-tile: clamp(1.5rem, 1.167rem + 1.481vw, 2.5rem);
-  /* Night ground: a graphite glow from the top of the section that falls to black (no blue: v2 palette). */
-  --grad-night: radial-gradient(120% 90% at 50% -10%, #262626 0%, #141414 45%, #0a0a0a 80%);
+  /* Night ground: a navy glow from the top of the section that falls to black (the Stripe-like blue moment on dark
+     stages; text sits on it at >= 13:1, never over a photo's sky). */
+  --grad-night: radial-gradient(110% 85% at 50% -12%, rgb(46 42 153 / 0.55) 0%, rgb(35 32 122 / 0.22) 42%, rgb(10 10 10 / 0) 72%);
+  /* Brand ground: brand navy at the top deepening to brand-950 (white 11:1 at the lightest point). */
+  --grad-brand: radial-gradient(120% 100% at 50% -10%, #2e2a99 0%, #23207a 35%, #100e3d 85%);
   /* Tile ramp: white to mist, top to bottom. */
   --grad-tile: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
 }
@@ -134,8 +143,8 @@
     color: var(--color-white);
   }
   /* Dark grounds: selection switches (covers direct-child text too). */
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, [data-ground='dark'])::selection,
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, [data-ground='dark']) ::selection {
+  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark'])::selection,
+  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) ::selection {
     /* v2: white selection with black text on black grounds (19.8:1). */
     background: var(--color-white);
     color: var(--color-black);
@@ -144,7 +153,7 @@
      element's own background (a bg-navy button on concrete keeps a navy ring). Descendants
      only; the light-panel reset comes later at equal specificity so it wins for light
      panels nested in dark sections. */
-  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, [data-ground='dark']) * {
+  :is(.bg-navy-950, .bg-navy-900, .bg-navy-800, .bg-navy, .bg-black, .bg-neutral-900, .bg-brand, .bg-brand-950, [data-ground='dark']) * {
     --ring: var(--color-white);
     caret-color: var(--color-red-bright);
   }

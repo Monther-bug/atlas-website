@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { cx } from './util';
 
 export type BentoSpan = 'third' | 'half' | 'half-wide' | 'two-thirds' | 'full';
-export type BentoTone = 'raised' | 'tile' | 'night' | 'navy' | 'photo';
+export type BentoTone = 'raised' | 'tile' | 'night' | 'navy' | 'brand' | 'photo';
 
 export interface BentoGridProps extends HTMLAttributes<HTMLElement> {
   /** `ul` when the tiles are a list of like things (services); `div` otherwise. */
@@ -39,7 +39,7 @@ export interface BentoTileProps extends HTMLAttributes<HTMLElement> {
  * one wherever it sits; `data-ground` and the --surface-* variables follow automatically.
  */
 export function BentoTile({ as: Tag = 'div', span = 'third', rows = 1, tone = 'raised', className, children, ...rest }: BentoTileProps) {
-  const dark = tone === 'night' || tone === 'navy' || tone === 'photo';
+  const dark = tone === 'night' || tone === 'navy' || tone === 'brand' || tone === 'photo';
   // `tile` is always a light ground (white -> mist), even inside a dark section; `raised` follows its section.
   const ground = dark ? 'dark' : tone === 'tile' ? 'light' : undefined;
   return (
@@ -49,7 +49,7 @@ export function BentoTile({ as: Tag = 'div', span = 'third', rows = 1, tone = 'r
       data-rows={rows === 2 ? '2' : undefined}
       data-tone={tone}
       data-ground={ground}
-      className={cx('ui-bento__tile', tone === 'navy' ? 'surface-navy' : dark ? 'surface-dark' : tone === 'tile' ? 'surface-white' : '', className)}
+      className={cx('ui-bento__tile', tone === 'navy' ? 'surface-navy' : tone === 'brand' ? 'surface-brand' : dark ? 'surface-dark' : tone === 'tile' ? 'surface-white' : '', className)}
     >
       {children}
     </Tag>

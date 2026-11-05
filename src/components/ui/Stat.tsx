@@ -43,7 +43,7 @@ export function Stat({ value, unit, label, from, decimals = 2, verified = true, 
           {shown}
         </span>
         {unit ? (
-          <span className="t-sub text-(--surface-fg-2)" aria-hidden="true">
+          <span className="t-sub t-accent" aria-hidden="true">
             {unit}
           </span>
         ) : null}

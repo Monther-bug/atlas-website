@@ -3,7 +3,7 @@
 - **Date:** 5 November 2026 (revised the same day for the user's font, palette, motion and reference instructions)
 - **Status:** foundation on `task/V.1`: tokens, fonts, Button, `src/components/ui/*`, `src/motion/reveals.ts`, `src/content/spec-rows.ts`, dev kitchen. Section agents build on it and merge `task/V.1` again before finishing.
 - **Why v2:** the user's verdict on v1 was "the website looks old". They want every section at the level of apple.com/iphone, stripe.com, land-book.com's featured pages, lusion.co and the Awwwards / School of Motion / DesignRush animated-site lists: modern components, modern animation, more sections, real crane details, and the Impeccable process on every section.
-- **User decisions folded in (5 Nov):** fonts **Tajawal** (Arabic) + **Poppins** (Latin, numerals); palette **"white and black, and a little of the red and the blue"**; "remove all the old look"; references add **land-book.com** and **lusion.co**; "add animations and Impeccable".
+- **User decisions folded in (5 Nov):** fonts **Tajawal** (Arabic) + **Poppins** (Latin, numerals); palette **"white and black, and a little of the red and the blue"**, then **"add some of the blue"** (navy becomes a clear secondary accent, about 10–15 % of a page's colour); "remove all the old look"; references add **land-book.com** and **lusion.co**; "add animations and Impeccable".
 - **Relationship to v1:** `2026-11-04-atlas-website-design.md` still owns product truth, architecture, truth gate, SEO, analytics and the hook concept. This document **replaces** its §6 (visual system), §7 (motion) and §15 (craft floor). On look and motion this document wins; on facts and truth, v1 wins.
 - **Evidence:** `docs/research/v2-references.md` + `docs/research/v2-refs/*.jpg`; kitchen and type screenshots in `docs/reviews/v2-kitchen/`.
 
@@ -25,9 +25,9 @@
 **Thesis.** Atlas is presented the way Apple presents a lineup, but the lineup is cranes from 55 t to 317.5 t, read the way a lift planner reads a load chart. Two grounds carry the page:
 
 - **Yard** (white, mist): where machines are *looked at*. Big rounded photo frames, white tiles with soft elevation, large display type. The yellow of the cranes is the only strong colour on these pages, and it comes from the photographs.
-- **Chart** (black, night): where numbers are *read* and requests are *made*. A graphite glow over black, a faint load-chart grid, numbers in white, actions in red.
+- **Chart** (black, night, brand): where numbers are *read* and requests are *made*. A navy glow over black, a faint load-chart grid, numbers in white, accents in light navy, actions in red. One section per page may sit on the deep-navy **brand** ground.
 
-**Colour has three jobs and nothing else:** black/white (and neutrals) build the page; **red** acts (primary buttons, the sling, the hook, key highlights) and is rare; **brand navy** is a small accent on light grounds (links, focus ring, the tab ink, the picked column, at most one accent tile per page). The logo carries the rest of the brand.
+**Colour has three jobs and nothing else:** black/white (and neutrals) build the page (~80 %); **brand navy** is the recognisable secondary accent (~10–15 %: links, focus, selected states, step numbers, icons, data labels, stat units, the navy glow of dark stages and one deep-navy section); **red** acts (primary buttons, the sling, the hook) and stays rare (~5 %). The yellow of the photographs is the only other colour.
 
 **Refused category defaults:** black + safety yellow + hazard stripes (Mammoet's world; our photos are yellow already); the SaaS gradient-blob hero; same-size icon cards as structure; a "trusted by" logo strip (Atlas has no publishable clients); a stats band of invented numbers; a custom cursor for its own sake.
 
@@ -36,7 +36,7 @@
 **Principles**
 1. **Prove the range like a lineup.** Each crane: photo, name, capacity, type, full manufacturer specification, one tap to request.
 2. **Grounds have jobs.** Yard = look; Chart = measure and act. Alternate by chapter (§5.3).
-3. **Colour has jobs.** Black/white build; red acts; navy points. Nothing else is coloured except the photographs.
+3. **Colour has jobs.** Black/white build; navy points and selects; red acts. Nothing else is coloured except the photographs.
 4. **Engineered softness.** Concentric radii, shadows with offset + soft blur, glass only where content moves underneath.
 5. **Loads are lifted and set down.** Motion rises and settles (expo-out), never bounces; one authored moment per chapter.
 6. **Truth is a designed state.** Draft badges, "manufacturer specification" labels, empty cells and hidden-until-data blocks are components.
@@ -65,8 +65,10 @@ Tokens in `src/styles.css` (`@theme static`; Tailwind's palette is cleared). **v
 | `red-600` | #A81B16 | Primary hover |
 | `red-bright` | #FF5A4F | Red text/lines on black (units, small highlights) |
 | `red-50` | #FCEDEC | Error wash |
-| `brand` | #23207A | **Accent on light only**: links (`plain` buttons), focus ring, light selection, tab ink, logo context, one accent tile |
-| `brand-50` / `brand-100` | #F3F3F9 / #E7E7F2 | Picked compare column; secondary text on a brand tile |
+| `brand` | #23207A | **Secondary accent on light**: links, focus ring, light selection, selected segment (thumb) / tab / chip, step numbers, icons, `.t-tag` data labels, Stat units, icon-button glyphs |
+| `brand-950` / `brand-900` | #100E3D / #1A1866 | Deep end of the `brand` ground; raised tiles on it |
+| `brand-300` | #A5A3F5 | **The same accent on dark grounds** (8.6:1 on black; navy itself is 1.5:1 there) |
+| `brand-200` / `brand-100` / `brand-50` | #C4C3E3 / #E7E7F2 / #F3F3F9 | Tertiary / secondary text on brand grounds; icon-button fill and the picked compare column on light |
 | `ok` / `ok-bright` | #1C7A45 / #5FD394 | Success on light / on black |
 | `line-dark` / `line-dark-strong` | white 14 % / 24 % | Hairlines on black |
 
@@ -82,8 +84,13 @@ Tokens in `src/styles.css` (`@theme static`; Tailwind's palette is cleared). **v
 | white on red / red-600 | 5.6 / 7.4 | | white 40 % border on black | 3.8 |
 | ok on white / mist | 5.4 / 4.9 | | brand-100 on brand (accent tile) | 11.0 |
 | line-control on white / mist | 3.5 / 3.2 | | white on glass-dark over white (worst) | 5.7 |
+| white on brand thumb / brand / brand-950 | 13.5 / 13.5 / 18.2 | | brand-300 on black / neutral-900 / brand / brand-950 | 8.6 / 7.8 / 5.9 / 8.0 |
+| brand-200 on brand / brand-950 | 7.9 / 10.6 | | black on brand-300 (dark thumb, pressed chip) | 8.6 |
+| #D6D5EA (night secondary) on black | 13.7 | | white on the brightest point of `--grad-brand` (#2E2A99) | 11.0 |
 | red on black | 3.5 (fills only, never text) | | ink-2 on glass-light over black (worst) | 5.6 |
 | brand on black | **1.5: never** | | focus: brand on white 13.5, white on black 19.8 | |
+
+**Where the blue goes (10–15 %):** links (`.ui-link`, `plain` buttons; underline thickens on hover), focus ring on light, selected SegmentedControl thumb (navy with white label; brand-300 with black label on dark), selected Tab (text + ink), pressed ToggleChip, step numbers and icons (`.t-accent`), data labels inside cards (`.t-tag`, never above a section heading), Stat units, carousel/icon-button glyphs on brand-50, the picked compare column, the navy glow of `night`, and one `brand` section per page. Never: body text, large fills behind photos, red's jobs.
 
 **Browser surfaces:** selection = brand bg + white text on light, white bg + black text on black; caret red; focus ring 2 px + offset (brand on light, white on dark); scrollbar neutral-600 on mist; `accent-color` red.
 
@@ -128,16 +135,17 @@ Rules: Tajawal draws small for its em (x-height 0.45): Arabic sizes run larger a
 | `mist` | light | #F5F5F5 | explorer, gallery (tiles sit on it) |
 | `tint` | light | neutral-100 | documents |
 | `dark` | dark | black | footer, flat chart ground |
-| `night` | dark | black + graphite glow from the top + 4 rem load-chart grid (white 4.5 %, masked) | fleet showcase, services, request |
-| `navy` | dark | brand navy | one accent tile or band per page, at most |
+| `night` | dark | black + **navy glow** from the top (`--grad-night`, Stripe-like) + 4 rem load-chart grid (white 4.5 %, masked) | fleet showcase, services, request |
+| `brand` | dark | brand #23207A at the top deepening to brand-950 #100E3D (`--grad-brand`) | **one signature section per page** (proposed: Why Atlas or Request); never the hero, never behind a photo's sky |
+| `navy` | dark | flat brand navy | one accent tile or band (oil services tile) |
 
-Every surface sets `--surface-fg/-fg-2/-fg-3/-line/-control/-raised/-sunken/-accent/-danger/-ok`; primitives read them, so one component works on every ground. `--surface-accent` is brand navy on light and **white on dark**. `data-ground` drives focus ring, caret and selection.
+Every surface sets `--surface-fg/-fg-2/-fg-3/-line/-control/-raised/-sunken/-accent/-on-accent/-danger/-ok`; primitives read them, so one component works on every ground. `--surface-accent` is brand navy on light and **brand-300 on dark and brand grounds**; secondary text on navy grounds is tinted from navy (brand-100/200), never grey. `data-ground` drives focus ring, caret and selection.
 
 ### 5.2 Glass
 Only where content moves underneath: header after the hero, request bar, captions/controls over photographs, sheet backdrop. `glass-dark` = black 62 % + blur 20 px + saturate 1.5; `glass-light` = white 80 % + blur 20 px + saturate 1.6; solid fallback without `backdrop-filter` and with `prefers-reduced-transparency`.
 
 ### 5.3 Rhythm (target order)
-Hero (photo + black band) → **About** (white) → **Fleet showcase** (night) → **Find your crane** (mist) + **Compare** (white) → **Services** (night) → **Why Atlas** (white) → **On site** (mist) → Documents (tint, hidden until data) → **Request** (night) → Footer (black).
+Hero (photo + black band) → **About** (white) → **Fleet showcase** (night, navy glow) → **Find your crane** (mist) + **Compare** (white) → **Services** (night) → **Why Atlas** (**brand**, the signature blue section) → **On site** (mist) → Documents (tint, hidden until data) → **Request** (night) → Footer (black).
 
 ## 6. Spacing, grid, radii, elevation
 
@@ -159,8 +167,8 @@ Labels come from `copy.ui` (prev, next, pause, play, close, carousel, slide, sli
 | **Section / SectionHeader** | Surface shell; heading first (no eyebrow slot), two-tone continuation, `t-sub` lead, actions | landmark via `aria-labelledby` | header may take `rise` |
 | **Card / CardLink** | One thing (crane, document, step); tones raised/outline/sunken/plain; full-bleed `media`; never nested | stretched primary link; inner controls `relative z-10` | `interactive`: lift 2 px + e2, 320 ms ease-ui; `.ui-zoom` on media |
 | **BentoGrid / BentoTile** | Container-query grid, spans third/half/half-wide/two-thirds/full, `rows={2}`; tones raised/tile/night/navy/photo | DOM order = reading order | `stagger` on the grid; `.ui-zoom` on photo tiles |
-| **SegmentedControl** | Pill track, sliding white thumb, native radios | arrows/announcements from the platform; works without JS; keeps the checked option in view (track only) | thumb 320 ms ease-ui; first paint never animates |
-| **Tabs** | APG tabs, automatic activation, roving tabindex, Home/End, ArrowLeft = next in Arabic, sliding ink | no JS: list hides, all panels show | ink 320 ms ease-ui |
+| **SegmentedControl** | Pill track, sliding **navy thumb with white label** (brand-300 thumb, black label on dark), native radios | arrows/announcements from the platform; works without JS; keeps the checked option in view (track only) | thumb 320 ms ease-ui; first paint never animates |
+| **Tabs** | APG tabs, automatic activation, roving tabindex, Home/End, ArrowLeft = next in Arabic, selected tab and sliding ink in the accent | no JS: list hides, all panels show | ink 320 ms ease-ui |
 | **Sheet** + `sheetTrigger(id)` | `<dialog>` bottom sheet (phones) / inline-end side sheet (≥ 48 rem; left in Arabic); invoker commands + click fallback; `closedby="any"`, backdrop click, Esc | focus trap/return from the platform; Lenis stops; page locks | in 480 ms ease-set (`@starting-style`), backdrop fade; reduced = instant |
 | **SpecList / CompareTable** | `<dl>` rows; real `<table>` with caption, scope, sticky header and first column inside a focusable labelled region; empty cell "—" + sr "Not stated"; `highlight` column (brand-50) | region scrolls with arrows | `fade` reveal; picked column tint 200 ms |
 | **Carousel** | scroll-snap `<ul>`, slides "i of n", paddles page by whole slides, `aria-disabled` at the ends, RTL-aware | track is a focusable region | native smooth scroll (none when reduced); first slides `stagger` |
@@ -168,10 +176,11 @@ Labels come from `copy.ui` (prev, next, pause, play, close, carousel, slide, sli
 | **Stat** | Fact + unit + label (+ DraftBadge); digits `aria-hidden`, sr-only final value; reserves its final width | | `data-ticker`: counts once on entry, 1.2 s expo-out |
 | **StickyStory** | Steps scroll past a sticky media stage (≥ 64 rem); inline media on phones and without JS | ordered list, labelled; stage `aria-hidden` | active step: media crossfade 480 ms ease-swap + settle 1.04 → 1 over 800 ms ease-set; inactive steps at 35 % |
 | **useFlip(ref, key)** | FLIP for filtered/reordered lists (`data-flip-id`) via the Web Animations API (no GSAP in the main bundle) | DOM order follows the data | moves 480 ms ease-set; entering items fade-rise 12 px; reduced = instant |
-| **Chip / ToggleChip** | Static tag / filter toggle (`aria-pressed`, 44 px) | group with `role="group"` + label | colour 200 ms |
+| **Chip / ToggleChip** | Static tag / filter toggle (`aria-pressed`, 44 px; pressed = accent fill) | group with `role="group"` + label | colour 200 ms |
 | **Field / fieldClass** | Label, tag, hint, control, error; describedby + invalid wiring; 52 px controls, borders ≥ 3:1 | form owns the live region | border/focus 200 ms |
 | **IconButton** | Round 44 px; light/dark/glass/outline | label required (sr-only) | press scale .95 |
 | **Reveal helpers** | `reveal(kind)`, `<Reveal>`, `magnetic`, `parallax` | content visible without JS | §9.2 |
+| **Accent text roles** | `.t-accent` (step numbers, icons, units), `.t-tag` (data label inside a card: "Max capacity", "Manufacturer specification"), `.ui-link` (prose links, always underlined) | colour never the only cue for links | thickness 200 ms |
 | **Micro-interaction classes** | `.ui-zoom` (photo 1.035 on hover/focus), `.ui-nudge` (arrow 3 px), `.ui-underline` (underline draws from the reading start) | hover = fine pointers only | 200–800 ms; none when reduced |
 | **DraftBadge** (v1) | Red/white chevron tag on every unverified value; spec blocks add "Manufacturer specification" + `copy.specs.disclaimer` | | none |
 
@@ -322,7 +331,7 @@ Checked against `.claude/skills/impeccable/reference/craft-floor.md`, `animate.m
 15. **No autoplay loops.** The Marquee moves only with scroll; one per page; real data only.
 16. **Cursor:** magnetic pull only on primary CTAs (≤ 6 px, desktop); no cursor followers; a custom cursor only if it explains an interaction (§9.6).
 17. **Truth floor:** DraftBadge on every unverified value; "manufacturer specification" label; HIDDEN UNTIL DATA not rendered; missing fields omitted; nothing invented.
-18. **Colour discipline:** black/white grounds; red only for action and the hook (rare); brand navy only as a small accent on light grounds; no grey text on coloured grounds (tint from the hue).
+18. **Colour discipline:** black/white grounds (~80 %); brand navy as the secondary accent (~10–15 %, the roles in §3; brand-300 on dark; one `brand` section per page); red only for action and the hook (~5 %); no grey text on coloured grounds (tint from the hue); no navy text on dark grounds.
 19. **Arabic:** composed RTL; tracking 0; no caps tricks; Latin codes in `<bdi>`; Western digits.
 20. **Every section rebuild passes** an Impeccable critique and `npx impeccable detect` (rendered, 1440 + 390, AR + EN) before merge.
 
@@ -334,4 +343,4 @@ Checked against `.claude/skills/impeccable/reference/craft-floor.md`, `animate.m
 | `npx impeccable detect http://localhost:4220/?v2=kitchen --viewport 1440x900` and `390x844`, same for `/en/?v2=kitchen` | **0 anti-patterns** at both sizes in both languages. Advisory: `repeating-stripes-gradient` (the red/white chevron of the DraftBadge and loading strip, a brand motif kept by decision) |
 | `npx impeccable detect http://localhost:4220/` and `/en/` (v1 sections on v2 tokens) | 0 anti-patterns; same chevron advisory |
 
-Fixed on the way: `marquee` (the first Marquee was an infinite CSS loop with a pause button; it is now scroll-driven, no loop) and `gray-on-color` (neutral secondary text on the brand-navy tile; brand tiles now tint secondary text from navy). The design hook and the full `/impeccable critique` run on each section rebuild (§16.20).
+Re-run after the blue accent (brand surface, navy glow, navy selected states): 0 anti-patterns on the kitchen and on `/`, `/en/` at 1440 and 390. Fixed on the way: StickyStory's inactive steps receded by opacity (2.3:1); they now recede by colour (ink-3, 5.3:1). Earlier: `marquee` (the first Marquee was an infinite CSS loop with a pause button; it is now scroll-driven, no loop) and `gray-on-color` (neutral secondary text on the brand-navy tile; brand tiles now tint secondary text from navy). The design hook and the full `/impeccable critique` run on each section rebuild (§16.20).

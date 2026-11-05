@@ -71,7 +71,7 @@ const K = {
     stepsTitle: 'كيف يتم الطلب',
     compareTitle: 'قارن الطرازات',
     sources: 'المصادر',
-    surfaces: { white: 'أبيض', mist: 'رمادي فاتح جداً', tint: 'رمادي فاتح', dark: 'أسود', night: 'ليل', navy: 'كحلي' },
+    surfaces: { white: 'أبيض', mist: 'رمادي فاتح جداً', tint: 'رمادي فاتح', dark: 'أسود', night: 'ليل', navy: 'كحلي', brand: 'كحلي عميق' },
   },
   en: {
     title: 'v2 kitchen',
@@ -102,7 +102,7 @@ const K = {
     stepsTitle: 'How a request works',
     compareTitle: 'Compare the models',
     sources: 'Sources',
-    surfaces: { white: 'White', mist: 'Mist', tint: 'Tint', dark: 'Black', night: 'Night', navy: 'Navy (accent)' },
+    surfaces: { white: 'White', mist: 'Mist', tint: 'Tint', dark: 'Black', night: 'Night (navy glow)', navy: 'Navy (flat)', brand: 'Brand (deep navy)' },
   },
 } as const;
 
@@ -118,9 +118,9 @@ const CRANE_PHOTOS: Record<CraneSpecId, readonly PhotoId[]> = {
 const PALETTE = [
   ['black', '#0A0A0A', 'Dark ground'],
   ['neutral-900', '#171717', 'Raised on black'],
-  ['neutral-400', '#A3A3A3', 'Tertiary on black'],
+  ['brand-950', '#100E3D', 'Brand ground (deep)'],
+  ['brand-300', '#A5A3F5', 'Accent on black'],
   ['neutral-300', '#D4D4D4', 'Secondary on black'],
-  ['neutral-100', '#EDEDED', 'Track, tint'],
   ['mist', '#F5F5F5', 'Light ground'],
   ['white', '#FFFFFF', 'Tiles, sheet'],
   ['line-control', '#8A8A8A', 'Control border'],
@@ -130,7 +130,7 @@ const PALETTE = [
   ['red', '#C9221C', 'Action, hook'],
   ['red-600', '#A81B16', 'Action hover'],
   ['red-bright', '#FF5A4F', 'Red on black'],
-  ['brand', '#23207A', 'Brand accent (light only)'],
+  ['brand', '#23207A', 'Secondary accent (light)'],
   ['ok', '#1C7A45', 'Success'],
 ] as const;
 
@@ -197,7 +197,7 @@ export function Kitchen() {
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-[46rem]">
             <h1 className="t-display">{k.title}</h1>
-            <p className="t-sub mt-5 text-neutral-300">{k.intro}</p>
+            <p className="t-sub mt-5 text-(--surface-fg-2)">{k.intro}</p>
           </div>
           <Button href={k.otherHref} variant="glass" size="sm" lang={lang === 'ar' ? 'en' : 'ar'}>
             {k.other}
@@ -224,7 +224,7 @@ export function Kitchen() {
               <span className="t-spec text-white" lang="en" dir="ltr">
                 {c.make} {c.model}
               </span>
-              <span className="t-sub text-red-bright">
+              <span className="t-sub t-accent">
                 {tons(c.capacityT)} {copy.hoist.unit}
               </span>
             </>
@@ -293,9 +293,9 @@ export function Kitchen() {
             </div>
           ))}
         </div>
-        <ul className="mt-(--space-gap) grid list-none grid-cols-2 gap-(--space-gap) p-0 md:grid-cols-6">
-          {(['white', 'mist', 'tint', 'dark', 'night', 'navy'] as const).map((s) => (
-            <li key={s} className={`surface-${s} flex h-28 flex-col justify-end rounded-lg p-4 shadow-e1`} data-ground={s === 'dark' || s === 'night' || s === 'navy' ? 'dark' : 'light'}>
+        <ul className="mt-(--space-gap) grid list-none grid-cols-2 gap-(--space-gap) p-0 md:grid-cols-7">
+          {(['white', 'mist', 'tint', 'dark', 'night', 'navy', 'brand'] as const).map((s) => (
+            <li key={s} className={`surface-${s} flex h-28 flex-col justify-end rounded-lg p-4 shadow-e1`} data-ground={s === 'dark' || s === 'night' || s === 'navy' || s === 'brand' ? 'dark' : 'light'}>
               <span className="t-small font-semibold">{k.surfaces[s]}</span>
               <span className="t-caption text-(--surface-fg-3)" lang="en" dir="ltr">
                 surface-{s}
@@ -412,7 +412,7 @@ export function Kitchen() {
                   label: k.tabs.specs,
                   panel: (
                     <div className="pt-6">
-                      <h3 className="t-small m-0 flex flex-wrap items-center gap-2 font-semibold text-ink-2">
+                      <h3 className="t-tag m-0 flex flex-wrap items-center gap-2">
                         {copy.specs.heading}
                         <DraftBadge verified={false} />
                       </h3>
@@ -550,22 +550,22 @@ export function Kitchen() {
       </Section>
 
       {/* ── Why Atlas: instruments built from facts on hand, no invented numbers ── */}
-      <Section surface="dark" aria-labelledby="k-why">
+      <Section surface="brand" aria-labelledby="k-why">
         <Label>{k.blocks.why}</Label>
         <BentoGrid>
           <BentoTile span="two-thirds" tone="raised">
-            <h3 id="k-why" className="t-small m-0 font-semibold text-neutral-300">
+            <h3 id="k-why" className="t-tag m-0">
               {k.range}
             </h3>
             <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-2">
               <Stat value={min} unit={copy.hoist.unit} label={cranes[0]?.model ?? ''} from={0} verified={false} />
-              <ArrowIcon className="mb-10 size-6 text-red-bright" />
+              <ArrowIcon className="mb-10 size-6 t-accent" />
               <Stat value={max} unit={copy.hoist.unit} label={cranes[cranes.length - 1]?.model ?? ''} from={0} decimals={1} verified={false} />
             </div>
             <ol className="relative mt-10 flex list-none justify-between border-t border-white/24 p-0 pt-3" aria-label={k.range}>
               {cranes.map((c) => (
                 <li key={c.id} className="t-caption flex flex-col items-center gap-1 text-steel">
-                  <span aria-hidden="true" className="-mt-[1.0625rem] block h-3 w-px bg-white" />
+                  <span aria-hidden="true" className="-mt-[1.0625rem] block h-3 w-px bg-brand-300" />
                   <span lang="en" dir="ltr">
                     {c.model}
                   </span>
@@ -586,35 +586,35 @@ export function Kitchen() {
           </BentoTile>
           <BentoTile tone="raised">
             <Stat value={copy.services.items.length} label={k.services} />
-            <ul className="t-small mt-auto flex list-none flex-col gap-1 p-0 pt-6 text-neutral-300">
+            <ul className="t-small mt-auto flex list-none flex-col gap-1 p-0 pt-6 text-(--surface-fg-2)">
               {copy.services.items.map((s) => (
                 <li key={s.id}>{s.title}</li>
               ))}
             </ul>
           </BentoTile>
           <BentoTile span="third" tone="raised">
-            <h3 className="t-small m-0 font-semibold text-neutral-300">{k.channels}</h3>
+            <h3 className="t-tag m-0">{k.channels}</h3>
             <ul className="mt-5 flex list-none flex-col gap-3 p-0">
               <li className="flex items-center gap-3">
-                <WhatsAppIcon className="size-5 text-neutral-400" />
+                <WhatsAppIcon className="size-5 t-accent" />
                 {copy.form.contact.whatsapp}
               </li>
               <li className="flex items-center gap-3">
-                <PhoneIcon className="size-5 text-neutral-400" />
+                <PhoneIcon className="size-5 t-accent" />
                 {copy.form.contact.phone}
               </li>
               <li className="flex items-center gap-3">
-                <ArrowIcon className="size-5 text-neutral-400" />
+                <ArrowIcon className="size-5 t-accent" />
                 {copy.form.contact.email}
               </li>
             </ul>
           </BentoTile>
           <BentoTile span="third" tone="raised">
-            <h3 className="t-small m-0 font-semibold text-neutral-300">{k.stepsTitle}</h3>
+            <h3 className="t-tag m-0">{k.stepsTitle}</h3>
             <ol className="mt-5 flex list-none flex-col gap-4 p-0">
               {k.steps.map((s, i) => (
                 <li key={s} className="flex items-baseline gap-3">
-                  <span className="t-spec text-neutral-400">{formatNumber(i + 1, lang)}</span>
+                  <span className="t-spec t-accent">{formatNumber(i + 1, lang)}</span>
                   <span className="t-body">{s}</span>
                 </li>
               ))}
@@ -636,7 +636,7 @@ export function Kitchen() {
               media: <Picture photo={photo} crop="desktop_16x9" mobileCrop="mobile_4x5" alt={copy.alt[photo]} sizes="(min-width: 1024px) 55vw, 100vw" className="h-full w-full" />,
               content: (
                 <div className="max-w-[28rem]">
-                  <span className="t-spec text-red">{formatNumber(i + 1, lang)}</span>
+                  <span className="t-spec t-accent">{formatNumber(i + 1, lang)}</span>
                   <p className="t-title mt-3">{step}</p>
                 </div>
               ),
