@@ -7,31 +7,67 @@ import {
   HOIST,
   counterLabel,
   counterSteps,
+  coverPositionX,
   coverPositionY,
   directionalSnap,
   hoistPinLength,
   hoistSnapPoints,
+  hoistTimelineUnits,
   hookToBox,
   type Point,
   type Rect,
 } from './math';
 import { lenisRef, noop, type Dispose } from './shared';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-/** Share of the stage height given to the photo. Keep in sync with `inset: 0 0 24% 0` in motion.css. */
-const STAGE_PHOTO = 0.76;
-/** The crop Part C's Hoist <Picture> shows at ≥ 768 px (C.5: crop="desktop_16x9"). */
-const HOIST_CROP: CropName = 'desktop_16x9';
-/** The real hook is kept at or above this share of the photo box, so it never sits on the photo's bottom edge. */
-const HOOK_MAX_Y = 0.8;
-/** Where every hidden load waits before its first beat: far above any stage, whatever the viewport. */
-const PARKED = -10000;
-const px = (value: number) => `${value}px`;
-/**
- * Each beat is still a little before its snap point (HOIST.setDownAt): a snap that settles half a pixel
- * early must still show the final frame (the exact rating, the hook on the real hook).
+/*
+ * The fleet showcase (v2). Desktop: one sticky, scrubbed stage. The first crane is hoisted in while the stage rises
+ * into view; once it sticks, each scroll beat lifts the readout away on the rope, opens the next photo bottom-up
+ * (clip-path, the "hoist" mask) over the last one, lowers the next readout and counts from the previous rating to the
+ * exact new one. The last beat lands the rope's hook on the real hook in IMG_6389; the exit carries the rope to the
+ * reading-start edge, where the page's progress rope (rope.ts, read-only here: D-notes 13) takes over.
+ * Note for the chrome owner of rope.ts: the progress rope goes live when #services reaches the viewport; the Hoist's
+ * rope reaches that edge one closing block earlier (the end of [data-hoist-track]). Starting the rope there would
+ * make the hand-off continuous; this module only reads the rope's rect.
+ * Touch: each card plays once as it arrives. Reduced motion never loads this file. Every change is undone on cleanup.
  */
+
+/** The crop the Hoist <Picture> shows from 768 px up (Hoist.tsx: crop="desktop_16x9"). */
+const HOIST_CROP: CropName = 'desktop_16x9';
+/** Where the hook waits above the stage's top edge between loads, in px. */
+const PARK = 56;
+/** From the hook point (where the rope meets the block) to the top of the readout it carries, in px (glyph 45 + 11). */
+const HOOK_GAP = 56;
+/** The rope hangs this far inside the readout's reading-start edge, in px (half the 36 px glyph). */
+const HOOK_INSET = 18;
+/** The glyph's bowl sits this far from its hook point (x right, y down), so it lands over the real hook, in px. */
+const LAND_DX = 6.75;
+const LAND_DY = 38;
+/** The real hook stays this share of the frame width away from the frame's side edges. */
+const HOOK_MARGIN_X = 0.12;
+/** ...and no lower than this share of its height. */
+const HOOK_MAX_Y = 0.8;
+/** How dark the previous photo gets under the next one. */
+const SHADE = 0.6;
+const BLUR = 'blur(6px)';
+const SHARP = 'blur(0px)';
+/** A snap that settles half a pixel early must still show the final frame (the exact rating, the landed hook). */
 const SETTLED = HOIST.setDownAt - 0.02;
+/**
+ * Inside a beat: the old readout is lifted away by LIFTED, the next photo opens from 0.12 to 0.55 and the next readout
+ * comes down from SWITCH, where that crane also becomes the current one. Short gaps, so a keyboard scroll that stops
+ * anywhere never shows a photo with no readout, or a readout under another crane's photo for long.
+ */
+const LIFTED = 0.24;
+const SWITCH = 0.25;
+
+const px = (value: number) => `${value}px`;
+/** A crane hook block: sheave block with its axle, swivel, forged hook and safety latch. The rope meets it at (16, 0). */
+const SVG =
+  '<svg class="hoist-rig__glyph" viewBox="0 0 32 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+  '<rect x="8" y="0.5" width="16" height="14" rx="4" fill="currentColor" stroke="none"/>' +
+  '<circle cx="16" cy="7.5" r="2.4" fill="#0a0a0a" stroke="none"/>' +
+  '<path d="M16 14.5v6" stroke-width="3"/><path d="M16 20.5v9.5a6 6 0 1 1-12 0v-3" stroke-width="2.6"/>' +
+  '<path d="M16 24.5 5.5 26.5" stroke-width="1.4"/></svg>';
 
 interface ItemParts {
   item: HTMLElement;
@@ -49,7 +85,7 @@ function partsOf(item: HTMLElement): ItemParts {
     photo,
     picture: photo?.querySelector<HTMLElement>('picture') ?? null,
     tag: item.querySelector<HTMLElement>('[data-load-tag]'),
-    // The aria-hidden counter only: its sr-only twin always keeps the final value (C.5).
+    // The aria-hidden counter only: its sr-only twin always keeps the final value (D-notes 2).
     counter: item.querySelector<HTMLElement>('[data-counter][aria-hidden="true"]'),
     anchor: item.querySelector<HTMLElement>('[data-hook-anchor]'),
   };
@@ -58,7 +94,7 @@ function partsOf(item: HTMLElement): ItemParts {
 interface CounterWriter {
   /** Shows `value`: whole tonnes mid-run, the exact rating at the ends (counterLabel). Non-finite values are ignored. */
   write(value: number): void;
-  /** Holds the counter at the width of its final number, so the tag never changes size while digits change. */
+  /** Holds the counter at the width of its final number, so nothing moves while digits change. */
   lock(): void;
   /** Puts back React's text and inline style. */
   restore(): void;
@@ -84,6 +120,7 @@ function counterWriter(counter: HTMLElement | null, lang: Lang, from: number, to
   const style = counter.getAttribute('style');
   return {
     write: (value) => {
+      // D-notes 1: formatNumber throws on NaN/Infinity, and nothing inside a GSAP callback would catch it.
       if (!Number.isFinite(value)) return;
       node.nodeValue = counterLabel(value, { from, to }, lang);
     },
@@ -91,8 +128,7 @@ function counterWriter(counter: HTMLElement | null, lang: Lang, from: number, to
       const shown = node.nodeValue;
       node.nodeValue = final;
       counter.style.removeProperty('min-inline-size');
-      // Inline-start aligned: a digit added mid-run grows towards the unit, so the text's start point
-      // (what Layout Instability measures) never moves and the run adds no layout shift.
+      // Inline-start aligned: a digit added mid-run grows towards the unit, so the text's start never moves (no CLS).
       counter.style.display = 'inline-block';
       counter.style.minInlineSize = px(counter.getBoundingClientRect().width);
       node.nodeValue = shown;
@@ -104,7 +140,7 @@ function counterWriter(counter: HTMLElement | null, lang: Lang, from: number, to
   };
 }
 
-/** The real hook in this item's photo (source pixels), when the crop has one and Part C rendered the anchor. */
+/** The real hook in this item's photo (source pixels), when the crop has one and the anchor was rendered. */
 function realHookOf(parts: ItemParts): { hook: Point; rect: Rect } | null {
   if (!parts.anchor) return null;
   const crane = cranes.find((c) => c.id === parts.item.dataset.crane);
@@ -118,9 +154,8 @@ function realHookOf(parts: ItemParts): { hook: Point; rect: Rect } | null {
 }
 
 /**
- * The exact `style` attributes React rendered, put back verbatim on cleanup (after ctx.revert(), which
- * also resets GSAP's transform cache): a revert can leave an empty `style=""` or re-serialise React's
- * custom properties. No gsap call here: this runs while gsap.matchMedia reverts its context.
+ * The exact `style` attributes React rendered, put back verbatim on cleanup (after ctx.revert(), which can leave an
+ * empty `style=""` or re-serialise React's custom properties). No gsap call here: this runs while matchMedia reverts.
  */
 function styleSnapshot(elements: Array<Element | null>): Dispose {
   const saved = elements.filter((el): el is Element => el !== null).map((el) => [el, el.getAttribute('style')] as const);
@@ -129,46 +164,41 @@ function styleSnapshot(elements: Array<Element | null>): Dispose {
   };
 }
 
-interface Rig {
-  li: HTMLLIElement;
-  hook: HTMLElement;
-  curves: SVGPathElement[];
+/** `el`'s layout offset inside `ancestor` (its offsetParent chain; transforms and clip-paths do not count). */
+function offsetIn(el: HTMLElement, ancestor: HTMLElement): Point {
+  let x = 0;
+  let y = 0;
+  let node: HTMLElement | null = el;
+  while (node && node !== ancestor) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+  return { x, y };
 }
 
-/** Motion-owned, decorative: faint load-chart arcs plus the rope and the hook block. */
-function buildRig(rtl: boolean): Rig {
-  const li = document.createElement('li');
-  li.className = 'hoist-rig';
-  li.setAttribute('aria-hidden', 'true');
+/** A rounded window onto the frame: `top` % of it closed from the top edge (100 = shut, 0 = open). */
+const clip = (top: number, side: number, radius: number) => `inset(${top}% ${side}% ${side ? top : 0}% ${side}% round ${px(radius)})`;
 
-  // Arcs about the bottom inline-end corner. No values, no axes: nothing reads as Atlas load data.
-  const chart = document.createElementNS(SVG_NS, 'svg');
-  chart.setAttribute('class', 'hoist-rig__curves');
-  chart.setAttribute('viewBox', '0 0 1000 760');
-  chart.setAttribute('preserveAspectRatio', rtl ? 'xMinYMax slice' : 'xMaxYMax slice');
-  const curves = [260, 420, 580, 740].map((r) => {
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', rtl ? `M ${r} 760 A ${r} ${r} 0 0 0 0 ${760 - r}` : `M ${1000 - r} 760 A ${r} ${r} 0 0 1 1000 ${760 - r}`);
-    // As an attribute, not CSS: DrawSVGPlugin reads it to measure the on-screen length.
-    path.setAttribute('vector-effect', 'non-scaling-stroke');
-    chart.append(path);
-    return path;
-  });
+function radiusOf(el: HTMLElement | null): number {
+  return el ? parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0 : 0;
+}
 
-  // One zero-size point: the rope runs up past the top edge, the block hangs just above the point.
+/** Motion-owned and decorative: the rope and its hook, one zero-size point moved with x/y. */
+function buildRig(): { root: HTMLElement; hook: HTMLElement } {
+  const root = document.createElement('div');
+  root.className = 'hoist-rig';
+  root.setAttribute('aria-hidden', 'true');
   const hook = document.createElement('div');
   hook.className = 'hoist-rig__hook';
-  hook.innerHTML =
-    '<svg class="hoist-rig__rope" viewBox="0 0 2 100" preserveAspectRatio="none"><line x1="1" y1="0" x2="1" y2="100" vector-effect="non-scaling-stroke"/></svg>' +
-    '<svg class="hoist-rig__block" viewBox="0 0 28 40"><rect x="7" y="0" width="14" height="14" rx="1"/><path d="M14 14v9a7 7 0 1 1-7 7"/></svg>';
-
-  li.append(chart, hook);
-  return { li, hook, curves };
+  hook.innerHTML = `<span class="hoist-rig__rope"></span>${SVG}`;
+  root.append(hook);
+  return { root, hook };
 }
 
 /**
- * Snapping gives way to the keyboard: after a key press (arrows, Page Down, Space, Tab, Enter on the
- * skip link) the scroll lands exactly where the browser put it. Wheel, touch and pointer scrolls snap.
+ * Snapping gives way to the keyboard: after a key press (arrows, Page Down, Space, Tab, Enter on a link) the scroll
+ * lands exactly where the browser put it. Wheel, touch and pointer scrolls snap.
  */
 function lastInputTracker(): { readonly keyboard: boolean; dispose: Dispose } {
   let keyboard = false;
@@ -189,8 +219,8 @@ function lastInputTracker(): { readonly keyboard: boolean; dispose: Dispose } {
 }
 
 /**
- * Moves the page to `from + delta` in one frame. With Lenis, through Lenis: a glide in progress would
- * otherwise put its old position back on the next frame. The rest of that glide is dropped; nothing jumps.
+ * Moves the page to `from + delta` in one frame. With Lenis, through Lenis: a glide in progress would otherwise put
+ * its old position back on the next frame.
  */
 function shiftScroll(from: number, delta: number): void {
   if (Math.abs(delta) < 0.5) return;
@@ -199,244 +229,316 @@ function shiftScroll(from: number, delta: number): void {
   else window.scrollTo({ top: from + delta, behavior: 'instant' });
 }
 
-/** The Hoist, desktop (spec §5.3). One sticky, scrubbed stage that snaps to each crane. */
-export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Dispose {
-  const list = section.querySelector<HTMLElement>('[data-hoist-list]');
-  const host = list?.parentElement ?? null;
-  const items = Array.from(section.querySelectorAll<HTMLElement>('[data-hoist-item]'));
-  if (!list || !host || items.length === 0) return noop;
+/** Glides to `y`; the longer the way, the longer the glide (0.45–1.2 s). */
+function glideTo(y: number): void {
+  const lenis = lenisRef.current;
+  const distance = Math.abs(y - window.scrollY);
+  if (distance <= 4) return;
+  if (lenis) lenis.scrollTo(y, { duration: Math.min(1.2, Math.max(0.45, (distance / window.innerHeight) * 0.6)) });
+  else window.scrollTo({ top: y });
+}
 
+/** The Hoist, desktop: a sticky, scrubbed stage that snaps to each crane. */
+export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Dispose {
+  const track = section.querySelector<HTMLElement>('[data-hoist-track]');
+  const stage = section.querySelector<HTMLElement>('[data-hoist-stage]');
+  const list = section.querySelector<HTMLElement>('[data-hoist-list]');
+  const items = Array.from(section.querySelectorAll<HTMLElement>('[data-hoist-item]'));
+  if (!track || !stage || !list || items.length === 0) return noop;
+
+  const n = items.length;
   const parts = items.map(partsOf);
   const steps = counterSteps(items.map((el) => Number(el.dataset.capacity)));
   const writers = parts.map((p, i) => counterWriter(p.counter, lang, steps[i].from, steps[i].to));
-  const snaps = hoistSnapPoints(items.length);
-  const lastIndex = parts.length - 1;
-  const last = parts[lastIndex];
+  const snaps = hoistSnapPoints(n);
+  const total = hoistTimelineUnits(n);
+  const nav = section.querySelector<HTMLElement>('[data-hoist-chapters]');
+  const links = parts.map((p) => section.querySelector<HTMLAnchorElement>(`[data-chapter="${p.item.dataset.crane}"]`));
+  const fills = links.map((a) => a?.querySelector<HTMLElement>('[data-chapter-fill]') ?? null);
+  const buttons = parts.map((p) => p.item.querySelector<HTMLElement>('[data-hoist-request]'));
+  const last = parts[n - 1];
   const lastHook = realHookOf(last);
 
-  const restoreStyles = styleSnapshot([list, ...parts.flatMap((p) => [p.item, p.photo, p.picture, p.tag, p.counter])]);
-  // A visitor already past the section (a deep link, scrolling back up) must not see the page jump while the
-  // stage changes the section's height above them: whatever follows the section stays where it is on screen.
+  const restoreStyles = styleSnapshot([
+    track,
+    stage,
+    list,
+    ...parts.flatMap((p) => [p.item, p.photo, p.picture, p.tag, p.counter]),
+    ...fills,
+  ]);
+  // A visitor already past the section (a deep link, scrolling back up) must not see the page jump while the stage
+  // changes the section's height above them: whatever follows the section stays where it is on screen.
   const before = section.getBoundingClientRect();
   const scrollBefore = window.scrollY;
   const keepBottom = before.top < 0 && before.bottom <= window.innerHeight;
 
-  // Static staging, set once.
   section.classList.add('hoist--staged');
-  const rig = buildRig(rtl);
-  list.append(rig.li);
-  const runway = document.createElement('div');
-  runway.className = 'hoist-runway';
-  runway.setAttribute('aria-hidden', 'true');
-  list.after(runway);
+  const rig = buildRig();
+  stage.append(rig.root);
 
-  // Geometry in px, stage coordinates; re-measured at the start of every ScrollTrigger refresh.
+  // Geometry in px, in the stage's coordinates; re-measured at the start of every ScrollTrigger refresh.
   const geo = {
-    top: 0, // the sticky offset: the fixed header's height
-    h: 0,
-    tail: 0,
+    vh: 0,
     pin: 0,
-    ropeX: 0,
-    hookY: 0,
-    lift: 0, // how far the hook and its tag rise to leave the frame
-    tagX: parts.map(() => 0),
-    land: null as Point | null, // the real hook in IMG_6389, when it is in view
+    radius: 0,
+    ropeX: parts.map(() => 0),
+    hookY: parts.map(() => 0),
+    land: null as Point | null,
     exitX: 0,
+    exitY: 0,
   };
   const measure = () => {
     const header = document.querySelector<HTMLElement>('[data-header]');
-    geo.top = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
-    list.style.setProperty('--stage-top', px(geo.top));
-
-    // Content after the runway (footnote, closing button) must not pass unseen under the stuck stage:
-    // a bottom margin of the same height releases the stage just as that content arrives. The stage
-    // is then stuck for runway + margin, so the runway is the pin length minus the margin.
-    list.style.marginBlockEnd = '0px';
-    geo.tail = Math.max(0, host.getBoundingClientRect().bottom - runway.getBoundingClientRect().bottom);
-    list.style.marginBlockEnd = px(geo.tail);
-    geo.pin = hoistPinLength(items.length, window.innerHeight);
-    runway.style.blockSize = px(Math.max(0, geo.pin - geo.tail));
-
-    const w = list.clientWidth;
-    geo.h = list.clientHeight;
-    geo.ropeX = w * (rtl ? 0.7 : 0.3); // the rope hangs in the reading-start third
-    geo.hookY = geo.h * STAGE_PHOTO * 0.26;
-    list.style.setProperty('--rope-x', px(geo.ropeX));
-    list.style.setProperty('--hook-y', px(geo.hookY));
-
+    const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+    stage.style.setProperty('--hoist-top', px(headerBottom));
+    geo.vh = window.innerHeight;
+    geo.pin = hoistPinLength(n, geo.vh);
+    track.style.blockSize = px(geo.vh + geo.pin);
     writers.forEach((writer) => writer.lock());
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    const tallest = Math.max(0, ...parts.map((p) => p.tag?.offsetHeight ?? 0));
-    geo.lift = geo.hookY + 3.5 * rem + tallest + rem;
 
-    // The climax: the GMK6350 crop moves down just enough to show its real hook clear of the photo's
-    // bottom edge; the UI hook lands there. If the hook still cannot be shown, there is no landing.
-    geo.tagX = parts.map(() => geo.ropeX);
+    geo.radius = radiusOf(parts[0].photo);
+    // Readouts start level with the photo frame's top edge (the frames are the same size in every item).
+    stage.style.setProperty('--hoist-photo-y', '0px');
+    if (parts[0].photo) stage.style.setProperty('--hoist-photo-y', px(offsetIn(parts[0].photo, parts[0].item).y - parts[0].item.clientTop));
+    parts.forEach((p, i) => {
+      if (!p.tag) return;
+      const at = offsetIn(p.tag, stage);
+      geo.ropeX[i] = rtl ? at.x + p.tag.offsetWidth - HOOK_INSET : at.x + HOOK_INSET;
+      geo.hookY[i] = at.y - HOOK_GAP;
+    });
+
+    // The climax: the GMK6350 crop moves just enough to keep its real hook clear of the frame's edges; the rope's
+    // hook lands there. If the hook still cannot be shown well, there is no landing.
     geo.land = null;
-    last.item.style.removeProperty('--photo-oy');
-    if (lastHook) {
-      const box = { width: w, height: geo.h * STAGE_PHOTO };
+    if (last.photo) {
+      last.photo.style.removeProperty('--photo-ox');
+      last.photo.style.removeProperty('--photo-oy');
+    }
+    if (lastHook && last.photo) {
+      const box = { width: last.photo.offsetWidth, height: last.photo.offsetHeight };
+      const ox = coverPositionX(lastHook.hook, lastHook.rect, box, HOOK_MARGIN_X);
       const oy = coverPositionY(lastHook.hook, lastHook.rect, box, HOOK_MAX_Y);
-      const p = hookToBox(lastHook.hook, lastHook.rect, box, { x: 0.5, y: oy });
-      const margin = 2 * rem;
-      if (p.x >= margin && p.x <= box.width - margin && p.y >= margin && p.y <= box.height - margin / 2) {
-        geo.land = p;
-        last.item.style.setProperty('--photo-oy', `${oy * 100}%`);
-        last.item.style.setProperty('--hook-ax', px(p.x));
-        last.item.style.setProperty('--hook-ay', px(p.y));
-        // Never hang the last tag over its own real hook (the landing rope would cross it): use the other third.
-        const half = (last.tag?.offsetWidth ?? 0) / 2;
-        if (Math.abs(p.x - geo.ropeX) < half + margin) geo.tagX[lastIndex] = w - geo.ropeX;
+      const p = hookToBox(lastHook.hook, lastHook.rect, box, { x: ox, y: oy });
+      if (box.width > 0 && p.x >= 24 && p.x <= box.width - 24 && p.y >= LAND_DY + 24 && p.y <= box.height - 16) {
+        const frame = offsetIn(last.photo, stage);
+        geo.land = { x: frame.x + p.x + LAND_DX, y: frame.y + p.y - LAND_DY };
+        last.photo.style.setProperty('--photo-ox', `${ox * 100}%`);
+        last.photo.style.setProperty('--photo-oy', `${oy * 100}%`);
+        last.photo.style.setProperty('--hook-ax', px(p.x));
+        last.photo.style.setProperty('--hook-ay', px(p.y));
       }
     }
-    // Every tag stays whole inside the stage, however wide its readout (e.g. "317.5" at 12.5rem).
-    parts.forEach((p, i) => {
-      const half = (p.tag?.offsetWidth ?? 0) / 2;
-      geo.tagX[i] = Math.min(w - half - rem, Math.max(half + rem, geo.tagX[i]));
-    });
-    parts.forEach((p, i) => {
-      if (geo.tagX[i] === geo.ropeX) p.item.style.removeProperty('--tag-x');
-      else p.item.style.setProperty('--tag-x', px(geo.tagX[i]));
-    });
 
-    // The exit: the reading-start edge, where the 1 px progress rope (D.8) takes over.
-    const stageLeft = list.getBoundingClientRect().left;
+    // The exit: the progress rope's line (read-only: rope.ts owns it), else the reading-start edge of the stage.
+    const stageLeft = stage.getBoundingClientRect().left;
     const rope = document.querySelector<HTMLElement>('[data-progress-rope]');
     const ropeBox = rope && rope.getClientRects().length > 0 ? rope.getBoundingClientRect() : null;
-    geo.exitX = ropeBox ? ropeBox.left + ropeBox.width / 2 - stageLeft : rtl ? w : 0;
+    geo.exitX = ropeBox && ropeBox.width > 0 ? ropeBox.left + ropeBox.width / 2 - stageLeft : rtl ? stage.clientWidth : 0;
+    // In view, just under the header, so the walk to the reading-start edge can be seen.
+    geo.exitY = headerBottom + 28;
   };
   measure();
   ScrollTrigger.addEventListener('refreshInit', measure);
-  // Chrome's scroll anchoring may already have moved the page (Lenis, mid-glide, would undo that on its next
-  // frame); browsers without anchoring leave the growth to us. Either way, Lenis must learn the new position.
+  // Chrome's scroll anchoring may already have moved the page; browsers without it leave the change to us. Either
+  // way, Lenis must learn the new position.
   const anchored = window.scrollY - scrollBefore;
   const shift = anchored + (keepBottom ? section.getBoundingClientRect().bottom - before.bottom : 0);
 
-  // Rig offsets (x, y) from its resting point at (--rope-x, --hook-y).
-  const dx = (i: number) => geo.tagX[i] - geo.ropeX;
-  const up = () => -geo.lift;
-  const landX = () => (geo.land ? geo.land.x - geo.ropeX : dx(lastIndex));
-  const landY = () => (geo.land ? geo.land.y - geo.hookY : 0);
-  // The scroll position where the stage sticks, from the (non-sticky) runway: ScrollTrigger mis-measures
-  // sticky elements while they are stuck. Runway top − margin − stage height − sticky offset.
-  const stageStart = () => runway.getBoundingClientRect().top + window.scrollY - geo.tail - list.offsetHeight - geo.top;
+  // The scroll position where the stage sticks, from the (non-sticky) track: ScrollTrigger mis-measures sticky elements.
+  const stuckAt = () => track.getBoundingClientRect().top + window.scrollY;
+  const parked = (i: number) => -PARK - geo.hookY[i]; // a readout's y while its hook waits above the stage
+  const landX = () => (geo.land ? geo.land.x : geo.ropeX[n - 1]);
+  const landY = () => (geo.land ? geo.land.y : geo.hookY[n - 1]);
   let st: ScrollTrigger | undefined;
+  let active = -1;
+  /** The crane on show: its progress link is current and its item takes the pointer. (Every crane's button stays in
+   * the tab order: focusing one brings its crane to rest, see onFocus.) */
+  const setActive = (index: number) => {
+    if (index === active) return;
+    active = index;
+    parts.forEach((p, i) => {
+      const on = i === index;
+      links[i]?.toggleAttribute('aria-current', false);
+      if (on) links[i]?.setAttribute('aria-current', 'step');
+      p.item.toggleAttribute('data-hoist-active', on);
+    });
+  };
+  const E = HOIST.enterUnits;
+  const b = HOIST.beatUnits;
+  const O = E + (n - 1) * b;
 
   const ctx = gsap.context(() => {
-    // Start: every load parked above the frame, every photo below the ground.
-    gsap.set(rig.hook, { x: 0, y: PARKED, opacity: 1 });
-    gsap.set(rig.curves, { drawSVG: '0% 0%' });
-    for (const p of parts) {
-      if (p.tag) gsap.set(p.tag, { xPercent: -50, y: PARKED });
-      if (p.photo && p.picture) {
-        gsap.set(p.photo, { yPercent: 100 });
-        gsap.set(p.picture, { yPercent: -100 });
-      }
-    }
+    // Progress 0: the stage is still below the viewport. Every photo shut, every readout parked with its hook.
+    gsap.set(rig.hook, { x: () => geo.ropeX[0], y: -PARK, opacity: 1 });
+    parts.forEach((p, i) => {
+      if (p.photo) gsap.set(p.photo, { clipPath: () => (i === 0 ? clip(9, 7, geo.radius) : clip(100, 0, geo.radius)), '--shade': 0 });
+      if (p.picture) gsap.set(p.picture, { scale: i === 0 ? 1.2 : 1.18 });
+      if (p.tag) gsap.set(p.tag, { y: () => parked(i), opacity: 0, filter: BLUR });
+      writers[i].write(steps[i].from);
+      if (fills[i]) gsap.set(fills[i], { scaleX: 0 });
+    });
 
     const tl = gsap.timeline({
       defaults: { ease: 'none', immediateRender: false },
       scrollTrigger: {
-        start: () => stageStart(),
-        end: () => stageStart() + geo.pin,
+        start: () => stuckAt() - geo.vh,
+        end: () => stuckAt() + geo.pin,
         scrub: 0.6,
         invalidateOnRefresh: true,
         refreshPriority: 1,
+        onUpdate: (self) => {
+          const units = self.progress * total;
+          let index = 0;
+          for (let k = 1; k < n; k++) if (units >= E + (k - 1) * b + SWITCH * b) index = k;
+          setActive(index);
+        },
       },
     });
     st = tl.scrollTrigger;
 
-    // Enter (0–30): the faint load-chart arcs draw.
-    tl.fromTo(rig.curves, { drawSVG: '0% 0%' }, { drawSVG: '0% 100%', duration: 24, stagger: 2, ease: 'expo.out' }, 0);
+    // Entrance (0–100): the first photo opens out as the stage rises; its readout comes down on the rope (40–92) and
+    // counts up from 0; its progress track fills.
+    const first = parts[0];
+    if (first.photo) tl.fromTo(first.photo, { clipPath: () => clip(9, 7, geo.radius) }, { clipPath: () => clip(0, 0, geo.radius), duration: 65, ease: 'power2.out' }, 5);
+    if (first.picture) tl.fromTo(first.picture, { scale: 1.2 }, { scale: 1, duration: E, ease: 'power1.out' }, 0);
+    tl.fromTo(rig.hook, { x: () => geo.ropeX[0], y: -PARK }, { x: () => geo.ropeX[0], y: () => geo.hookY[0], duration: 52, ease: 'expo.out' }, 40);
+    if (first.tag) tl.fromTo(first.tag, { y: () => parked(0), opacity: 0, filter: BLUR }, { y: 0, opacity: 1, filter: SHARP, duration: 52, ease: 'expo.out' }, 40);
+    const firstCount = { value: steps[0].from };
+    tl.fromTo(
+      firstCount,
+      { value: steps[0].from },
+      { value: steps[0].to, duration: 56, ease: 'expo.out', onUpdate: () => writers[0].write(firstCount.value) },
+      40,
+    );
+    if (fills[0]) tl.fromTo(fills[0], { scaleX: 0 }, { scaleX: 1, duration: 56 }, 40);
 
-    parts.forEach((p, i) => {
-      const s = HOIST.inUnits + i * HOIST.beatUnits;
-      const b = HOIST.beatUnits;
-      const prev = parts[i - 1];
-      const landsOnRealHook = i === lastIndex && lastHook !== null;
+    for (let k = 1; k < n; k++) {
+      const s = E + (k - 1) * b;
+      const prev = parts[k - 1];
+      const p = parts[k];
+      const lands = k === n - 1 && geo.land !== null;
 
-      // 0–30 %: the hook hoists the previous tag out of frame (the rope shortens).
-      if (prev) {
-        tl.fromTo(rig.hook, { x: () => dx(i - 1), y: 0 }, { x: () => dx(i - 1), y: up, duration: b * 0.3, ease: 'power2.in' }, s);
-        if (prev.tag) tl.fromTo(prev.tag, { y: 0 }, { y: up, duration: b * 0.3, ease: 'power2.in' }, s);
+      // 0–24 %: the hook lifts the previous readout away; it fades and softens on the way up.
+      tl.fromTo(rig.hook, { x: () => geo.ropeX[k - 1], y: () => geo.hookY[k - 1] }, { x: () => geo.ropeX[k - 1], y: -PARK, duration: LIFTED * b, ease: 'power2.in' }, s);
+      if (prev.tag) {
+        tl.fromTo(prev.tag, { y: 0 }, { y: () => parked(k - 1), duration: LIFTED * b, ease: 'power2.in' }, s);
+        tl.fromTo(prev.tag, { opacity: 1, filter: SHARP }, { opacity: 0, filter: BLUR, duration: 0.16 * b, ease: 'power1.in' }, s);
       }
 
-      // 25–65 %: the photo rises out of the ground (transform-only shutter: the window opens, the image holds still).
-      if (p.photo && p.picture) {
-        tl.fromTo(p.photo, { yPercent: 100 }, { yPercent: 0, duration: b * 0.4, ease: 'expo.out' }, s + b * 0.25);
-        tl.fromTo(p.picture, { yPercent: -100 }, { yPercent: 0, duration: b * 0.4, ease: 'expo.out' }, s + b * 0.25);
-      }
+      // 12–55 %: the next photo opens bottom-up over the last one, which darkens; the image settles from 1.18.
+      if (p.photo) tl.fromTo(p.photo, { clipPath: () => clip(100, 0, geo.radius) }, { clipPath: () => clip(0, 0, geo.radius), duration: 0.43 * b, ease: 'power3.out' }, s + 0.12 * b);
+      if (p.picture) tl.fromTo(p.picture, { scale: 1.18 }, { scale: 1, duration: 0.6 * b, ease: 'power2.out' }, s + 0.12 * b);
+      if (prev.photo) tl.fromTo(prev.photo, { '--shade': 0 }, { '--shade': SHADE, duration: 0.43 * b }, s + 0.12 * b);
 
-      // 50–83 % (last crane: 50–70 %): the hook lowers with the new tag and sets it down; the counter runs.
-      const at = s + b * 0.5;
-      const lower = landsOnRealHook ? b * 0.2 : b * (SETTLED - 0.5);
-      tl.fromTo(rig.hook, { x: () => dx(i), y: up }, { x: () => dx(i), y: 0, duration: lower, ease: 'expo.out' }, at);
-      if (p.tag) tl.fromTo(p.tag, { y: up }, { y: 0, duration: lower, ease: 'expo.out' }, at);
-      const proxy = { value: steps[i].from };
+      // 25–83 % (the last crane: 25–58 %, then 60–83 % the hook lets go and lands on the real hook).
+      const lowerEnd = lands ? 0.58 : SETTLED;
+      const at = s + SWITCH * b;
+      tl.fromTo(rig.hook, { x: () => geo.ropeX[k], y: -PARK }, { x: () => geo.ropeX[k], y: () => geo.hookY[k], duration: (lowerEnd - SWITCH) * b, ease: 'expo.out' }, at);
+      if (p.tag) {
+        tl.fromTo(p.tag, { y: () => parked(k), opacity: 0, filter: BLUR }, { y: 0, opacity: 1, filter: SHARP, duration: (lowerEnd - SWITCH) * b, ease: 'expo.out' }, at);
+      }
+      const proxy = { value: steps[k].from };
       tl.fromTo(
         proxy,
-        { value: steps[i].from },
-        { value: steps[i].to, duration: b * (SETTLED - 0.5), ease: 'expo.out', onUpdate: () => writers[i].write(proxy.value) },
+        { value: steps[k].from },
+        { value: steps[k].to, duration: (SETTLED - SWITCH) * b, ease: 'expo.out', onUpdate: () => writers[k].write(proxy.value) },
         at,
       );
-
-      // Last crane, 70–83 %: the hook lets go of the tag and settles on the real hook in the photo.
-      if (landsOnRealHook) {
-        tl.fromTo(rig.hook, { x: () => dx(i), y: 0 }, { x: landX, y: landY, duration: b * (SETTLED - 0.7), ease: 'expo.out' }, s + b * 0.7);
+      if (fills[k]) tl.fromTo(fills[k], { scaleX: 0 }, { scaleX: 1, duration: SETTLED * b }, s);
+      if (lands) {
+        // The hook lets go and travels above the photo, then drops onto the real hook (never sweeping across it).
+        tl.fromTo(rig.hook, { y: () => geo.hookY[k] }, { y: () => geo.exitY, duration: 0.07 * b, ease: 'power2.inOut' }, s + 0.6 * b);
+        tl.fromTo(rig.hook, { x: () => geo.ropeX[k] }, { x: landX, duration: 0.08 * b, ease: 'power2.inOut' }, s + 0.65 * b);
+        tl.fromTo(rig.hook, { y: () => geo.exitY }, { y: landY, duration: (SETTLED - 0.72) * b, ease: 'expo.out' }, s + 0.72 * b);
       }
-    });
+    }
 
-    // Out (30): the rope travels to the reading-start edge and hands over to the progress rope.
-    tl.fromTo(
-      rig.hook,
-      { x: landX, y: landY, opacity: 1 },
-      { x: () => geo.exitX - geo.ropeX, y: landY, opacity: 0, duration: HOIST.outUnits, ease: 'power2.inOut' },
-      HOIST.inUnits + parts.length * HOIST.beatUnits,
-    );
+    // Exit (30): the hook rises off the real hook, travels to the reading-start edge and hands over to the progress rope.
+    const out = HOIST.outUnits;
+    tl.fromTo(rig.hook, { y: landY }, { y: () => geo.exitY, duration: 0.45 * out, ease: 'power2.inOut' }, O);
+    tl.fromTo(rig.hook, { x: landX }, { x: () => geo.exitX, duration: 0.7 * out, ease: 'power2.inOut' }, O + 0.3 * out);
+    tl.fromTo(rig.hook, { opacity: 1 }, { opacity: 0, duration: 0.4 * out }, O + 0.6 * out);
+    tl.set({}, {}, total); // the timeline spans exactly `total` units, so snap points line up
   });
 
-  // Snap to a crane once a wheel or touch scroll stops inside the stage (never after keyboard scrolling).
+  setActive(0);
+
+  // Snap to a crane once a wheel or touch scroll stops on the stuck stage (never after keyboard scrolling, never in
+  // the entrance, so the page never pulls a reader into the stage).
   const input = lastInputTracker();
   const snap = () => {
     if (!st || input.keyboard) return;
     const range = st.end - st.start;
-    if (range <= 0 || st.progress <= 0 || st.progress >= 1) return;
+    if (range <= 0 || st.progress < snaps[0] - 0.002 || st.progress >= 1) return;
     const target = directionalSnap(snaps, st.progress, st.direction, 4 / range);
-    const distance = Math.abs(target - st.progress) * range;
-    if (distance <= 4) return;
-    const y = st.start + range * target;
-    if (lenisRef.current) {
-      const beat = (HOIST.beatUnits * window.innerHeight) / 100;
-      lenisRef.current.scrollTo(y, { duration: Math.min(0.8, Math.max(0.3, (distance / beat) * 0.8)) });
-    } else {
-      window.scrollTo({ top: y });
-    }
+    glideTo(st.start + range * target);
   };
   ScrollTrigger.addEventListener('scrollEnd', snap);
+
+  // Page Down / Page Up / Space on the stuck stage move one crane, like one wheel notch (Apple's product stories do
+  // the same). Arrow keys and Tab still scroll exactly where the browser puts them, and snapping never follows them.
+  const onPageKey = (event: KeyboardEvent) => {
+    if (!st || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    const back = event.key === 'PageUp' || (event.key === ' ' && event.shiftKey);
+    if (!back && event.key !== 'PageDown' && event.key !== ' ') return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('a, button, input, textarea, select, summary, [contenteditable], dialog[open]')) return;
+    const range = st.end - st.start;
+    const progress = (window.scrollY - st.start) / range;
+    if (range <= 0 || progress < snaps[0] - 0.002 || progress > 1 - 0.002 || (back && progress <= snaps[0] + 0.002)) return;
+    const ahead = back ? snaps.filter((p) => p < progress - 0.002).pop() : snaps.find((p) => p > progress + 0.002);
+    if (ahead === undefined) return;
+    event.preventDefault();
+    glideTo(st.start + range * ahead);
+  };
+  window.addEventListener('keydown', onPageKey);
+
+  // The progress links glide to their crane's snap point (core's anchor glide ignores a prevented click).
+  const onChapter = (event: MouseEvent) => {
+    const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('[data-chapter]') : null;
+    const index = link ? links.indexOf(link) : -1;
+    if (!st || index < 0 || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    glideTo(st.start + (st.end - st.start) * snaps[index]);
+  };
+  nav?.addEventListener('click', onChapter);
+  // A crane's button can take focus while the stage is still rising (its readout half lowered): bring that crane to
+  // rest, so the focused control is never shown faded.
+  const onFocus = (event: FocusEvent) => {
+    const index = event.target instanceof HTMLElement ? buttons.indexOf(event.target) : -1;
+    if (st && index >= 0) glideTo(st.start + (st.end - st.start) * snaps[index]);
+  };
+  list.addEventListener('focusin', onFocus);
 
   ScrollTrigger.sort();
   ScrollTrigger.refresh();
   // After the refresh, which puts back the scroll position it cached earlier. Same task: no paint between.
   shiftScroll(scrollBefore, shift);
+  // A shared link to one crane (#hoist-gmk6350) opens on that crane, not on the first one.
+  const linked = parts.findIndex((p) => p.item.id && `#${p.item.id}` === window.location.hash);
+  if (st && linked >= 0) shiftScroll(window.scrollY, st.start + (st.end - st.start) * snaps[linked] - window.scrollY);
 
   return () => {
+    nav?.removeEventListener('click', onChapter);
+    list.removeEventListener('focusin', onFocus);
+    window.removeEventListener('keydown', onPageKey);
     ScrollTrigger.removeEventListener('scrollEnd', snap);
     ScrollTrigger.removeEventListener('refreshInit', measure);
     input.dispose();
     ctx.revert();
     writers.forEach((writer) => writer.restore());
-    rig.li.remove();
-    runway.remove();
+    links.forEach((link) => link?.removeAttribute('aria-current'));
+    parts.forEach((p) => p.item.removeAttribute('data-hoist-active'));
+    rig.root.remove();
     section.classList.remove('hoist--staged');
-    restoreStyles(); // also drops --stage-top, --rope-x, --hook-y, the margin, --tag-x, --photo-oy, --hook-ax/-ay
+    restoreStyles(); // also drops --hoist-top, the track height, --photo-ox/-oy, --hook-ax/-ay and --shade
     ScrollTrigger.refresh();
   };
 }
 
 /**
- * Touch or narrower than 64rem: the "load stack" (spec §5.3). Each card plays once, when its top reaches
- * 80 % of the viewport: the photo opens upward (the same transform-only shutter), the tag drops 40 px on its
- * own short red rope and settles 2° about the rope's top, and the counter runs from the previous rating.
+ * Touch or narrower than 64rem: each card plays once, when its top reaches 88 % of the viewport (the shared reveal
+ * line): the photo opens bottom-up and settles, the readout rises in and counts from the previous rating to its own.
  * Cards already on screen when this starts are left exactly as rendered. Adds no nodes and needs no CSS.
  */
 export function hoistTouch(section: HTMLElement, lang: Lang): Dispose {
@@ -459,25 +561,16 @@ export function hoistTouch(section: HTMLElement, lang: Lang): Dispose {
         restoreStyles();
       };
       undos.push(undo);
-      writer.lock(); // the final number's width, so the tag never changes size while digits change
+      writer.lock();
+      const radius = radiusOf(p.photo);
       const tl = gsap.timeline({ paused: true, onComplete: undo });
-      if (p.photo && p.picture) {
-        tl.fromTo(p.photo, { yPercent: 100 }, { yPercent: 0, duration: 0.7, ease: 'expo.out', immediateRender: true }, 0);
-        tl.fromTo(p.picture, { yPercent: -100 }, { yPercent: 0, duration: 0.7, ease: 'expo.out', immediateRender: true }, 0);
-      }
-      if (p.tag) {
-        // Displaced, never faded: it swings from the top of its own 3.5rem rope, i.e. from the hook.
-        tl.fromTo(
-          p.tag,
-          { y: -40, rotation: 2, transformOrigin: '50% -3.5rem' },
-          { y: 0, rotation: 0, duration: 0.6, ease: 'expo.out', immediateRender: true },
-          0.3,
-        );
-      }
+      if (p.photo) tl.fromTo(p.photo, { clipPath: clip(100, 0, radius) }, { clipPath: clip(0, 0, radius), duration: 1, ease: 'expo.out', immediateRender: true }, 0);
+      if (p.picture) tl.fromTo(p.picture, { scale: 1.12 }, { scale: 1, duration: 1.25, ease: 'expo.out', immediateRender: true }, 0);
+      if (p.tag) tl.fromTo(p.tag, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out', immediateRender: true }, 0.2);
       const proxy = { value: steps[i].from };
       writer.write(steps[i].from);
-      tl.to(proxy, { value: steps[i].to, duration: 0.8, ease: 'expo.out', onUpdate: () => writer.write(proxy.value) }, 0.35);
-      ScrollTrigger.create({ trigger: p.item, start: 'top 80%', once: true, onEnter: () => tl.play() });
+      tl.to(proxy, { value: steps[i].to, duration: 1.1, ease: 'expo.out', onUpdate: () => writer.write(proxy.value) }, 0.25);
+      ScrollTrigger.create({ trigger: p.item, start: 'top 88%', once: true, onEnter: () => tl.play() });
     });
   });
 

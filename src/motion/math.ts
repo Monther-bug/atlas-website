@@ -39,25 +39,41 @@ export function viewBoxToBox(point: Point, viewBox: ViewBox, box: Size): Point {
   return { x: point.x * scale + tx, y: point.y * scale + ty };
 }
 
-/** Hoist timeline units, in vh of scroll (spec §5: 30 in, 55 per crane, 30 out). */
-export const HOIST = { inUnits: 30, beatUnits: 55, outUnits: 30, setDownAt: 0.85 } as const;
+/**
+ * Hoist timeline units, in vh of scroll (v2 fleet showcase). The entrance is the 100 vh the stage takes to rise into
+ * view (the first crane is hoisted in on the way); then the stage is stuck for one beat per change of crane and the
+ * exit, where its rope hands over to the progress rope. A crane is set down at `setDownAt` of its beat.
+ */
+export const HOIST = { enterUnits: 100, beatUnits: 55, outUnits: 30, setDownAt: 0.85 } as const;
 
+const craneCount = (count: number) => Math.max(0, Math.floor(count));
+
+/** The stuck part of the stage, in vh: (n − 1) beats plus the exit. */
 export function hoistPinUnits(count: number): number {
-  const n = Math.max(0, Math.floor(count));
-  return HOIST.inUnits + n * HOIST.beatUnits + HOIST.outUnits;
+  return Math.max(0, craneCount(count) - 1) * HOIST.beatUnits + HOIST.outUnits;
 }
 
-/** Scroll distance of the sticky stage, in px, for a viewport `vh` px tall. */
+/** The whole scrubbed timeline, in vh: the entrance plus the stuck part. */
+export function hoistTimelineUnits(count: number): number {
+  return HOIST.enterUnits + hoistPinUnits(count);
+}
+
+/** Scroll distance the stage stays stuck for, in px, for a viewport `vh` px tall. */
 export function hoistPinLength(count: number, vh: number): number {
   return (hoistPinUnits(count) * vh) / 100;
 }
 
-/** Scroll progress values to snap to: 0, each crane once its tag is set down, 1. */
+/**
+ * Progress values (0–1 of the whole timeline) to snap to: each crane once it is set down (the first one the moment the
+ * stage sticks), then the end. Nothing inside the entrance: the page never pulls a reader into the stage.
+ */
 export function hoistSnapPoints(count: number): number[] {
-  const n = Math.max(0, Math.floor(count));
-  const total = hoistPinUnits(n);
-  const beats = Array.from({ length: n }, (_, i) => (HOIST.inUnits + i * HOIST.beatUnits + HOIST.beatUnits * HOIST.setDownAt) / total);
-  return [0, ...beats, 1];
+  const n = craneCount(count);
+  const total = hoistTimelineUnits(n);
+  const cranes = Array.from({ length: n }, (_, i) =>
+    i === 0 ? HOIST.enterUnits / total : (HOIST.enterUnits + (i - 1) * HOIST.beatUnits + HOIST.beatUnits * HOIST.setDownAt) / total,
+  );
+  return [...cranes, 1];
 }
 
 /** Each counter runs from the previous crane's capacity to its own; the first starts at 0. */
@@ -140,4 +156,20 @@ export function coverPositionY(hook: Point, rect: Rect, box: Size, maxFraction: 
   if (overflow <= 1e-9) return 0;
   const needed = ((hook.y - rect.top) * scale - maxFraction * box.height) / overflow;
   return Math.min(1, Math.max(0, needed));
+}
+
+/**
+ * The horizontal object-position (0 = left, 1 = right) that shows `point` (source px) at least `margin` (a fraction of
+ * the box width) inside both side edges when the crop `rect` fills `box` with `object-fit: cover`. Stays at 0.5
+ * (centred) whenever it can; 0.5 too when nothing is cut sideways.
+ */
+export function coverPositionX(point: Point, rect: Rect, box: Size, margin: number): number {
+  const scale = Math.max(box.width / rect.width, box.height / rect.height);
+  const overflow = rect.width * scale - box.width;
+  if (overflow <= 1e-9) return 0.5;
+  const x = (point.x - rect.left) * scale; // the point's distance from the image's left edge
+  // Shown at x − overflow × p; keep it within [margin, 1 − margin] × width.
+  const lo = (x - (1 - margin) * box.width) / overflow;
+  const hi = (x - margin * box.width) / overflow;
+  return Math.min(1, Math.max(0, Math.min(hi, Math.max(lo, 0.5))));
 }

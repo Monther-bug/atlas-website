@@ -45,14 +45,27 @@ describe('hoistDesktop', () => {
     const dispose = hoistDesktop(section, 'en', false);
     const list = section.querySelector('[data-hoist-list]')!;
     expect(section.classList.contains('hoist--staged')).toBe(true);
-    const lis = [...list.children];
-    expect(lis).toHaveLength(6);
-    expect(lis.filter((li) => li.getAttribute('aria-hidden') !== 'true')).toHaveLength(5);
-    expect(lis.at(-1)!.className).toBe('hoist-rig');
-    expect(list.nextElementSibling?.className).toBe('hoist-runway');
-    expect(list.nextElementSibling?.getAttribute('aria-hidden')).toBe('true');
+    expect([...list.children].every((li) => li.hasAttribute('data-hoist-item'))).toBe(true);
+    expect(list.children).toHaveLength(5);
+    const rig = section.querySelector('[data-hoist-stage] > .hoist-rig');
+    expect(rig?.getAttribute('aria-hidden')).toBe('true');
+    expect(rig?.querySelector('a, button, [tabindex]')).toBeNull();
+    // The track stays stuck for one beat per change of crane plus the exit: 100vh + 250vh at 900 px.
+    expect((section.querySelector('[data-hoist-track]') as HTMLElement).style.blockSize).toBe('3150px');
     expect(st.addEventListener).toHaveBeenCalledWith('scrollEnd', expect.any(Function));
     dispose();
+  });
+
+  it('starts with every readout parked and every counter on the rating before it', async () => {
+    const { section } = await renderHoist('en');
+    const dispose = hoistDesktop(section, 'en', false);
+    const counters = [...section.querySelectorAll('[data-counter]')].map((c) => c.textContent);
+    expect(counters).toEqual(['0', '55', '60', '200', '250']);
+    for (const tag of section.querySelectorAll<HTMLElement>('[data-load-tag]')) expect(tag.style.opacity).toBe('0');
+    const photos = [...section.querySelectorAll<HTMLElement>('[data-hoist-photo]')];
+    expect(photos[1].style.clipPath).toContain('inset(100%');
+    dispose();
+    expect([...section.querySelectorAll('[data-counter]')].map((c) => c.textContent)).toEqual(['55', '60', '200', '250', '317.5']);
   });
 
   it('never touches the screen-reader twin of a counter', async () => {
@@ -63,6 +76,12 @@ describe('hoistDesktop', () => {
     expect(twins()).toEqual(before);
     dispose();
     expect(twins()).toEqual(before);
+  });
+
+  it('leaves the progress links without aria-current once it stops', async () => {
+    const { section } = await renderHoist('ar');
+    hoistDesktop(section, 'ar', true)();
+    expect(section.querySelector('[aria-current]')).toBeNull();
   });
 
   it('puts the DOM back exactly as React rendered it, listeners included', async () => {
@@ -92,7 +111,7 @@ describe('hoistTouch (the load stack)', () => {
   const finishAll = () => gsap.globalTimeline.getChildren(false, false, true).forEach((t) => t.progress(1));
   const counters = (section: HTMLElement) => [...section.querySelectorAll('[data-counter]')].map((c) => c.textContent);
 
-  it('leaves cards already on screen exactly as rendered, and arms one "top 80%" trigger per card below', async () => {
+  it('leaves cards already on screen exactly as rendered, and arms one "top 88%" trigger per card below', async () => {
     const { section } = await renderHoist('en');
     const items = [...section.querySelectorAll<HTMLElement>('[data-hoist-item]')];
     const before = items.map((el) => el.outerHTML);
@@ -102,7 +121,7 @@ describe('hoistTouch (the load stack)', () => {
     expect(items[1].outerHTML).toBe(before[1]);
     expect(items[2].outerHTML).not.toBe(before[2]);
     expect(st.create).toHaveBeenCalledTimes(3);
-    expect(st.create.mock.calls.map(([vars]) => [vars.trigger, vars.start, vars.once])).toEqual(items.slice(2).map((el) => [el, 'top 80%', true]));
+    expect(st.create.mock.calls.map(([vars]) => [vars.trigger, vars.start, vars.once])).toEqual(items.slice(2).map((el) => [el, 'top 88%', true]));
     dispose();
     expect(items.map((el) => el.outerHTML)).toEqual(before);
   });
@@ -113,8 +132,9 @@ describe('hoistTouch (the load stack)', () => {
     const dispose = hoistTouch(section, 'en');
     expect(counters(section)).toEqual(['0', '55', '60', '200', '250']); // waiting at the previous rating
     const tag = section.querySelectorAll<HTMLElement>('[data-load-tag]')[4];
-    expect(tag.style.transform).not.toBe(''); // displaced, never faded
-    expect(tag.style.opacity).toBe('');
+    expect(tag.style.transform).not.toBe(''); // waits 16 px low, transparent: the shared "rise"
+    expect(tag.style.opacity).toBe('0');
+    expect(section.querySelectorAll<HTMLElement>('[data-hoist-photo]')[4].style.clipPath).toContain('inset(100%');
     for (const [vars] of st.create.mock.calls) vars.onEnter();
     finishAll();
     expect(counters(section)).toEqual(['55', '60', '200', '250', '317.5']);

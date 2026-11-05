@@ -160,6 +160,13 @@ export interface Copy {
     footnote: string;
     closing: string;
     closingButton: string;
+    /** v2: accessible name of the crane-by-crane progress links on the desktop stage. */
+    chapters: string;
+    /**
+     * v2: a line under a crane whose machine shows a different number from its metric rating. `{capacity}` is filled
+     * with the formatted rating and unit. Only the GMK6350 (its boom reads "350 TON": US tons, crane-specs.ts).
+     */
+    ratingNotes: Partial<Record<CraneId, string>>;
   };
 
   /** Copy deck §5. */

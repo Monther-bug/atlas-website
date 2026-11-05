@@ -126,6 +126,10 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Mobile swipe hint | اسحب لرؤية المزيد | Swipe for more |
 | Closing line | لست متأكداً من الحجم؟ أرسل لنا تفاصيل الحمولة ونختار معك. | Not sure which size you need? Send us the load details and we will choose with you. |
 | Closing button → form | أرسل التفاصيل | Send the details |
+| Stage progress links, accessible name (v2, desktop stage only) | انتقل إلى رافعة | Go to a crane |
+| Rating note, GMK6350 only (v2; `{capacity}` = the metric rating with its unit) | الرقم 350 على الذراع هو تصنيف الشركة المصنّعة بالطن الأمريكي، ويساوي {capacity} متري. | The 350 on the boom is the maker's rating in US tons, which is {capacity} metric. |
+
+*v2 rating note: the GMK6350's boom is marked "350 TON" (photos 6388, 6389). Manitowoc's product guide rates the crane 350 US tons (700,000 lb), which converts to 317.5 t (src/content/crane-specs.ts). The note keeps the photo from contradicting the readout. It is manufacturer data, draft-badged with the capacity until Atlas confirms.*
 
 **Class names**
 

@@ -10,6 +10,8 @@ import {
   flightDelta,
   hoistPinLength,
   hoistPinUnits,
+  hoistTimelineUnits,
+  coverPositionX,
   hoistSnapPoints,
   hookToBox,
   nearestSnap,
@@ -73,38 +75,63 @@ describe('viewBoxToBox (SVG preserveAspectRatio="xMidYMin slice")', () => {
   });
 });
 
-describe('Hoist pin length (spec §5: 30 vh in, 55 vh per crane, 30 vh out)', () => {
+describe('Hoist timeline (v2: 100 vh entrance, 55 vh per crane change, 30 vh exit)', () => {
   it('counts vh units from the number of cranes', () => {
-    expect(HOIST).toEqual({ inUnits: 30, beatUnits: 55, outUnits: 30, setDownAt: 0.85 });
-    expect(hoistPinUnits(5)).toBe(335);
-    expect(hoistPinUnits(3)).toBe(225);
-    expect(hoistPinUnits(0)).toBe(60);
+    expect(HOIST).toEqual({ enterUnits: 100, beatUnits: 55, outUnits: 30, setDownAt: 0.85 });
+    // Stuck part: one beat per change of crane (n - 1) plus the exit.
+    expect(hoistPinUnits(5)).toBe(250);
+    expect(hoistPinUnits(3)).toBe(140);
+    expect(hoistPinUnits(1)).toBe(30);
+    expect(hoistPinUnits(0)).toBe(30);
+    // The whole scrubbed timeline adds the entrance (the stage rising into view).
+    expect(hoistTimelineUnits(5)).toBe(350);
   });
 
   it('converts units to pixels for a viewport height', () => {
-    expect(hoistPinLength(5, 900)).toBe(3015);
-    expect(hoistPinLength(3, 1000)).toBe(2250);
+    expect(hoistPinLength(5, 900)).toBe(2250);
+    expect(hoistPinLength(3, 1000)).toBe(1400);
   });
 
   it('treats negative and fractional counts safely', () => {
-    expect(hoistPinUnits(-2)).toBe(60);
-    expect(hoistPinUnits(2.7)).toBe(170);
+    expect(hoistPinUnits(-2)).toBe(30);
+    expect(hoistPinUnits(2.7)).toBe(85);
   });
 });
 
 describe('hoistSnapPoints', () => {
-  it('snaps to the start, to each crane once its tag is set down, and to the end', () => {
+  it('snaps to each crane once it is set down, then to the end; never inside the entrance', () => {
     const points = hoistSnapPoints(5);
-    expect(points).toHaveLength(7);
-    expect(points[0]).toBe(0);
-    expect(points[6]).toBe(1);
-    expect(points[1]).toBeCloseTo((30 + 55 * 0.85) / 335, 10);
-    expect(points[5]).toBeCloseTo((30 + 4 * 55 + 55 * 0.85) / 335, 10);
+    expect(points).toHaveLength(6);
+    expect(points[0]).toBeCloseTo(100 / 350, 10); // the first crane: the stage has just stuck
+    expect(points[1]).toBeCloseTo((100 + 55 * 0.85) / 350, 10);
+    expect(points[4]).toBeCloseTo((100 + 3 * 55 + 55 * 0.85) / 350, 10);
+    expect(points[5]).toBe(1);
     for (let i = 1; i < points.length; i++) expect(points[i]).toBeGreaterThan(points[i - 1]);
   });
 
-  it('returns just the two ends for an empty list', () => {
-    expect(hoistSnapPoints(0)).toEqual([0, 1]);
+  it('returns only the end for an empty list', () => {
+    expect(hoistSnapPoints(0)).toEqual([1]);
+    expect(hoistSnapPoints(1)).toEqual([100 / 130, 1]);
+  });
+});
+
+describe('coverPositionX', () => {
+  const rect = { left: 0, top: 0, width: 4240, height: 2385 };
+  const box = { width: 760, height: 570 }; // 4:3 box: the 16:9 crop overflows sideways
+
+  it('stays centred while the point is inside the margins', () => {
+    expect(coverPositionX({ x: 2120, y: 1000 }, rect, box, 0.1)).toBe(0.5);
+  });
+
+  it('moves the crop just enough to bring a point near the edge inside the margin', () => {
+    const p = coverPositionX({ x: 885, y: 1868 }, rect, box, 0.12);
+    expect(p).toBeLessThan(0.5);
+    const shown = hookToBox({ x: 885, y: 1868 }, rect, box, { x: p, y: 0 });
+    expect(shown.x / box.width).toBeCloseTo(0.12, 6);
+  });
+
+  it('returns 0.5 when nothing is cut sideways', () => {
+    expect(coverPositionX({ x: 10, y: 10 }, rect, { width: 1600, height: 400 }, 0.2)).toBe(0.5);
   });
 });
 

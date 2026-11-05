@@ -105,127 +105,166 @@ html[data-motion="reduced"] .progress-rope {
    on elements below the fold, so nothing is pre-hidden here and nothing needs a failsafe. */
 /* ==== end Services + Why Atlas ==== */
 
-/* ==== The Hoist, desktop (D.5) ==========================================================
-   hoist.ts adds .hoist--staged, the rig <li> and the runway <div>, and sets the custom
-   properties below in px. The list becomes a sticky stage under the fixed header; nothing is
-   pinned with a pin-spacer, so no React node is reparented. Removed with the class on cleanup. */
-.hoist--staged [data-hoist-list] {
+/* ==== The Hoist v2: the fleet showcase stage (S.hoist) =================================
+   hoist.ts adds .hoist--staged to [data-hoist] and the rig, and sets in px: the track's height (100vh + the stuck
+   length), --hoist-top (the fixed header's bottom), and on the GMK6350 frame --photo-ox/-oy, --hook-ax/-ay; GSAP
+   tweens --shade on the frames. CSS position: sticky, no pin-spacer: no React node is ever reparented (C12 D.4).
+   Everything here goes away with the class on cleanup. */
+.hoist--staged [data-hoist-track] {
+  position: relative;
+}
+.hoist--staged [data-hoist-stage] {
+  --hoist-gap: clamp(2rem, 4vw, 4.5rem);
+  --hoist-chapters-h: 3.5rem;
+  /* Readout and photo: 4.5 + 7.5 of 12 columns. */
+  --hoist-cols: minmax(0, 9fr) minmax(0, 15fr);
   position: sticky;
-  top: var(--stage-top, 0px);
+  top: 0;
+  display: grid;
+  grid-template-columns: var(--hoist-cols);
+  grid-template-rows: minmax(0, 1fr) var(--hoist-chapters-h);
+  column-gap: var(--hoist-gap);
+  row-gap: 1.25rem;
+  block-size: 100vh;
+  /* The bottom 6rem stay clear: html's scroll-padding-bottom (the request bar's band) would otherwise make the
+     browser scroll every time a progress link takes focus, and the stage would drift between cranes. */
+  padding-block: calc(var(--hoist-top, 4rem) + 2.5rem) calc(6rem + env(safe-area-inset-bottom));
+  /* Clip vertically only: lifted readouts leave through the top edge; the rope may reach the page's progress rope. */
+  overflow-x: visible;
+  overflow-y: clip;
+  /* The brand navy glows behind the cranes (user, 5 Nov 2026: "add some of the blue"). */
+  background: radial-gradient(52% 60% at var(--hoist-glow-x, 64%) 46%, rgb(46 42 153 / 0.62), rgb(35 32 122 / 0.22) 45%, rgb(35 32 122 / 0) 74%);
+}
+[dir='rtl'] .hoist--staged [data-hoist-stage] {
+  --hoist-glow-x: 36%;
+}
+.hoist--staged [data-hoist-list] {
+  position: relative;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   display: block;
-  block-size: calc(100vh - var(--stage-top, 0px));
-  overflow: clip;
-  padding: 0;
-  list-style: none;
-  background: var(--color-navy-950);
+  margin: 0;
 }
 .hoist--staged [data-hoist-item] {
   position: absolute;
   inset: 0;
-  display: block;
+  display: grid;
+  grid-template-columns: var(--hoist-cols);
+  grid-template-rows: minmax(0, 1fr) var(--hoist-chapters-h);
+  column-gap: var(--hoist-gap);
+  row-gap: 1.25rem;
+  align-items: center;
   margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
 }
-/* Photo box = the top 76 % of the stage. Keep in sync with STAGE_PHOTO in hoist.ts. */
+/* The frame: as wide as its columns, 4:3 until the stage height runs out (then wider), centred in row 1. */
 .hoist--staged [data-hoist-photo] {
-  position: absolute;
-  inset: 0 0 24% 0;
-  inline-size: auto;
-  block-size: auto;
-  aspect-ratio: auto;
-  margin: 0;
-  overflow: clip;
-}
-.hoist--staged [data-hoist-photo] picture {
-  display: block;
+  grid-column: 2;
+  grid-row: 1;
   inline-size: 100%;
-  block-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  max-block-size: 100%;
+  border-radius: var(--radius-2xl);
 }
-/* Top-anchored like C6; only the GMK6350 crop may move down (--photo-oy) to keep its real hook in view.
+/* The previous photo darkens under the next one. */
+.hoist--staged [data-hoist-photo]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--color-black);
+  opacity: var(--shade, 0);
+  pointer-events: none;
+}
+/* Top-anchored like C6; only the GMK6350 crop moves (--photo-ox/-oy) to keep its real hook in view.
    !important: Picture sets object-position inline. */
 .hoist--staged [data-hoist-photo] img {
-  inline-size: 100%;
-  block-size: 100%;
-  max-inline-size: none;
-  object-fit: cover;
-  object-position: 50% var(--photo-oy, 0%) !important;
+  object-position: var(--photo-ox, 50%) var(--photo-oy, 0%) !important;
 }
-/* The load tag hangs under the hook: its own 3.5rem rope (Part C) reaches up to the hook point.
-   max-content: an absolute box is otherwise shrunk to the space left of `left` (the unit would spill out).
-   hoist.ts centres it on the rope with xPercent and moves it with transforms only (no CSS `translate`:
-   GSAP folds that into its transform and would write it back inline on revert). */
+/* A fixed 4rem below the photo frame's top edge (hoist.ts measures --hoist-photo-y): the hook block hangs level with
+   the frame's top, the numeral sits at the same height for every crane and the rope keeps its length. */
 .hoist--staged [data-load-tag] {
-  position: absolute;
-  left: var(--tag-x, var(--rope-x, 30%));
-  inline-size: max-content;
-  top: calc(var(--hook-y, 20%) + 3.5rem);
-  margin: 0;
-  z-index: 2;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: start;
+  margin-block-start: calc(var(--hoist-photo-y, 0px) + clamp(2.75rem, 7vh, 4rem));
+}
+/* Only the crane on show takes the pointer (and hoist.ts takes the others' buttons out of the tab order). */
+.hoist--staged [data-hoist-item]:not([data-hoist-active]) {
+  pointer-events: none;
+}
+/* The capacity is the hero: up to 12 rem (v2 floor §16.12 exception), sized to its column and to short screens. */
+.hoist--staged [data-readout] {
+  font-size: clamp(4.5rem, min(32cqi, 19vh), 12rem);
 }
 /* The real hook, placed by hoist.ts from the image manifest (hookToBox). */
 .hoist--staged [data-hook-anchor] {
   left: var(--hook-ax, -100vw) !important;
   top: var(--hook-ay, 0) !important;
 }
-.hoist-runway {
+/* Under the photo, like a film strip's progress. The bottom 6rem band (the request bar's) stays clear below it. */
+.hoist--staged [data-hoist-chapters] {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  margin: 0;
+}
+.hoist--staged [data-chapter] {
+  justify-content: flex-start;
+  min-block-size: 3.5rem;
+  padding-block: 0.75rem 0.25rem;
+}
+.hoist--staged [data-chapter-track] {
   display: block;
-  pointer-events: none;
+}
+.hoist--staged [data-chapter-fill] {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+[dir='rtl'] .hoist--staged [data-chapter-fill] {
+  transform-origin: 100% 50%;
 }
 .hoist-rig {
   position: absolute;
   inset: 0;
   z-index: 3;
-  margin: 0;
-  padding: 0;
-  list-style: none;
   pointer-events: none;
+  /* The rope comes out from under the header instead of starting at a hard edge while the stage rises. */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--hoist-top, 4rem));
 }
-.hoist-rig__curves {
-  position: absolute;
-  inset: 0 0 24% 0;
-  inline-size: 100%;
-  block-size: 76%;
-  fill: none;
-  stroke: rgb(255 255 255 / 0.18);
-  stroke-width: 1px;
-}
+/* One zero-size point (where the rope meets the hook's eye), moved by GSAP in px. */
 .hoist-rig__hook {
   position: absolute;
-  left: var(--rope-x, 30%);
-  top: var(--hook-y, 20%);
+  left: 0;
+  top: 0;
   inline-size: 0;
   block-size: 0;
+  color: var(--color-red-bright);
 }
 .hoist-rig__rope {
   position: absolute;
-  left: -1px;
-  bottom: 40px;
-  inline-size: 2px;
-  block-size: 110vh;
-  overflow: visible;
-  stroke: var(--color-red);
-  stroke-width: 2px;
+  left: -0.75px;
+  bottom: 0;
+  inline-size: 1.5px;
+  block-size: 300vh;
+  background: currentColor;
 }
-.hoist-rig__block {
+/* A crane hook block: sheave block, swivel, forged hook with its safety latch (32 x 40 at 1.125x). */
+.hoist-rig__glyph {
   position: absolute;
-  left: -14px;
-  top: -40px;
-  inline-size: 28px;
-  block-size: 40px;
+  left: -18px;
+  top: 0;
+  inline-size: 36px;
+  block-size: 45px;
   overflow: visible;
 }
-.hoist-rig__block rect {
-  fill: var(--color-red);
+/* Without JS the request store cannot run: no button that does nothing (the request form and the bar still work). */
+html:not(.js) [data-hoist-request] {
+  display: none;
 }
-.hoist-rig__block path {
-  fill: none;
-  stroke: var(--color-red);
-  stroke-width: 3px;
-  stroke-linecap: round;
-}
-/* ==== end of the Hoist (D.5) ==== */
+/* ==== end of the Hoist v2 ==== */
 
 /* ==== S.chrome: v2 header menu sheet ====
    The mobile menu is a native modal <dialog>. It fades in and its rows rise one after another; both are final

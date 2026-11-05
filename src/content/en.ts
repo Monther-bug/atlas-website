@@ -73,6 +73,10 @@ export const en: Copy = {
       "Maximum capacity is the maker's rating at the shortest radius. What a crane can lift on your site depends on radius and height, which is why we ask for both.",
     closing: 'Not sure which size you need? Send us the load details and we will choose with you.',
     closingButton: 'Send the details',
+    chapters: 'Go to a crane',
+    ratingNotes: {
+      gmk6350: "The 350 on the boom is the maker's rating in US tons, which is {capacity} metric.",
+    },
   },
 
   // §5
