@@ -184,6 +184,11 @@ export const en: Copy = {
     title: 'Which crane does your project need?',
     lead: 'Get in touch and leave the rest to us.',
     intro: 'Fill in only what you know. We need your phone number and the load weight. We will ask about the rest.',
+    next: {
+      title: 'What happens next',
+      steps: ['You send your phone number and the load weight.', 'We contact you on that number.', 'We agree the crane and the details with you.'],
+    },
+    summary: { title: 'Your lift', note: 'This only repeats what you entered. We confirm the right crane with you.' },
     contact: {
       email: 'Email',
       phone: 'Phone',

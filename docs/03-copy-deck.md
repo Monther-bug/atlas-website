@@ -683,3 +683,14 @@ Every token above, grouped by what it blocks.
 - [ ] Permission to show the Kobelco photos (6367, 6370, 6371), or to leave them out.
 - [ ] Source file of the 41-second Facebook fleet video (optional hero loop).
 - [ ] Photographer credit, if one is required.
+
+### 9b. Request form v2 additions
+
+| Element | العربية | English |
+|---|---|---|
+| What happens next (title) | ماذا يحدث بعد الإرسال | What happens next |
+| Step 1 | ترسل رقم هاتفك ووزن الحمولة. | You send your phone number and the load weight. |
+| Step 2 | نتواصل معك على الرقم نفسه. | We contact you on that number. |
+| Step 3 | نتفق معك على الرافعة والتفاصيل. | We agree the crane and the details with you. |
+| Lift summary title | رفعتك | Your lift |
+| Lift summary note | هذا تكرار لما كتبته فقط. نؤكد معك الرافعة المناسبة. | This only repeats what you entered. We confirm the right crane with you. |

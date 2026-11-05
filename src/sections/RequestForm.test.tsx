@@ -81,7 +81,10 @@ describe('RequestForm', () => {
     const summary = host.querySelector<HTMLElement>('[data-testid="form-error-summary"]');
     expect(summary).not.toBeNull();
     expect(document.activeElement).toBe(summary);
-    expect([...(summary?.querySelectorAll('a') ?? [])].map((a) => a.getAttribute('href'))).toEqual(['#request-phone', '#request-weight']);
+    expect([...(summary?.querySelectorAll('a') ?? [])].map((a) => a.getAttribute('href'))).toEqual([
+      '#request-phone',
+      '#request-weight',
+    ]);
     expect(host.querySelector('[data-testid="form-weight"]')?.getAttribute('aria-invalid')).toBe('true');
     await changeValue(host.querySelector('[data-testid="form-weight"]'), '٣٥٠');
     await changeValue(host.querySelector('[data-testid="form-phone"]'), '0912345678');
@@ -268,5 +271,17 @@ describe('RequestForm', () => {
       vi.unstubAllGlobals();
     }
     mockEnv.whatsapp = null;
+  });
+
+  it('shows the crane chip and a lift summary echo without capacity claims', async () => {
+    const { host, unmount } = await mount(<RequestForm />, 'en');
+    expect(host.querySelector('[data-testid="form-lift-summary"]')).toBeNull();
+    await act(async () => setRequestedCrane('gmk6350'));
+    expect(host.querySelector('[data-testid="form-hook-chip"]')?.textContent).toContain('GMK6350');
+    await changeValue(host.querySelector('[data-testid="form-weight"]'), '12');
+    const summary = host.querySelector('[data-testid="form-lift-summary"]');
+    expect(summary?.textContent).toContain('12');
+    expect(summary?.textContent).toContain('Your lift');
+    await unmount();
   });
 });

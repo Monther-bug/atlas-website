@@ -1,4 +1,5 @@
 import { Fill } from '@/components/Fill';
+import { Card, Chip, Section, SectionHeader, reveal } from '@/components/ui';
 import { siteInfo } from '@/content/site';
 import type { DocumentFile } from '@/content/types';
 import { useLang } from '@/lib/lang';
@@ -9,34 +10,33 @@ export function Documents() {
   const { copy } = useLang();
   if (siteInfo.documents.length === 0) return null;
   return (
-    <section id="documents" aria-labelledby="documents-title" className="section-y bg-white text-ink">
-      <div className="shell">
-        <h2 id="documents-title" className="t-h2 text-balance text-navy">
-          {copy.documents.title}
-        </h2>
-        <p className="t-lead measure mt-5">{copy.documents.intro}</p>
-        <ul className="mt-12 border-t border-line">
-          {siteInfo.documents.map((doc) => (
-            <DocumentRow key={doc.id} doc={doc} />
-          ))}
-        </ul>
-      </div>
-    </section>
+    <Section id="documents" surface="white" aria-labelledby="documents-title">
+      <SectionHeader id="documents-title" title={copy.documents.title} lead={copy.documents.intro} />
+      <ul {...reveal('stagger')} className="grid list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        {siteInfo.documents.map((doc) => (
+          <DocumentCard key={doc.id} doc={doc} />
+        ))}
+      </ul>
+    </Section>
   );
 }
 
-function DocumentRow({ doc }: { doc: DocumentFile }) {
+function DocumentCard({ doc }: { doc: DocumentFile }) {
   const { copy } = useLang();
   const d = copy.documents;
   const name = (d.names as Record<string, string>)[doc.id] ?? doc.id;
-  const link = 'inline-flex min-h-11 items-center font-semibold text-navy underline hover:decoration-2';
+  const link = 'inline-flex min-h-11 items-center font-semibold underline underline-offset-4 hover:decoration-2';
   return (
-    <li className="grid gap-3 border-b border-line py-6 md:grid-cols-12 md:items-center md:gap-8">
-      <p className="t-h3 text-navy md:col-span-5">{name}</p>
-      <p className="t-small text-ink/75 md:col-span-4">
-        <Fill template={d.meta} vars={{ language: d.languages[doc.lang], date: <bdi className="tabular-nums">{doc.date}</bdi> }} />
+    <Card as="li" tone="outline" interactive className="h-full">
+      <Chip className="self-start">PDF</Chip>
+      <h3 className="t-title mt-5">{name}</h3>
+      <p className="t-small mt-2 text-(--surface-fg-2)">
+        <Fill
+          template={d.meta}
+          vars={{ language: d.languages[doc.lang], date: <bdi className="tabular-nums">{doc.date}</bdi> }}
+        />
       </p>
-      <div className="flex flex-wrap gap-x-6 gap-y-2 md:col-span-3 md:justify-end">
+      <div className="mt-auto flex flex-wrap gap-x-6 gap-y-1 pt-6">
         <a href={doc.href} download className={link}>
           {d.download}
           <span className="sr-only">: {name}</span>
@@ -46,6 +46,6 @@ function DocumentRow({ doc }: { doc: DocumentFile }) {
           <span className="sr-only">: {name}</span>
         </a>
       </div>
-    </li>
+    </Card>
   );
 }

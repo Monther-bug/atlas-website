@@ -297,3 +297,39 @@ html[data-motion="desktop"] [data-service-row] {
   }
 }
 /* ==== end S.chrome ==== */
+
+/* ==== Request form success check (S.form) ==== */
+.atlas-check__ring,
+.atlas-check__tick {
+  stroke: var(--color-ok);
+  stroke-dasharray: 160;
+}
+.atlas-check__tick {
+  stroke-dasharray: 40;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .atlas-check__ring {
+    animation: atlas-check-draw 0.7s var(--ease-ui) both;
+  }
+  .atlas-check__tick {
+    animation: atlas-check-draw 0.45s var(--ease-ui) 0.4s both;
+  }
+  [data-testid='form-success'] > h3 {
+    animation: atlas-check-rise 0.5s var(--ease-ui) 0.5s both;
+  }
+}
+@keyframes atlas-check-draw {
+  from {
+    stroke-dashoffset: 160;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes atlas-check-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* ==== end of the Request form success check ==== */

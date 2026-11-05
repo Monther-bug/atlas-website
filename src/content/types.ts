@@ -187,6 +187,8 @@ export interface Copy {
     title: string; // the dialect question (spec §5.8)
     lead: string; // the dialect line, BELOW the title (deck "Eyebrow"; spec §15.1)
     intro: string;
+    next: { title: string; steps: [string, string, string] }; // what happens after sending: no times promised
+    summary: { title: string; note: string }; // live echo of the entered lift, no capacity claims
     contact: { email: string; phone: string; whatsapp: string; address: string; facebook: string };
     groups: { details: string; lift: string; site: string };
     required: string;

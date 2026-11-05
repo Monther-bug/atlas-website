@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { Fill } from '@/components/Fill';
-import { WhatsAppIcon } from '@/components/Icons';
+import { HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
+import { Chip, Reveal, Section, SectionHeader, fieldClass, reveal } from '@/components/ui';
 import { siteInfo, visibleCranes } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
-import { toAsciiDigits } from '@/lib/digits';
+import { parseDecimal, toAsciiDigits } from '@/lib/digits';
 import { useLang } from '@/lib/lang';
 import { formatNumber } from '@/lib/numbers';
 import { getRequestedCrane, setRequestedCrane, useRequestedCrane } from '@/lib/request';
@@ -17,6 +18,7 @@ import {
   buildFollowUpMessage,
   handoffMessage,
   craneFromOption,
+  craneOrServiceLabel,
   craneOptionValue,
   emailSubject,
   emptyRequest,
@@ -33,71 +35,79 @@ type Status = 'idle' | 'handoff' | 'sending' | 'sent' | 'failed' | 'offline';
 const TIMEOUT_MS = 10_000;
 const HANDOFF_LOCK_MS = 3000;
 
-const CONTROL =
-  'block w-full rounded-none border border-white/40 bg-navy-950 ps-4 text-base text-white transition-colors hover:border-white/70 focus:border-white aria-invalid:border-2 aria-invalid:border-red-bright';
-function controlClass({ unit = false, multiline = false }: { unit?: boolean; multiline?: boolean } = {}): string {
-  return `${CONTROL} ${unit ? 'pe-14' : 'pe-4'} ${multiline ? 'min-h-36 py-3' : 'h-13'}`;
+/** Field control: the v2 `fieldClass` (52 px, 14 px radius, 3:1 border) plus a unit gutter or multiline height. */
+function controlClass({ unit = false }: { unit?: boolean } = {}): string {
+  return `${fieldClass} ${unit ? 'pe-12' : ''}`;
 }
-const TEXT_LINK = 'inline-flex min-h-11 items-center font-semibold underline hover:decoration-2';
+const TEXT_LINK = 'inline-flex min-h-11 items-center font-semibold underline underline-offset-4 hover:decoration-2';
 
 export function RequestForm() {
   const { copy } = useLang();
   const f = copy.form;
   return (
-    <section id="request" data-ground="dark" aria-labelledby="request-title" className="section-y bg-navy-950 text-white">
-      <div className="shell grid gap-14 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-5">
-          <h2 id="request-title" className="t-h2 text-balance">
-            {f.title}
-          </h2>
-          <p className="t-lead measure mt-5">{f.lead}</p>
-          <p className="t-body measure mt-4 text-steel">{f.intro}</p>
-          <ContactPanel />
-        </div>
-        <div className="lg:col-span-7">
-          <RequestFormBody />
+    <Section id="request" surface="night" aria-labelledby="request-title">
+      <div className="grid items-start gap-14 lg:grid-cols-12 lg:gap-16">
+        <Reveal kind="rise" className="lg:sticky lg:top-28 lg:col-span-5">
+          <SectionHeader id="request-title" title={f.title} lead={f.lead} className="mb-0" />
+          <p className="t-body mt-6 max-w-[34rem] text-(--surface-fg-2)">{f.intro}</p>
+          <Channels />
+          <NextSteps />
+        </Reveal>
+        <div {...reveal('fade')} className="lg:col-span-7">
+          {/* The form sits on a white card: its own light ground, so the Field primitives read dark-on-white. */}
+          <div data-ground="light" className="surface-white rounded-3xl p-6 shadow-e4 sm:p-8 lg:p-10">
+            <RequestFormBody />
+          </div>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 
-function ContactPanel() {
+/** Direct channels: WhatsApp (red pill), call, email. Only the ones that exist are shown. */
+function Channels() {
   const { copy, lang } = useLang();
   const c = copy.form.contact;
   const tel = telHref();
   const whatsapp = env.whatsapp ? whatsappHref(copy.whatsapp.general) : null;
   return (
-    <div className="mt-12 border-t border-line-dark pt-8">
-      <dl className="grid gap-5">
+    <div className="mt-10">
+      <div className="flex flex-wrap gap-3">
+        {whatsapp && env.whatsapp && (
+          <Button
+            href={whatsapp}
+            external
+            size="md"
+            icon={<WhatsAppIcon className="size-5" />}
+            onClick={() => track('whatsapp_click', { location: 'form' })}
+          >
+            {c.whatsapp}
+          </Button>
+        )}
+        {tel && env.phone && (
+          <Button
+            href={tel}
+            variant="ghost-dark"
+            size="md"
+            icon={<PhoneIcon className="size-5" />}
+            onClick={() => track('call_click')}
+          >
+            <bdi dir="ltr">{env.phone}</bdi>
+          </Button>
+        )}
+      </div>
+      <dl className="mt-6 grid gap-1 border-t border-(--surface-line) pt-4">
         <ContactRow label={c.email}>
-          <a href={`mailto:${siteInfo.email}`} className="inline-flex min-h-11 items-center break-all underline hover:decoration-2">
+          <a
+            href={`mailto:${siteInfo.email}`}
+            className="inline-flex min-h-11 items-center break-all underline underline-offset-4 hover:decoration-2"
+          >
             <bdi>{siteInfo.email}</bdi>
           </a>
         </ContactRow>
-        {tel && env.phone && (
-          <ContactRow label={c.phone}>
-            <a href={tel} onClick={() => track('call_click')} className="underline hover:decoration-2">
-              <bdi dir="ltr">{env.phone}</bdi>
-            </a>
-          </ContactRow>
-        )}
-        {whatsapp && env.whatsapp && (
-          <ContactRow label={c.whatsapp}>
-            <a
-              href={whatsapp}
-              {...externalProps(whatsapp)}
-              onClick={() => track('whatsapp_click', { location: 'form' })}
-              className="underline hover:decoration-2"
-            >
-              <bdi dir="ltr">+{env.whatsapp.replace(/\D/g, '')}</bdi>
-              <NewTabNote />
-            </a>
-          </ContactRow>
-        )}
         {siteInfo.address && <ContactRow label={c.address}>{siteInfo.address[lang]}</ContactRow>}
       </dl>
-      <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={`${TEXT_LINK} mt-6`}>
+      <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={TEXT_LINK}>
         {c.facebook}
         <NewTabNote />
       </a>
@@ -107,9 +117,33 @@ function ContactPanel() {
 
 function ContactRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <dt className="t-label text-steel">{label}</dt>
-      <dd className="t-body mt-1">{children}</dd>
+    <div className="flex flex-wrap items-baseline gap-x-4">
+      <dt className="t-small min-w-28 text-(--surface-fg-3)">{label}</dt>
+      <dd className="t-body m-0">{children}</dd>
+    </div>
+  );
+}
+
+/** What happens after sending. Order is the information, so the steps are numbered. No times are promised. */
+function NextSteps() {
+  const { copy, lang } = useLang();
+  const n = copy.form.next;
+  return (
+    <div className="mt-10">
+      <h3 className="t-title">{n.title}</h3>
+      <ol className="mt-4 grid gap-3">
+        {n.steps.map((step, i) => (
+          <li key={step} className="flex items-start gap-3">
+            <span
+              aria-hidden="true"
+              className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-(--surface-control) text-sm font-semibold tabular-nums"
+            >
+              {formatNumber(i + 1, lang)}
+            </span>
+            <span className="t-body text-(--surface-fg-2)">{step}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -196,7 +230,10 @@ function RequestFormBody() {
     try {
       const response = await fetch(env.formEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         body: JSON.stringify(requestPayload(values, copy)),
         signal: controller.signal,
       });
@@ -229,12 +266,23 @@ function RequestFormBody() {
     return (
       <div>
         {live}
-        <div ref={result} tabIndex={-1} data-testid="form-success" className="border border-line-dark p-8 md:p-10">
-          <h3 className="t-h3">{f.success.title}</h3>
+        <div ref={result} tabIndex={-1} data-testid="form-success" className="py-4 outline-none">
+          <svg viewBox="0 0 56 56" aria-hidden="true" className="atlas-check size-14">
+            <circle className="atlas-check__ring" cx="28" cy="28" r="25" fill="none" strokeWidth="3" />
+            <path
+              className="atlas-check__tick"
+              d="M17 29.5 24.5 37 39.5 20"
+              fill="none"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <h3 className="t-title mt-6">{f.success.title}</h3>
           <p className="t-body mt-3">
             <Fill template={f.success.text} vars={{ phone: <bdi dir="ltr">{toAsciiDigits(values.phone).trim()}</bdi> }} />
           </p>
-          <p className="t-body mt-6 text-steel">{f.success.nudge}</p>
+          <p className="t-body mt-6 text-(--surface-fg-2)">{f.success.nudge}</p>
           <Button
             href={whatsappHref(buildFollowUpMessage(values, copy))}
             external
@@ -255,9 +303,14 @@ function RequestFormBody() {
   return (
     <div>
       {live}
-      <form noValidate onSubmit={onSubmit} data-testid="request-form" aria-describedby="request-privacy" className="grid gap-12">
+      <form noValidate onSubmit={onSubmit} data-testid="request-form" aria-describedby="request-privacy" className="grid gap-10">
         {attempts > 0 && errorKeys.length > 0 && (
-          <div ref={summary} tabIndex={-1} data-testid="form-error-summary" className="border border-red-bright p-5">
+          <div
+            ref={summary}
+            tabIndex={-1}
+            data-testid="form-error-summary"
+            className="rounded-2xl border border-(--surface-danger) bg-red-50 p-5"
+          >
             <p className="font-semibold">{f.errorSummary}</p>
             <ul className="mt-3 grid gap-2">
               {errorKeys.map((key) => (
@@ -268,7 +321,7 @@ function RequestFormBody() {
                       event.preventDefault();
                       document.getElementById(`request-${key}`)?.focus();
                     }}
-                    className="underline hover:decoration-2"
+                    className="underline underline-offset-4 hover:decoration-2"
                   >
                     {errors[key]}
                   </a>
@@ -279,11 +332,16 @@ function RequestFormBody() {
         )}
 
         {(status === 'failed' || status === 'offline') && (
-          <div ref={result} tabIndex={-1} data-testid="form-failure" className="border border-red-bright p-5">
+          <div
+            ref={result}
+            tabIndex={-1}
+            data-testid="form-failure"
+            className="rounded-2xl border border-(--surface-danger) bg-red-50 p-5"
+          >
             <p className="font-semibold">{f.failure.title}</p>
             <p className="t-body mt-2">{status === 'offline' ? f.failure.offline : f.failure.text}</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button type="submit" variant="outline-on-dark" size="md">
+              <Button type="submit" variant="secondary" size="md">
                 {f.failure.retry}
               </Button>
               <Button
@@ -295,7 +353,7 @@ function RequestFormBody() {
               >
                 {f.failure.whatsapp}
               </Button>
-              <Button href={mailtoHref(emailSubject(values, copy), message)} variant="outline-on-dark" size="md">
+              <Button href={mailtoHref(emailSubject(values, copy), message)} variant="ghost-light" size="md">
                 {f.failure.email}
               </Button>
             </div>
@@ -303,8 +361,8 @@ function RequestFormBody() {
         )}
 
         <fieldset>
-          <legend className="t-h3">{f.groups.details}</legend>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <legend className="t-title">{f.groups.details}</legend>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <Field name="name" label={f.fields.name.label} hint={f.fields.name.hint} error={errors.name}>
               {(a11y) => (
                 <input
@@ -350,7 +408,7 @@ function RequestFormBody() {
                   data-testid="form-phone"
                   value={values.phone}
                   onChange={update('phone')}
-                  className={`${controlClass()} tabular-nums rtl:text-right`}
+                  className={`${controlClass()} tabular-nums`}
                 />
               )}
             </Field>
@@ -358,27 +416,37 @@ function RequestFormBody() {
         </fieldset>
 
         <fieldset>
-          <legend className="t-h3">{f.groups.lift}</legend>
-          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+          <legend className="t-title">{f.groups.lift}</legend>
+          <div className="mt-5 grid gap-5 sm:grid-cols-3">
             <Field name="crane" label={f.fields.crane.label} hint={f.fields.crane.hint} className="sm:col-span-3">
               {(a11y) => (
-                <select {...a11y} value={values.crane} onChange={update('crane')} className={`${controlClass()} [color-scheme:dark]`}>
-                  <option value="">{f.fields.crane.unsure}</option>
-                  <optgroup label={f.fields.crane.servicesGroup}>
-                    {copy.services.items.map((service) => (
-                      <option key={service.id} value={serviceOptionValue(service.id)}>
-                        {service.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={f.fields.crane.cranesGroup}>
-                    {visibleCranes.map((crane) => (
-                      <option key={crane.id} value={craneOptionValue(crane.id)}>
-                        {`${crane.make} ${crane.model}`}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                <>
+                  {requested && (
+                    <Chip data-testid="form-hook-chip" className="mb-2 self-start bg-ink text-white">
+                      <HookIcon className="size-4" />
+                      <span>
+                        {copy.bar.onHook} <bdi>{craneOrServiceLabel(values.crane, copy)}</bdi>
+                      </span>
+                    </Chip>
+                  )}
+                  <select {...a11y} value={values.crane} onChange={update('crane')} className={`${controlClass()}`}>
+                    <option value="">{f.fields.crane.unsure}</option>
+                    <optgroup label={f.fields.crane.servicesGroup}>
+                      {copy.services.items.map((service) => (
+                        <option key={service.id} value={serviceOptionValue(service.id)}>
+                          {service.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={f.fields.crane.cranesGroup}>
+                      {visibleCranes.map((crane) => (
+                        <option key={crane.id} value={craneOptionValue(crane.id)}>
+                          {`${crane.make} ${crane.model}`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </>
               )}
             </Field>
             <Field
@@ -440,15 +508,29 @@ function RequestFormBody() {
                 />
               )}
             </Field>
+            <LiftSummary values={values} />
           </div>
         </fieldset>
 
         <fieldset>
-          <legend className="t-h3">{f.groups.site}</legend>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            <Field name="site" label={f.fields.site.label} hint={f.fields.site.hint} error={errors.site} className="sm:col-span-2">
+          <legend className="t-title">{f.groups.site}</legend>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <Field
+              name="site"
+              label={f.fields.site.label}
+              hint={f.fields.site.hint}
+              error={errors.site}
+              className="sm:col-span-2"
+            >
               {(a11y) => (
-                <input {...a11y} type="text" dir="auto" value={values.site} onChange={update('site')} className={controlClass()} />
+                <input
+                  {...a11y}
+                  type="text"
+                  dir="auto"
+                  value={values.site}
+                  onChange={update('site')}
+                  className={controlClass()}
+                />
               )}
             </Field>
             <Field name="start" label={f.fields.start.label} hint={f.fields.start.hint} error={errors.start}>
@@ -459,13 +541,13 @@ function RequestFormBody() {
                   min={today}
                   value={values.start}
                   onChange={update('start')}
-                  className={`${controlClass()} tabular-nums [color-scheme:dark]`}
+                  className={`${controlClass()} tabular-nums`}
                 />
               )}
             </Field>
             <Field name="duration" label={f.fields.duration.label} hint={f.fields.duration.hint}>
               {(a11y) => (
-                <select {...a11y} value={values.duration} onChange={update('duration')} className={`${controlClass()} [color-scheme:dark]`}>
+                <select {...a11y} value={values.duration} onChange={update('duration')} className={`${controlClass()}`}>
                   <option value="">{f.fields.duration.unsure}</option>
                   {DURATIONS.map((d) => (
                     <option key={d} value={d}>
@@ -487,23 +569,26 @@ function RequestFormBody() {
                 dir="auto"
                 value={values.message}
                 onChange={update('message')}
-                className={controlClass({ multiline: true })}
+                className={controlClass()}
               />
             )}
           </Field>
-          <p className="t-small mt-1 text-end tabular-nums text-steel">
+          <p className="t-small mt-1 text-end tabular-nums text-(--surface-fg-3)">
             <Fill
               template={f.fields.message.counter}
-              vars={{ n: formatNumber(values.message.length, lang), max: formatNumber(LIMITS.message, lang) }}
+              vars={{
+                n: formatNumber(values.message.length, lang),
+                max: formatNumber(LIMITS.message, lang),
+              }}
             />
           </p>
         </div>
 
         <div className="flex flex-col items-start gap-5">
-          <p id="request-privacy" className="t-small measure text-steel">
+          <p id="request-privacy" className="t-small measure text-(--surface-fg-3)">
             {f.privacy}
           </p>
-          <Button type="submit" loading={status === 'sending'} loadingLabel={f.busy} data-testid="form-submit">
+          <Button type="submit" size="lg" magnetic loading={status === 'sending'} loadingLabel={f.busy} data-testid="form-submit">
             {f.submit}
           </Button>
           <a href={whatsappAlt} {...altExt} onClick={() => track('whatsapp_click', { location: 'form' })} className={TEXT_LINK}>
@@ -555,28 +640,63 @@ function Field({
     ...(required ? { 'aria-required': true as const } : {}),
   };
   return (
-    <div className={className}>
+    <div className={`flex flex-col ${className}`}>
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="font-semibold">
+        <label htmlFor={id} className="t-body font-semibold">
           {label}
         </label>
-        <span className="t-small text-steel">{required ? copy.form.required : copy.form.optional}</span>
+        {/* Only required fields are tagged: the intro says the rest is optional, and nine repeated "Optional" tags were noise. */}
+        {required && <span className="t-caption text-(--surface-fg-3)">{copy.form.required}</span>}
       </div>
-      <p id={hintId} className="t-small mt-1 text-steel">
+      <p id={hintId} className="t-small mt-1 grow text-(--surface-fg-2)">
         {hint}
       </p>
-      <div className="relative mt-2">
+      <div className="relative mt-2 flex flex-col">
         {children(a11y)}
         {unit && (
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-4 flex items-center text-steel">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 end-4 flex items-center font-medium text-(--surface-fg-3)"
+          >
             {unit}
           </span>
         )}
       </div>
-      {/* White text, not red: red on navy fails contrast (spec §6). The red-bright border marks the field. */}
-      <p id={errorId} aria-live="polite" className="t-small mt-2 font-semibold text-white">
+      {/* Danger red on white is 6.3:1; the border and a bold message both mark the field. */}
+      <p id={errorId} aria-live="polite" className="t-small mt-2 min-h-5 font-semibold text-(--surface-danger)">
         {error ?? ''}
       </p>
+    </div>
+  );
+}
+
+/** Echo of the entered lift (no capacity claims). Appears once the weight is a valid number. */
+function LiftSummary({ values }: { values: RequestValues }) {
+  const { copy, lang } = useLang();
+  const f = copy.form;
+  const parts = (
+    [
+      ['weight', parseDecimal(values.weight)],
+      ['radius', parseDecimal(values.radius)],
+      ['height', parseDecimal(values.height)],
+    ] as const
+  ).filter((p): p is readonly ['weight' | 'radius' | 'height', number] => p[1] !== null && p[1] > 0);
+  if (!parts.some(([k]) => k === 'weight')) return null;
+  return (
+    <div data-testid="form-lift-summary" className="rounded-2xl bg-(--surface-sunken) p-5 sm:col-span-3">
+      <p className="t-title">{f.summary.title}</p>
+      <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
+        {parts.map(([key, n]) => (
+          <div key={key}>
+            <dt className="t-small text-(--surface-fg-2)">{f.fields[key].label.replace(/\s*[(（].*$/, '')}</dt>
+            <dd className="m-0 text-2xl font-semibold tabular-nums">
+              <bdi>{formatNumber(n, lang)}</bdi>
+              <span className="ms-1 text-base font-medium text-(--surface-fg-2)">{f.fields[key].unit}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="t-small mt-3 text-(--surface-fg-3)">{f.summary.note}</p>
     </div>
   );
 }
