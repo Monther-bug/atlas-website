@@ -41,9 +41,25 @@ describe('RequestBar', () => {
     expect(call?.getAttribute('aria-label')).toBe('اتصل بنا على +218 91 123 4567');
   });
 
-  it('uses the one shadow token from spec §15.6 (C11 `shadow-bar`)', () => {
+  it('is a floating glass pill on the dark ground with an elevation token from the scale', () => {
     const bar = renderHtml(<RequestBar />).querySelector('[data-request-bar]');
-    expect(bar?.className.split(' ')).toContain('shadow-bar');
+    const classes = bar?.className.split(' ') ?? [];
+    expect(classes).toEqual(expect.arrayContaining(['glass-dark', 'rounded-full', 'shadow-e3']));
+    expect(bar?.getAttribute('data-ground')).toBe('dark');
+    expect(bar?.querySelector('[data-bar-whatsapp]')?.className).toContain('bg-red');
+  });
+
+  it('keeps the bar clear of the dock: it only fades, it never carries a transform class', () => {
+    const bar = renderHtml(<RequestBar />).querySelector('[data-request-bar]');
+    expect(bar?.className).not.toMatch(/(^|\s)(-?translate|scale|rotate)/);
+    expect(bar?.className).toContain('transition-[opacity,visibility]');
+  });
+
+  it('gives the crane chip its own solid fill, so the ride ghost looks the same in flight', async () => {
+    const { host, unmount } = await mount(<RequestBar />, 'en');
+    await act(async () => setRequestedCrane('gmk6350'));
+    expect(host.querySelector('[data-bar-chip]')?.className).toContain('bg-neutral-800');
+    await unmount();
   });
 
   it('shows the crane on the hook, switches to template B and clears with an SVG close button', async () => {

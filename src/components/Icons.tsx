@@ -78,6 +78,15 @@ export function ArrowIcon({ direction = 'forward', className = '', ...props }: I
   );
 }
 
+/** Points up (back to top). Never mirrored. */
+export function ArrowUpIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 20V5M6 11l6-6 6 6" />
+    </Svg>
+  );
+}
+
 /** Simplified oil derrick, after the one in the logo (spec §5.4). */
 export function DerrickIcon(props: IconProps) {
   return (

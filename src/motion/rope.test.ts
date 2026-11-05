@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { startBackToTop, startFooterPad, startProgressRope } from './rope';
+import { startBackToTop, startProgressRope } from './rope';
 import { startServiceSetDown, startServiceSlings } from './reveal';
 import { lenisRef } from './shared';
 
@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe('missing targets', () => {
   it('every module is a no-op without its C9 attributes', () => {
-    for (const m of [startProgressRope, startFooterPad, startServiceSetDown, startServiceSlings]) {
+    for (const m of [startProgressRope, startServiceSetDown, startServiceSlings]) {
       expect(() => m(env)()).not.toThrow();
     }
     expect(document.body.innerHTML).toBe('');
@@ -86,24 +86,14 @@ describe('startServiceSetDown', () => {
 });
 
 describe('startProgressRope', () => {
-  it('toggles is-live from onToggle, ends at max scroll, and clamps the rope length to at least 0.2', () => {
-    document.body.innerHTML =
-      '<div data-progress-rope></div><section id="services"></section><svg data-footer-pad></svg>';
-    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+  it('runs the full height of the page, ends at max scroll, and toggles is-live from onToggle', () => {
+    document.body.innerHTML = '<div data-progress-rope></div><section id="services"></section>';
     const rope = document.querySelector('[data-progress-rope]')!;
     const fromTo = vi.spyOn(gsap, 'fromTo').mockReturnValue(undefined as never);
-    vi.spyOn(gsap, 'getProperty').mockReturnValue(0 as never);
-    const pad = document.querySelector('[data-footer-pad]')!;
-    const padBottom = vi.spyOn(pad, 'getBoundingClientRect');
 
     startProgressRope(env);
-    const length = (fromTo.mock.calls[0][2] as { scaleY: () => number }).scaleY;
-    padBottom.mockReturnValue(rect(0, { bottom: 5300 })); // pad bottom 5300 - maxScroll 4000 = 1300 -> clamp to 1
-    expect(length()).toBe(1);
-    padBottom.mockReturnValue(rect(0, { bottom: 4050 })); // 50 / 1000 -> clamp to 0.2
-    expect(length()).toBe(0.2);
-    padBottom.mockReturnValue(rect(0, { bottom: 4400 })); // 0.4
-    expect(length()).toBeCloseTo(0.4);
+    expect(fromTo.mock.calls[0][1]).toEqual({ scaleY: 0 });
+    expect(fromTo.mock.calls[0][2]).toMatchObject({ scaleY: 1, scrollTrigger: { start: 0, end: 'max' } });
 
     const cfg = st.create.mock.calls[0][0];
     expect(cfg.end()).toBe(4001);
@@ -111,6 +101,15 @@ describe('startProgressRope', () => {
     expect(rope.classList.contains('is-live')).toBe(true);
     cfg.onToggle({ isActive: false });
     expect(rope.classList.contains('is-live')).toBe(false);
+  });
+
+  it('hands over after the Hoist when there is no Services section, and clears is-live on cleanup', () => {
+    document.body.innerHTML = '<div data-progress-rope class="is-live"></div><section id="cranes"></section>';
+    vi.spyOn(gsap, 'fromTo').mockReturnValue(undefined as never);
+    const dispose = startProgressRope(env);
+    expect(st.create.mock.calls[0][0].trigger.id).toBe('cranes');
+    dispose();
+    expect(document.querySelector('[data-progress-rope]')!.classList.contains('is-live')).toBe(false);
   });
 });
 

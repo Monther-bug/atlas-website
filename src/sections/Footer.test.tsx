@@ -22,12 +22,32 @@ describe('Footer', () => {
 
   const html = renderHtml(<Footer />, 'ar');
 
-  it('is the C9 footer with a back-to-top link and the outrigger pad', () => {
+  it('is the C9 footer on the black ground with a back-to-top link and no outrigger pad', () => {
     expect(html.querySelector('footer[data-footer]')).not.toBeNull();
     const top = html.querySelector('a[data-testid="back-to-top"][data-back-to-top]');
     expect(top?.getAttribute('href')).toBe('#top');
     expect(top?.textContent).toBe('العودة إلى الأعلى');
-    expect(html.querySelector('svg[data-footer-pad]')).not.toBeNull();
+    expect(html.querySelector('svg[data-footer-pad]')).toBeNull();
+    const footer = html.querySelector('footer');
+    expect(footer?.getAttribute('data-ground')).toBe('dark');
+    expect(footer?.className).toContain('surface-dark');
+  });
+
+  it('closes with the positioning line and the one action', () => {
+    expect(html.querySelector('footer p.t-display')?.textContent).toBe('لكل مشروع رافعته المناسبة.');
+    const request = html.querySelector('footer a[href="#request"]');
+    expect(request?.textContent).toBe('اطلب رافعة');
+    expect(request?.className).toContain('bg-red');
+  });
+
+  it('lists the four services and the page links', () => {
+    const services = html.querySelectorAll('nav[aria-labelledby="footer-services"] a');
+    expect(services).toHaveLength(4);
+    expect([...html.querySelectorAll('nav[aria-labelledby="footer-page"] a')].map((a) => a.getAttribute('href'))).toEqual([
+      '#cranes',
+      '#sites',
+      '#request',
+    ]);
   });
 
   it('shows only confirmed contact facts', () => {
@@ -39,6 +59,12 @@ describe('Footer', () => {
 
   it('prints the copyright with the current year', () => {
     expect(html.textContent).toContain(`© ${new Date().getFullYear()} أطلس الصحراء. جميع الحقوق محفوظة.`);
+  });
+
+  it('adds a WhatsApp action beside the request only when a number is set', () => {
+    expect(html.querySelectorAll('footer a[href^="https://wa.me/"]')).toHaveLength(0);
+    mockEnv.whatsapp = '218911234567';
+    expect(renderHtml(<Footer />, 'en').querySelectorAll('footer a[href^="https://wa.me/"]').length).toBeGreaterThan(1);
   });
 
   it('shows the phone and WhatsApp rows when configured', () => {

@@ -35,7 +35,12 @@ function useOverHero(): boolean {
   return overHero;
 }
 
-/** Fixed bar on every screen (spec §5): 64 px + safe area; compact at the inline end on desktop. */
+/**
+ * v2 request bar: a glass-dark pill that floats above the safe area on phones (inset 12 px from the sides) and sits
+ * compact at the inline end on desktop. The crane on the hook is a solid chip, so the ride ghost (a clone that keeps
+ * its classes) looks the same in flight. Opacity and visibility only: the dock and the ride measure this bar's
+ * buttons, so nothing here may move with a transform while they land.
+ */
 export function RequestBar() {
   const { copy } = useLang();
   const overHero = useOverHero();
@@ -53,15 +58,20 @@ export function RequestBar() {
       data-request-bar=""
       data-over-hero={overHero ? '' : undefined}
       data-testid="request-bar"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line-dark bg-navy-950 pb-[env(safe-area-inset-bottom)] text-white shadow-bar transition-[opacity,visibility] duration-300 lg:start-auto lg:end-6 lg:bottom-6 lg:border-t-0 lg:pb-0"
+      data-ground="dark"
+      className="glass-dark bg-black/80 fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-auto max-w-md rounded-full text-white shadow-e3 ring-1 ring-white/10 transition-[opacity,visibility] duration-(--dur-ui) ease-ui lg:inset-x-auto lg:end-6 lg:bottom-6 lg:mx-0 lg:max-w-none"
     >
-      <div className="flex h-16 items-center gap-2 ps-3 pe-2 lg:gap-3 lg:ps-5">
+      <div className="flex items-center gap-2 p-2 lg:gap-3">
         {crane ? (
-          <span data-bar-chip="" data-testid="bar-chip" className="flex min-w-0 items-center gap-2 border border-line-dark ps-3">
+          <span
+            data-bar-chip=""
+            data-testid="bar-chip"
+            className="flex min-h-12 min-w-0 items-center gap-2 rounded-full bg-neutral-800 ps-4 pe-1 text-white"
+          >
             <HookIcon className="size-4 shrink-0 text-red-bright" />
             {/* Below sm the hook icon stands for "On the hook:" so the model itself is never truncated. */}
-            <span className="min-w-0 truncate text-[0.9375rem]">
-              <span className="max-sm:sr-only">{copy.bar.onHook}</span> <bdi className="t-spec">{crane.model}</bdi>
+            <span className="min-w-0 truncate text-[0.9375rem] [&:lang(ar)]:text-base">
+              <span className="max-sm:sr-only">{copy.bar.onHook}</span> <bdi className="font-semibold">{crane.model}</bdi>
             </span>
             <button
               type="button"
@@ -71,24 +81,25 @@ export function RequestBar() {
                 setRequestedCrane(null);
                 whatsappRef.current?.querySelector<HTMLElement>('[data-bar-whatsapp]')?.focus();
               }}
-              className="inline-flex size-11 shrink-0 items-center justify-center transition-colors hover:bg-white/10"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-[background-color,transform] duration-(--dur-state) ease-ui hover:bg-white/15 active:scale-95"
             >
               <CloseIcon className="size-4" />
             </button>
           </span>
         ) : (
-          <p className="hidden text-[0.9375rem] text-steel lg:block">{copy.bar.tooltip}</p>
+          <p className="hidden ps-4 text-[0.9375rem] text-neutral-300 lg:block [&:lang(ar)]:text-base">{copy.bar.tooltip}</p>
         )}
 
         <div ref={whatsappRef} className="ms-auto flex shrink-0 items-center gap-2">
           {tel && env.phone && (
             <Button
               href={tel}
-              variant="outline-on-dark"
+              variant="ghost-dark"
               size="md"
               icon={<PhoneIcon className="size-5" />}
               aria-label={fillTemplate(copy.header.call.label, { phone: env.phone })}
               data-testid="bar-call"
+              className="max-sm:w-12 max-sm:px-0"
               onClick={() => track('call_click')}
             >
               <span className="max-sm:sr-only">{copy.header.call.text}</span>
@@ -98,13 +109,17 @@ export function RequestBar() {
             href={whatsappHref(message)}
             external
             size="md"
+            // With a crane on the hook, phones show the WhatsApp icon alone so the model keeps its room (the name stays).
+            className={crane ? 'max-sm:w-12 max-sm:px-0' : undefined}
             icon={<WhatsAppIcon className="size-5" />}
             data-testid="bar-whatsapp"
             data-bar-whatsapp=""
             onClick={() => track('whatsapp_click', { location: 'bar' })}
           >
             <span className="sr-only">{copy.bar.whatsappLabel}</span>
-            <span aria-hidden="true">{copy.bar.whatsapp}</span>
+            <span aria-hidden="true" className={crane ? 'max-sm:hidden' : undefined}>
+              {copy.bar.whatsapp}
+            </span>
           </Button>
         </div>
       </div>

@@ -66,9 +66,10 @@ html[data-motion="desktop"] .progress-rope.is-live {
   will-change: transform;
 }
 
-/* The riding chip: its colours come from the bar (<aside>), which the ghost in <body> does not inherit. */
+/* The riding chip carries its own solid fill and text colour (RequestBar chip: bg-neutral-800 text-white), because the
+   ghost in <body> does not inherit the bar's. These two lines are only a safety net for that. */
 .motion-ghost.motion-ghost--chip {
-  background-color: var(--color-navy-950);
+  background-color: var(--color-neutral-800);
   color: var(--color-white);
 }
 
@@ -260,3 +261,39 @@ html[data-motion="desktop"] [data-service-row] {
   stroke-linecap: round;
 }
 /* ==== end of the Hoist (D.5) ==== */
+
+/* ==== S.chrome: v2 header menu sheet ====
+   The mobile menu is a native modal <dialog>. It fades in and its rows rise one after another; both are final
+   state without animation support or under reduced motion (the rules sit inside no-preference). */
+@media (prefers-reduced-motion: no-preference) {
+  .menu-sheet {
+    opacity: 0;
+    transition:
+      opacity var(--dur-layout) var(--ease-set),
+      display var(--dur-layout) allow-discrete,
+      overlay var(--dur-layout) allow-discrete;
+  }
+  .menu-sheet[open] {
+    opacity: 1;
+  }
+  @starting-style {
+    .menu-sheet[open] {
+      opacity: 0;
+    }
+  }
+  .menu-sheet[open] .menu-item {
+    animation: menu-rise 640ms var(--ease-set) both;
+    animation-delay: calc(120ms + var(--i, 0) * 55ms);
+  }
+}
+@keyframes menu-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* ==== end S.chrome ==== */

@@ -169,9 +169,9 @@ describe('Logo', () => {
     expect(html.querySelector('[lang="en"]')?.textContent).toBe('Atlas Alshraa');
   });
 
-  it('uses the 80 px badge and the full name in the footer', () => {
+  it('uses the 64 px badge and the full name in the footer', () => {
     const html = renderHtml(<Logo variant="footer" />, 'en');
-    expect(html.querySelector('img')?.getAttribute('width')).toBe('80');
+    expect(html.querySelector('img')?.getAttribute('width')).toBe('64');
     expect(html.textContent).toBe('Atlas Alshraa · For oil services');
   });
 });

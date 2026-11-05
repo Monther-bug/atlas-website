@@ -6,7 +6,7 @@ import Lenis from 'lenis';
 import { startRide } from './ride';
 import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mode';
 import { startServiceSetDown, startServiceSlings } from './reveal';
-import { startBackToTop, startFooterPad, startProgressRope } from './rope';
+import { startBackToTop, startProgressRope } from './rope';
 import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
@@ -112,7 +112,6 @@ const DESKTOP: MotionModule[] = [
   startProgressRope,
   startServiceSetDown,
   startServiceSlings,
-  startFooterPad,
   startBackToTop,
   startRide,
   hoistLazy('desktop'),
@@ -128,7 +127,6 @@ const TOUCH: MotionModule[] = [
   heroIntro,
   heroDock,
   startServiceSetDown,
-  startFooterPad,
   startBackToTop,
   startRide,
   hoistLazy('touch'),

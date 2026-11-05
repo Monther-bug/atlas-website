@@ -1,132 +1,156 @@
-import { CHEVRON_STRIPES, NewTabNote, externalProps } from '@/components/Button';
-import { HookIcon } from '@/components/Icons';
+import { Button, NewTabNote, externalProps } from '@/components/Button';
+import { ArrowUpIcon, WhatsAppIcon } from '@/components/Icons';
 import { Logo } from '@/components/Logo';
+import { Section, reveal } from '@/components/ui';
 import { siteInfo } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
 import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
-const LINK = 'inline-flex min-h-11 items-center hover:underline';
-const HEADING = 'text-[0.9375rem] font-semibold text-steel';
+const LINK =
+  'inline-flex min-h-11 items-center text-neutral-300 underline-offset-[0.3em] transition-colors duration-(--dur-state) ease-ui hover:text-white hover:underline';
+const HEADING = 'text-[0.9375rem] font-semibold text-neutral-400 [&:lang(ar)]:text-base';
 
+/** v2 footer: black ground, the closing line set large with the one action, then the columns, then © and back to top. */
 export function Footer() {
   const { copy, lang } = useLang();
   const tel = telHref();
   const whatsapp = env.whatsapp ? whatsappHref(copy.whatsapp.general) : null;
 
   return (
-    <footer data-footer="" data-ground="dark" className="bg-navy-950 pb-28 text-white">
-      <OutriggerPad />
-      <div className="shell grid gap-12 pt-14 md:grid-cols-12">
-        <div className="md:col-span-4">
-          <Logo variant="footer" />
-          <p className="t-small measure mt-6 text-steel">{copy.footer.legalName}</p>
-          <p className="t-lead mt-4">{copy.footer.tagline}</p>
+    // pb leaves room for the request bar, which floats over the bottom edge on every screen.
+    <Section as="footer" surface="dark" width="wide" pad="none" data-footer="" className="pt-(--space-section) pb-28">
+      {/* One reveal pattern for the whole footer: its three blocks rise 40 ms apart (below the fold only). */}
+      <div {...reveal('stagger')}>
+        <div className="grid items-end gap-10 lg:grid-cols-12">
+          <p className="t-display lg:col-span-8">{copy.footer.tagline}</p>
+          <div className="flex flex-wrap items-center gap-3 lg:col-span-4 lg:justify-end">
+            <Button href="#request" size="lg" magnetic>
+              {copy.header.request}
+            </Button>
+            {whatsapp && (
+              <Button
+                href={whatsapp}
+                external
+                variant="ghost-dark"
+                size="lg"
+                icon={<WhatsAppIcon className="size-5" />}
+                onClick={() => track('whatsapp_click', { location: 'footer' })}
+              >
+                {copy.header.menu.whatsapp}
+              </Button>
+            )}
+          </div>
         </div>
 
-        <nav aria-labelledby="footer-services" className="md:col-span-2">
-          <h2 id="footer-services" className={HEADING}>
-            {copy.footer.servicesHeading}
-          </h2>
-          <ul className="mt-3">
-            {copy.services.items.map((service) => (
-              <li key={service.id}>
-                <a href="#services" className={LINK}>
-                  {service.title}
+        <div className="mt-(--space-head) grid gap-12 border-t border-line-dark pt-12 sm:grid-cols-2 lg:grid-cols-12">
+          <div className="sm:col-span-2 lg:col-span-3">
+            <Logo variant="footer" />
+            <p className="t-small mt-6 max-w-sm text-neutral-400">{copy.footer.legalName}</p>
+          </div>
+
+          <nav aria-labelledby="footer-services" className="lg:col-span-2">
+            <h2 id="footer-services" className={HEADING}>
+              {copy.footer.servicesHeading}
+            </h2>
+            <ul className="mt-3">
+              {copy.services.items.map((service) => (
+                <li key={service.id}>
+                  <a href="#services" className={LINK}>
+                    {service.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <nav aria-labelledby="footer-page" className="lg:col-span-2">
+            <h2 id="footer-page" className={HEADING}>
+              {copy.footer.pageHeading}
+            </h2>
+            <ul className="mt-3">
+              <li>
+                <a href="#cranes" className={LINK}>
+                  {copy.footer.pageLinks.cranes}
                 </a>
               </li>
-            ))}
-          </ul>
-        </nav>
-
-        <nav aria-labelledby="footer-page" className="md:col-span-2">
-          <h2 id="footer-page" className={HEADING}>
-            {copy.footer.pageHeading}
-          </h2>
-          <ul className="mt-3">
-            <li>
-              <a href="#cranes" className={LINK}>
-                {copy.footer.pageLinks.cranes}
-              </a>
-            </li>
-            <li>
-              <a href="#sites" className={LINK}>
-                {copy.footer.pageLinks.sites}
-              </a>
-            </li>
-            <li>
-              <a href="#request" className={LINK}>
-                {copy.footer.pageLinks.request}
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="md:col-span-2">
-          <h2 className={HEADING}>{copy.footer.contactHeading}</h2>
-          <ul className="mt-3">
-            <li>
-              <a href={`mailto:${siteInfo.email}`} className={`${LINK} break-all`}>
-                <bdi>{siteInfo.email}</bdi>
-              </a>
-            </li>
-            {tel && env.phone && (
               <li>
-                <a href={tel} onClick={() => track('call_click')} className={LINK}>
-                  <bdi dir="ltr">{env.phone}</bdi>
+                <a href="#sites" className={LINK}>
+                  {copy.footer.pageLinks.sites}
                 </a>
               </li>
-            )}
-            {whatsapp && env.whatsapp && (
               <li>
-                <a
-                  href={whatsapp}
-                  {...externalProps(whatsapp)}
-                  onClick={() => track('whatsapp_click', { location: 'footer' })}
-                  className={LINK}
-                >
-                  <bdi dir="ltr">+{env.whatsapp.replace(/\D/g, '')}</bdi>
+                <a href="#request" className={LINK}>
+                  {copy.footer.pageLinks.request}
+                </a>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="lg:col-span-3">
+            <h2 className={HEADING}>{copy.footer.contactHeading}</h2>
+            <ul className="mt-3">
+              <li>
+                <a href={`mailto:${siteInfo.email}`} className={`${LINK} break-words`}>
+                  <bdi>{siteInfo.email}</bdi>
+                </a>
+              </li>
+              {tel && env.phone && (
+                <li>
+                  <a href={tel} onClick={() => track('call_click')} className={LINK}>
+                    <bdi dir="ltr">{env.phone}</bdi>
+                  </a>
+                </li>
+              )}
+              {whatsapp && env.whatsapp && (
+                <li>
+                  <a
+                    href={whatsapp}
+                    {...externalProps(whatsapp)}
+                    onClick={() => track('whatsapp_click', { location: 'footer' })}
+                    className={LINK}
+                  >
+                    <bdi dir="ltr">+{env.whatsapp.replace(/\D/g, '')}</bdi>
+                    <NewTabNote />
+                  </a>
+                </li>
+              )}
+              {siteInfo.address && <li className="py-2 text-neutral-300">{siteInfo.address[lang]}</li>}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-2">
+            <h2 className={HEADING}>{copy.footer.followHeading}</h2>
+            <ul className="mt-3">
+              <li>
+                <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={LINK}>
+                  {copy.footer.facebook}
                   <NewTabNote />
                 </a>
               </li>
-            )}
-            {siteInfo.address && <li className="py-2">{siteInfo.address[lang]}</li>}
-          </ul>
+            </ul>
+          </div>
         </div>
 
-        <div className="md:col-span-2">
-          <h2 className={HEADING}>{copy.footer.followHeading}</h2>
-          <ul className="mt-3">
-            <li>
-              <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={LINK}>
-                {copy.footer.facebook}
-                <NewTabNote />
-              </a>
-            </li>
-          </ul>
+        <div className="mt-16 flex flex-col-reverse gap-4 border-t border-line-dark pt-6 sm:flex-row sm:items-center sm:justify-between">
+          {/* The year is plain digits (formatNumber would group it). Prerendered at build time, so it may differ once a year. */}
+          <p className="t-small text-neutral-400" suppressHydrationWarning>
+            {fillTemplate(copy.footer.copyright, { year: String(new Date().getFullYear()) })}
+          </p>
+          <a
+            href="#top"
+            data-testid="back-to-top"
+            data-back-to-top=""
+            className="group inline-flex min-h-11 items-center gap-3 self-start rounded-full bg-white/10 ps-5 pe-1.5 font-semibold transition-[background-color,transform] duration-(--dur-state) ease-ui hover:bg-white/20 active:scale-[0.98] sm:self-auto"
+          >
+            {copy.footer.backToTop}
+            <span className="grid size-8 place-items-center rounded-full bg-white text-ink">
+              <ArrowUpIcon className="size-4" />
+            </span>
+          </a>
         </div>
       </div>
-
-      <div className="shell mt-14 flex flex-col-reverse gap-4 border-t border-line-dark pt-6 sm:flex-row sm:items-center sm:justify-between">
-        {/* The year is plain digits (formatNumber would group it). Prerendered at build time, so it may differ once a year. */}
-        <p className="t-small text-steel" suppressHydrationWarning>
-          {fillTemplate(copy.footer.copyright, { year: String(new Date().getFullYear()) })}
-        </p>
-        <a href="#top" data-testid="back-to-top" data-back-to-top="" className="inline-flex min-h-11 items-center gap-2 font-semibold hover:underline">
-          <HookIcon className="size-5 text-red-bright" />
-          {copy.footer.backToTop}
-        </a>
-      </div>
-    </footer>
-  );
-}
-
-/** Where the rope ends: an outrigger pad in red/white chevrons (spec §5.9). Physical drawing, never mirrored. */
-function OutriggerPad() {
-  return (
-    <div className="shell" aria-hidden="true">
-      <svg data-footer-pad="" viewBox="0 0 160 20" width="160" height="20" focusable="false" className="block h-5 w-40" style={CHEVRON_STRIPES} />
-    </div>
+    </Section>
   );
 }
