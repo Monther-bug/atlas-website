@@ -366,6 +366,7 @@ export const ar: Copy = {
     followHeading: 'تابعنا',
     facebook: 'فيسبوك',
     copyright: '© {year} أطلس الصحراء. جميع الحقوق محفوظة.',
+    credit: 'تصميم وتطوير',
     backToTop: 'العودة إلى الأعلى',
   },
 

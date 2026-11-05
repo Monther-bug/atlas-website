@@ -11,6 +11,8 @@ import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
 const LINK =
   'inline-flex min-h-11 items-center text-neutral-300 underline-offset-[0.3em] transition-colors duration-(--dur-state) ease-ui hover:text-white hover:underline';
+/** The studio that designed and built the site (the user's request: "add at the end: by Core"). */
+const CORE_URL = 'https://core.com.ly/';
 const HEADING = 'text-[0.9375rem] font-semibold text-neutral-400 [&:lang(ar)]:text-base';
 
 /** v2 footer: black ground, the closing line set large with the one action, then the columns, then © and back to top. */
@@ -140,9 +142,18 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col-reverse gap-4 border-t border-line-dark pt-6 sm:flex-row sm:items-center sm:justify-between">
           {/* The year is plain digits (formatNumber would group it). Prerendered at build time, so it may differ once a year. */}
-          <p className="t-small text-neutral-400" suppressHydrationWarning>
-            {fillTemplate(copy.footer.copyright, { year: String(new Date().getFullYear()) })}
-          </p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+            <p className="t-small text-neutral-400" suppressHydrationWarning>
+              {fillTemplate(copy.footer.copyright, { year: String(new Date().getFullYear()) })}
+            </p>
+            <p className="t-small text-neutral-400" data-testid="footer-credit">
+              {copy.footer.credit}{' '}
+              <a href={CORE_URL} {...externalProps(CORE_URL)} className={`${LINK} font-semibold`} lang="en">
+                <bdi>Core</bdi>
+                <NewTabNote />
+              </a>
+            </p>
+          </div>
           <a
             href={crane ? '#main' : '#top'}
             data-testid="back-to-top"

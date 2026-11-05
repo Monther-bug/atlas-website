@@ -745,6 +745,7 @@ I just sent a request through your website. Name: {name}, phone: {phone}.
 | Link | فيسبوك | Facebook |
 | Registration (optional, HIDDEN UNTIL DATA) | السجل التجاري: [[CR_NUMBER]] | Commercial registration: [[CR_NUMBER]] |
 | Copyright | © {year} أطلس الصحراء. جميع الحقوق محفوظة. | © {year} Atlas Alshraa. All rights reserved. |
+| Credit (links to https://core.com.ly/) | تصميم وتطوير Core | Designed and built by Core |
 | Back to top | العودة إلى الأعلى | Back to top |
 
 ---

@@ -368,6 +368,7 @@ export const en: Copy = {
     followHeading: 'Follow us',
     facebook: 'Facebook',
     copyright: '© {year} Atlas Alshraa. All rights reserved.',
+    credit: 'Designed and built by',
     backToTop: 'Back to top',
   },
 

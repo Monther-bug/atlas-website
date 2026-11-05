@@ -61,6 +61,18 @@ describe('Footer', () => {
     expect(html.textContent).toContain(`© ${new Date().getFullYear()} أطلس الصحراء. جميع الحقوق محفوظة.`);
   });
 
+  it('credits Core with a link that opens in a new tab', () => {
+    const credit = html.querySelector('[data-testid="footer-credit"]');
+    expect(credit?.textContent).toContain('تصميم وتطوير');
+    const link = credit?.querySelector('a[href="https://core.com.ly/"]');
+    expect(link?.textContent).toContain('Core');
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(renderHtml(<Footer />, 'en').querySelector('[data-testid="footer-credit"]')?.textContent).toContain(
+      'Designed and built by',
+    );
+  });
+
   it('adds a WhatsApp action beside the request only when a number is set', () => {
     expect(html.querySelectorAll('footer a[href^="https://wa.me/"]')).toHaveLength(0);
     mockEnv.whatsapp = '218911234567';

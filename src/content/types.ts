@@ -319,6 +319,8 @@ export interface Copy {
     followHeading: string;
     facebook: string;
     copyright: string; // {year}
+    /** Studio credit before the Core link, e.g. "Designed and built by". */
+    credit: string;
     backToTop: string;
   };
 
