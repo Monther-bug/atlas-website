@@ -10,6 +10,7 @@ import { startWhyBars, startWhyStepsDesktop, startWhyStepsTouch } from './why';
 import { startBackToTop, startProgressRope } from './rope';
 import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
+import { afterLoader, loaderShowing } from './loader';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
 import { startAboutDesktop, startAboutTouch } from './about';
 import { startSitesDrag, startSitesDrift, startSitesSlidesDesktop, startSitesSlidesTouch } from './sites';
@@ -139,10 +140,16 @@ function lineupLazy(kind: 'desktop' | 'touch'): MotionModule {
   };
 }
 
+/**
+ * The hero intro waits for the first-visit curtain (loader.ts): it starts the moment the hook lifts it, or at once when
+ * there is none. One wrapped module for both contexts.
+ */
+const heroIntroAfterLoader = afterLoader(heroIntro);
+
 /** Desktop context. Order matters: Lenis first, then the hero intro (it must set its from-states in this same task). */
 const DESKTOP: MotionModule[] = [
   startLenis,
-  heroIntro,
+  heroIntroAfterLoader,
   heroDock,
   startProgressRope,
   // Services + Why Atlas (v2): line drawings, capacity bars, the scrubbed process line.
@@ -167,7 +174,7 @@ const DESKTOP: MotionModule[] = [
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
 const TOUCH: MotionModule[] = [
-  heroIntro,
+  heroIntroAfterLoader,
   heroDock,
   startServiceArt,
   startWhyBars,
@@ -197,7 +204,9 @@ export function startMotion(): Dispose {
   ScrollTrigger.config({ ignoreMobileResize: true });
 
   const root = document.documentElement;
-  const env: MotionEnv = { lang: langOf(root.lang), rtl: root.dir === 'rtl', late: performance.now() > LATE_MS };
+  // Under the first-visit curtain the hero has not been seen yet, so a start after LATE_MS is not late: the intro waits
+  // for the lift instead (afterLoader).
+  const env: MotionEnv = { lang: langOf(root.lang), rtl: root.dir === 'rtl', late: performance.now() > LATE_MS && !loaderShowing() };
 
   // Set the mode before any context runs. The CSS pre-hide stops here, so every module
   // that wants a from-state sets it synchronously, in this same task, before the next paint.

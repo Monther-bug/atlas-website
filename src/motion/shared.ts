@@ -10,7 +10,8 @@ export interface MotionEnv {
   /**
    * True when motion started more than 2.8 s after navigation: the 3 s CSS failsafe in motion.css has
    * revealed the hero, or is about to. Intro modules (D.3) then skip their from-states and leave the hero
-   * as rendered instead of hiding it again. Computed once, in startMotion(); a context that re-runs later
+   * as rendered instead of hiding it again. Never true while the first-visit curtain still covers the page
+   * (loader.ts): the hero has not been seen, and its intro waits for the lift. Computed once, in startMotion(); a context that re-runs later
    * (a resize across the breakpoint) gets the same value, so a module that must not replay keeps its own flag.
    */
   late: boolean;
