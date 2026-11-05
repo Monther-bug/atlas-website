@@ -20,11 +20,15 @@ const CRANE_PRELOADS = {
   en: ['plex-mono-500', 'poppins-700', 'poppins-400'],
 } as const;
 
+/** The 404 page: Arabic first (H1 Tajawal 800, buttons 700), then the Poppins 700 "404". */
+const NOT_FOUND_PRELOADS = ['tajawal-ar-800', 'tajawal-ar-700', 'poppins-700'] as const;
+
 /** Builds the preload tags for one HTML page from the emitted bundle file names. */
 export function fontPreloadTags(htmlPath: string, bundleFiles: string[], base = '/'): HtmlTagDescriptor[] {
   const lang = htmlPath.startsWith('/en/') ? 'en' : 'ar';
   const crane = /(^|\/)cranes\//.test(htmlPath);
-  return (crane ? CRANE_PRELOADS : PRELOADS)[lang].map((name) => {
+  const names = /(^|\/)404\.html$/.test(htmlPath) ? NOT_FOUND_PRELOADS : (crane ? CRANE_PRELOADS : PRELOADS)[lang];
+  return names.map((name) => {
     const file = bundleFiles.find((f) => f.endsWith('.woff2') && f.split('/').pop()!.startsWith(`${name}-`));
     if (!file) throw new Error(`font-preload: no emitted .woff2 for "${name}". Did src/fonts.css change?`);
     return {

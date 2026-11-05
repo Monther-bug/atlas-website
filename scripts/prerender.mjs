@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build, loadEnv } from 'vite';
 import { buildSitemap, fillSiteUrl, normalizeSiteUrl } from './lib/seo.mjs';
-import { dropDuplicateLinks, extractLeadingLinks, findTokens, injectApp, injectHead, resolveBuildTarget } from './lib/prerender-helpers.mjs';
+import { dropDuplicateLinks, extractLeadingLinks, fillNotFound, findTokens, injectApp, injectHead, resolveBuildTarget } from './lib/prerender-helpers.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = path.join(ROOT, 'dist');
@@ -70,6 +70,14 @@ try {
   }
   // The templates themselves are not pages.
   for (const rel of Object.values(CRANE_TEMPLATES)) await rm(path.join(DIST, rel), { force: true });
+  // The 404 page: no React, only its two contact markers (WhatsApp when configured, else email).
+  const notFound = path.join(DIST, '404.html');
+  const nfHtml = fillNotFound(await readFile(notFound, 'utf8'), {
+    whatsapp: process.env.VITE_WHATSAPP || FILE_ENV.VITE_WHATSAPP,
+    email: server.siteInfo.email,
+  });
+  await writeFile(notFound, nfHtml);
+  console.log(`prerender: 404.html ${(Buffer.byteLength(nfHtml) / 1024).toFixed(1)} KB`);
   const craneGroups = server.cranePageIds.map((id) => [
     { lang: 'ar', path: `/cranes/${id}/` },
     { lang: 'en', path: `/en/cranes/${id}/` },

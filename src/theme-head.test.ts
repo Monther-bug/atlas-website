@@ -7,6 +7,7 @@ import arHtml from '../index.html?raw';
 import enHtml from '../en/index.html?raw';
 import craneArHtml from '../cranes/index.html?raw';
 import craneEnHtml from '../en/cranes/index.html?raw';
+import notFoundHtml from '../404.html?raw';
 import { minifyInlineScripts } from '../vite/inline-script';
 
 function load(html: string, { saved, osDark = false, reduced = false, noStorage = false }: { saved?: string; osDark?: boolean; reduced?: boolean; noStorage?: boolean }) {
@@ -40,6 +41,7 @@ describe.each([
   ['en minified', minifyInlineScripts(enHtml)],
   ['crane ar', craneArHtml],
   ['crane en minified', minifyInlineScripts(craneEnHtml)],
+  ['404 minified', minifyInlineScripts(notFoundHtml)],
 ])('%s head script: theme', (_name, html) => {
   it('opens light on a first visit, even when the OS prefers dark', () => {
     expect(load(html, { osDark: true }).hasAttribute('data-theme')).toBe(false);

@@ -45,6 +45,7 @@ export function head(lang: Lang): string {
 
 /** The crane pages to write: every visible crane, in both languages (never the hidden CKE2500). */
 export const cranePageIds: readonly CraneId[] = CRANE_PAGES.map((c) => c.id);
+export { siteInfo } from '@/content/site';
 
 function craneOf(id: CraneId) {
   const crane = CRANE_PAGES.find((c) => c.id === id);

@@ -283,6 +283,23 @@ for (const p of CRANE_PAGES) {
   }
 }
 
+// The 404 page: a real 404 status for an unknown path, noindex, both languages, working links.
+{
+  const res = await fetch(`${BASE}/no-such-page/`);
+  const html = await res.text();
+  report(res.status === 404, '404 page: unknown path answers 404', String(res.status));
+  report(/<meta name="robots" content="noindex"/.test(html), '404 page: noindex');
+  report(html.includes('هذه الصفحة غير موجودة') && html.includes("This page doesn't exist"), '404 page: Arabic and English headings');
+  report(!/<link[^>]*rel="canonical"/.test(html), '404 page: no canonical');
+  report(!html.includes('<!--contact-'), '404 page: contact markers filled');
+  const links = [...html.matchAll(/<a\b[^>]*\bhref="(\/[^"]*)"/g)].map((m) => m[1].split('#')[0]);
+  for (const href of [...new Set(links)]) {
+    const r = await fetch(BASE + href);
+    report(r.status === 200, `404 page: link ${href} resolves`, String(r.status));
+  }
+  const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
+  report(!sitemap.includes('404'), '404 page: not in sitemap.xml');
+}
 await browser.close();
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll prerender checks passed');
 process.exit(failures ? 1 : 0);

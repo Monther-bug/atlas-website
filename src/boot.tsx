@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { App } from '@/App';
 import type { Copy } from '@/content/types';
 import { LangProvider } from '@/lib/lang';
+import { KeepPageBoundary } from '@/lib/KeepPageBoundary';
 import './styles.css';
 
 /**
@@ -15,11 +16,15 @@ export function boot(copy: Copy): void {
 
 
   // The same tree src/entry-server.tsx renders for the prerender.
+  // If a render error ever happens, the boundary puts the prerendered page back rather than leaving it blank.
+  const snapshot = container.innerHTML;
   const app = (
     <StrictMode>
-      <LangProvider lang={copy.lang} copy={copy}>
-        <App />
-      </LangProvider>
+      <KeepPageBoundary snapshot={snapshot}>
+        <LangProvider lang={copy.lang} copy={copy}>
+          <App />
+        </LangProvider>
+      </KeepPageBoundary>
     </StrictMode>
   );
 

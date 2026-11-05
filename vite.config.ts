@@ -7,6 +7,7 @@ import { inlineScriptMinify } from './vite/inline-script.ts';
 import { siteUrl } from './vite/site-url.ts';
 import { truthGate } from './vite/truth-gate.ts';
 import { cranePagesDev } from './vite/crane-pages-dev.ts';
+import { notFoundFallback } from './vite/not-found-fallback.ts';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -35,6 +36,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       siteUrl(),
       cranePagesDev(),
+      notFoundFallback(),
       react(),
       tailwindcss(),
       fontPreload(),
@@ -54,6 +56,8 @@ export default defineConfig(({ mode }) => {
           en: path('./en/index.html'),
           'crane-ar': path('./cranes/index.html'),
           'crane-en': path('./en/cranes/index.html'),
+          // The 404 page (dist/404.html): static, no React; scripts/prerender.mjs fills its contact action.
+          'not-found': path('./404.html'),
         },
       },
       // Never inline fonts as base64: the tiny unicode-range fill faces (fill-ar, fill-la) must stay separate files

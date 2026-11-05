@@ -64,3 +64,24 @@ export function dropDuplicateLinks(links, html) {
   const have = new Set((html.match(/<link\b[^>]*>/gi) ?? []).map(linkKey));
   return (links.match(/<link\b[^>]*>/gi) ?? []).filter((tag) => !have.has(linkKey(tag)));
 }
+
+const CONTACT_AR = '<!--contact-ar-->';
+const CONTACT_EN = '<!--contact-en-->';
+
+/** The 404 page's contact action in one language: a red WhatsApp button when a number is configured, otherwise a
+ *  quiet email link (the same fallback as every WhatsApp button on the site). */
+export function notFoundContact(lang, { whatsapp, email }) {
+  const number = (whatsapp ?? '').replace(/\D/g, '');
+  const ar = lang === 'ar';
+  if (number) return `<a class="nf-btn nf-btn-red" href="https://wa.me/${number}">${ar ? 'تواصل عبر واتساب' : 'WhatsApp us'}</a>`;
+  return `<a class="nf-btn nf-btn-text" href="mailto:${email}">${ar ? 'راسلنا بالبريد' : 'Email us'}</a>`;
+}
+
+/** Fills both contact markers of 404.html. */
+export function fillNotFound(html, opts) {
+  for (const [marker, lang] of [[CONTACT_AR, 'ar'], [CONTACT_EN, 'en']]) {
+    if (html.split(marker).length !== 2) throw new Error(`prerender: marker ${marker} must appear exactly once in 404.html`);
+    html = html.replace(marker, () => notFoundContact(lang, opts));
+  }
+  return html;
+}

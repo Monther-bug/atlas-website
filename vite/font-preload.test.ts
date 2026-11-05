@@ -61,4 +61,9 @@ describe('fontPreloadTags', () => {
     expect(hrefs('/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/tajawal-ar-400-DPfaHKGf.woff2']);
     expect(hrefs('/en/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/poppins-400-BA30v0Pd.woff2']);
   });
+
+  it('preloads the 404 page\'s faces: Tajawal 800 and 700, Poppins 700', () => {
+    const files = ['assets/tajawal-ar-800-a.woff2', 'assets/tajawal-ar-700-b.woff2', 'assets/poppins-700-c.woff2'];
+    expect(fontPreloadTags('/404.html', files).map((t) => t.attrs?.href)).toEqual(files.map((f) => `/${f}`));
+  });
 });

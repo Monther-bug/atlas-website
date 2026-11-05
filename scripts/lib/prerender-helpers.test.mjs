@@ -4,9 +4,11 @@ import {
   countFontPreloads,
   dropDuplicateLinks,
   extractLeadingLinks,
+  fillNotFound,
   findTokens,
   injectApp,
   injectHead,
+  notFoundContact,
   resolveBuildTarget,
 } from './prerender-helpers.mjs';
 
@@ -132,5 +134,29 @@ describe('dropDuplicateLinks', () => {
     const a = '<link rel="preload" as="image" href="/n1.jpg">';
     const b = '<link rel="preload" as="image" href="/n2.jpg">';
     expect(dropDuplicateLinks(a + '\n' + b, page)).toEqual([a, b]);
+  });
+});
+
+describe('404 page contact action', () => {
+  const email = 'a@example.com';
+  it('is a red WhatsApp button when a number is configured', () => {
+    const html = notFoundContact('en', { whatsapp: '+218 91-000', email });
+    expect(html).toContain('href="https://wa.me/21891000"');
+    expect(html).toContain('nf-btn-red');
+  });
+  it('falls back to an email link, never a made-up number', () => {
+    for (const lang of ['ar', 'en']) {
+      const html = notFoundContact(lang, { whatsapp: undefined, email });
+      expect(html).toContain('href="mailto:a@example.com"');
+      expect(html).not.toContain('wa.me');
+    }
+  });
+  it('fills both markers, once each', () => {
+    const out = fillNotFound('<!--contact-ar-->|<!--contact-en-->', { whatsapp: '', email });
+    expect(out).not.toContain('<!--contact');
+    expect(out.match(/mailto:/g)).toHaveLength(2);
+  });
+  it('throws when a marker is missing', () => {
+    expect(() => fillNotFound('<!--contact-ar-->', { email })).toThrow(/contact-en/);
   });
 });
