@@ -16,7 +16,7 @@ import { formatMetres, formatNumber } from '@/lib/numbers';
 import { setRequestedCrane } from '@/lib/request';
 import { fillTemplate, whatsappHref } from '@/lib/whatsapp';
 import { closeNow, openWithMorph } from '@/motion/morph';
-import { ratingRadius } from './card-facts';
+import { ratingDiffers, ratingRadius } from './card-facts';
 import { addToCompare, compareStore, defaultCompare } from './compare-store';
 import { SHEET_ID, specIdOf, specOf } from './lineup-data';
 import { craneMessage, hostOf, photosOf, sourcesOf, specGroups } from './sheet-data';
@@ -70,7 +70,7 @@ export default function CraneSheet({ crane, request }: { crane: Crane; request: 
   const capacity = formatNumber(crane.capacityT, lang, { maximumFractionDigits: decimals });
   const specId = specIdOf(crane.id);
   const note = specId ? extra.capacityNotes[specId] : null;
-  const groups = spec ? specGroups(spec, copy, extra, lang) : [];
+  const groups = spec ? specGroups(spec, copy, extra, lang, crane) : [];
   const anySecondary = groups.some((g) => g.rows.some((r) => r.cell.secondary));
   const sources = spec ? sourcesOf(spec) : [];
   const dialog = () => document.getElementById(SHEET_ID) as HTMLDialogElement | null;
@@ -148,7 +148,7 @@ export default function CraneSheet({ crane, request }: { crane: Crane; request: 
             {copy.grid.card.capacity}
             {radius !== undefined ? ` ${fillTemplate(copy.grid.card.atRadius, { radius: formatMetres(radius, lang) })}` : ''}
             {' · '}
-            {copy.grid.card.rating}
+            {ratingDiffers(crane) ? extra.conflict.label : copy.grid.card.rating}
           </span>
           <DraftBadge verified={crane.verified} />
         </p>
@@ -179,6 +179,12 @@ export default function CraneSheet({ crane, request }: { crane: Crane; request: 
                       {row.cell.text}
                       <span aria-hidden="true">*</span>
                       <span className="sr-only"> ({extra.compare.secondary})</span>
+                    </>
+                  ) : row.cell.conflict ? (
+                    <>
+                      {row.cell.text}
+                      <span aria-hidden="true">†</span>
+                      <span className="sr-only"> ({extra.conflict.mark})</span>
                     </>
                   ) : (
                     row.cell.text

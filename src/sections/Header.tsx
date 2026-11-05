@@ -63,7 +63,6 @@ function useChromeState() {
   const [atTop, setAtTop] = useState(false);
   const [tone, setTone] = useState<Tone>('dark');
   const [active, setActive] = useState<string | null>(null);
-  const [overHero, setOverHero] = useState(true);
 
   useEffect(() => {
     const header = document.querySelector<HTMLElement>('[data-header]');
@@ -73,9 +72,6 @@ function useChromeState() {
       frame = 0;
       const hero = document.getElementById('top');
       setAtTop(hero !== null && window.scrollY < TOP_SLACK);
-      // Until the hero's WhatsApp load docks into the bar (hero bottom above 65 % of the viewport, RequestBar.tsx),
-      // the hero's red button is the one red action on screen, so the header's request pill stays outlined.
-      setOverHero(hero !== null && hero.getBoundingClientRect().bottom > window.innerHeight * 0.65);
       setTone(groundUnder(header) ?? 'dark');
       setActive(sectionAtSpyLine());
     };
@@ -94,12 +90,12 @@ function useChromeState() {
     };
   }, []);
 
-  return { atTop, tone, active, overHero };
+  return { atTop, tone, active };
 }
 
 export function Header() {
   const { lang, copy, otherLang, otherHref } = useLang();
-  const { atTop, tone, active, overHero } = useChromeState();
+  const { atTop, tone, active } = useChromeState();
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -184,8 +180,13 @@ export function Header() {
       />
 
       <div className="shell-wide relative grid h-16 grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]">
-        <a href="#top" aria-label={copy.header.homeLabel} className="inline-flex min-h-11 items-center justify-self-start rounded-full">
+        {/* Named by what it shows (both name lines) plus a hidden "back to top", so the name contains the visible label. */}
+        <a href="#top" className="inline-flex min-h-11 items-center justify-self-start rounded-full">
           <Logo tone={onLight ? 'light' : 'dark'} />
+          <span className="sr-only">
+            {lang === 'ar' ? '، ' : ', '}
+            {copy.header.homeLabel}
+          </span>
         </a>
 
         <nav aria-label={copy.header.menu.open} className="hidden lg:block">
@@ -246,7 +247,10 @@ export function Header() {
             {copy.header.langSwitch.text}
           </a>
           <div className="hidden sm:block">
-            <Button href="#request" size="sm" variant={overHero ? 'ghost-dark' : 'primary'} data-testid="header-request">
+            {/* One look, following the ground like the glass: white on dark, ink on light. Never red: red stays with the
+                actions in the content and the request bar (Q.1: the outline-then-red flip read as a glitch, and a red
+                pill here doubled the bar's red WhatsApp on every desktop screen). */}
+            <Button href="#request" size="sm" variant={onLight ? 'secondary' : 'inverse'} data-testid="header-request">
               {copy.header.request}
             </Button>
           </div>

@@ -35,12 +35,13 @@ export function App() {
       </a>
       <Header />
       <main id="main" tabIndex={-1} className="outline-none">
+        {/* v2 spec §5.3: the fleet is told in one run (showcase, then find + compare), then services, why, the photos. */}
         <Hero />
         <About />
         <Hoist />
+        <CraneGrid />
         <Services />
         <WhyAtlas />
-        <CraneGrid />
         <Sites />
         <Documents />
         <RequestForm />

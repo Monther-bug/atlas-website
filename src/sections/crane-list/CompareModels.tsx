@@ -19,7 +19,7 @@ import { HookIcon } from '@/components/Icons';
 import { setRequestedCrane } from '@/lib/request';
 import { track } from '@/lib/analytics';
 import { COMPARE_MAX, addToCompare, compareStore, useCompare } from './compare-store';
-import { SPEC_GROUPS, hasBar, magnitude, rowLabel, rowMax, specCell, specIdOf, specOf } from './lineup-data';
+import { SPEC_GROUPS, capacityCell, hasBar, magnitude, rowLabel, rowMax, specCell, specIdOf, specOf } from './lineup-data';
 
 const off = (hidden: boolean) => (hidden ? { 'data-off': '' } : {});
 
@@ -66,7 +66,11 @@ export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
     id: group.id,
     rows: group.rows
       .map((row) => {
-        const cells = models.map((m) => ({ id: m.crane.id, on: m.on, cell: specCell(m.spec, row, copy, lang), size: magnitude(m.spec, row) }));
+        const cells = models.map((m) => {
+          // One capacity per crane on the page: the row shows the figure the cards show (see capacityCell).
+          const own = row === 'maxCapacity' ? capacityCell(m.crane, m.spec, copy, lang) : null;
+          return { id: m.crane.id, on: m.on, cell: own ?? specCell(m.spec, row, copy, lang), size: own ? m.crane.capacityT : magnitude(m.spec, row) };
+        });
         return { row, cells, max: hasBar(row) ? rowMax(specs, row) : undefined, any: cells.some((c) => c.cell), anyPicked: cells.some((c) => c.on && c.cell) };
       })
       .filter((r) => r.any),
@@ -196,6 +200,12 @@ export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
                             <>
                               <span aria-hidden="true">*</span>
                               <span className="sr-only"> ({text.secondary})</span>
+                            </>
+                          ) : null}
+                          {cell.conflict ? (
+                            <>
+                              <span aria-hidden="true">†</span>
+                              <span className="sr-only"> ({extra.conflict.mark})</span>
                             </>
                           ) : null}
                           {max !== undefined && size !== undefined ? (

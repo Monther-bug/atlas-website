@@ -119,14 +119,17 @@ describe('LoadTag accessibility and layout', () => {
 });
 
 describe('Hoist v2', () => {
-  it.each(['ar', 'en'] as const)('explains the "350 TON" on the GMK6350 boom with its metric rating, on that crane only (%s)', (lang) => {
+  it.each(['ar', 'en'] as const)('explains the "350 TON" on the GMK6350 boom and the QUY250 figure, on those cranes only (%s)', (lang) => {
     const html = renderHtml(<Hoist />, lang);
     const notes = [...html.querySelectorAll('[data-load-tag] p')];
-    expect(notes).toHaveLength(1);
-    expect(notes[0]?.closest('[data-hoist-item]')?.getAttribute('data-crane')).toBe('gmk6350');
-    expect(notes[0]?.textContent).toContain('350');
-    expect(notes[0]?.textContent).toContain(lang === 'ar' ? '317.5\u00A0طن' : '317.5\u00A0t');
-    expect(notes[0]?.textContent).not.toContain('{');
+    expect(notes.map((n) => n.closest('[data-hoist-item]')?.getAttribute('data-crane'))).toEqual(['quy250', 'gmk6350']);
+    const [quy, gmk] = notes;
+    expect(gmk?.textContent).toContain('350');
+    expect(gmk?.textContent).toContain(lang === 'ar' ? '317.5\u00A0طن' : '317.5\u00A0t');
+    // QUY250: the figure shown is the model name's; Fuwa's page lists another (open decision, spec §15.2).
+    expect(quy?.textContent).toContain(lang === 'ar' ? '250\u00A0طن' : '250\u00A0t');
+    expect(quy?.textContent).toContain('260');
+    for (const n of notes) expect(n.textContent).not.toContain('{');
   });
 
   it('renders the five capacities as an index above the list, one link per crane, each pointing at its item', () => {

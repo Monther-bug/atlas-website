@@ -122,13 +122,13 @@ describe('desktop in-page links', () => {
     let prevented: boolean | undefined;
     window.addEventListener('click', (event) => (prevented = event.defaultPrevented), { once: true });
     a.click();
-    expect(lenises[0].scrollTo).toHaveBeenCalledWith('#request');
+    expect(lenises[0].scrollTo).toHaveBeenCalledWith('#request', { onComplete: expect.any(Function) });
     expect(prevented).toBe(false);
   });
 
   it('decode the hash and work from an element inside the link', () => {
     link('#%D8%AE%D8%AF%D9%85%D8%A7%D8%AA', '<span>services</span>').querySelector('span')!.click();
-    expect(lenises[0].scrollTo).toHaveBeenCalledWith('#خدمات');
+    expect(lenises[0].scrollTo).toHaveBeenCalledWith('#خدمات', { onComplete: expect.any(Function) });
   });
 
   it('are left alone when a handler already took the click (error summary links)', () => {

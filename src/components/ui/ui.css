@@ -403,6 +403,8 @@
     justify-content: center;
     gap: 0.5rem;
     min-block-size: 2.75rem;
+    /* A short label ("All") on a phone's tighter padding still makes a 44 px target. */
+    min-inline-size: 2.75rem;
     padding-inline: 1.125rem;
     border-radius: 999px;
     font-family: var(--font-body);

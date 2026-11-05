@@ -6,7 +6,8 @@ export const BADGE_SRC = '/brand/badge.png';
 /**
  * Header: 40 px badge + the name over its other-language twin. Footer: 64 px badge + the name as on the logo.
  * `tone` is the ground the lockup sits on ('dark' = black or glass-dark, 'light' = white): it only changes the
- * second line, which must keep 4.5:1 on either (neutral-400 on black 7.9:1, ink-3 on white 5.3:1).
+ * second line, which must keep 4.5:1 on either. On dark it is neutral-200: the glass-dark bar over the hero's bright
+ * sky measured 2.8:1 with neutral-400 (Q.1); neutral-200 keeps ≥ 5:1 there and 16.3:1 on black. Ink-3 on white 5.3:1.
  */
 export function Logo({ variant = 'header', tone = 'dark' }: { variant?: 'header' | 'footer'; tone?: 'dark' | 'light' }) {
   const { copy, otherLang } = useLang();
@@ -25,7 +26,7 @@ export function Logo({ variant = 'header', tone = 'dark' }: { variant?: 'header'
         <span className="text-[1rem] leading-tight font-bold [&:lang(ar)]:text-[1.125rem] [&:lang(ar)]:leading-[1.35]">{copy.header.name}</span>
         <span
           lang={otherLang}
-          className={`text-[0.75rem] leading-tight transition-colors duration-(--dur-ui) [&:lang(ar)]:text-[0.8125rem] [&:lang(ar)]:leading-[1.4] ${tone === 'light' ? 'text-ink-3' : 'text-neutral-400'}`}
+          className={`text-[0.75rem] leading-tight transition-colors duration-(--dur-ui) [&:lang(ar)]:text-[0.8125rem] [&:lang(ar)]:leading-[1.4] ${tone === 'light' ? 'text-ink-3' : 'text-neutral-200'}`}
         >
           {copy.header.nameAlt}
         </span>

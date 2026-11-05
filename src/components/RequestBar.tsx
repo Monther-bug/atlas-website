@@ -51,15 +51,72 @@ export function RequestBar() {
     : copy.whatsapp.general;
   const tel = telHref();
   const whatsappRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLElement>(null);
+
+  // Keyboard focus never lands under the floating bar (WCAG 2.4.11/2.4.12): when the focused control overlaps it,
+  // scroll just enough to clear it (html's scroll-padding-bottom reserves the bar's height). A control taller than the
+  // room left (a photo card on a 657 px laptop) can still touch it: the bar then steps aside (data-yield: faded and
+  // click-through, still in the tab order) until keyboard focus moves on. Browsers leave a partly visible control where
+  // it is, so without this a card in the photo strip was focused half under the bar (Q.1 keyboard walk).
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    let focused: HTMLElement | null = null;
+    let frame = 0;
+    const overlaps = (el: HTMLElement) => {
+      const a = el.getBoundingClientRect();
+      const b = bar.getBoundingClientRect();
+      return a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right;
+    };
+    const focusVisible = (el: HTMLElement) => {
+      try {
+        return el.matches(':focus-visible');
+      } catch {
+        return true; // an engine without :focus-visible: treat focus as visible
+      }
+    };
+    const watched = (el: HTMLElement | null): el is HTMLElement =>
+      !!el && !bar.contains(el) && !el.closest('dialog, .hoist--staged [data-hoist-stage]') && !bar.hasAttribute('data-over-hero');
+    const sync = () => {
+      frame = 0;
+      const yieldNow = watched(focused) && focusVisible(focused) && overlaps(focused);
+      bar.toggleAttribute('data-yield', yieldNow);
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const el = event.target instanceof HTMLElement ? event.target : null;
+      focused = el;
+      if (watched(el) && overlaps(el)) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      sync();
+    };
+    const onFocusOut = () => {
+      focused = null;
+      bar.removeAttribute('data-yield');
+    };
+    const onScroll = () => {
+      if (focused && !frame) frame = requestAnimationFrame(sync);
+    };
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   return (
     <aside
+      ref={barRef}
       aria-label={copy.bar.tooltip}
       data-request-bar=""
       data-over-hero={overHero ? '' : undefined}
       data-testid="request-bar"
       data-ground="dark"
-      className="glass-dark bg-black/80 fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-auto max-w-md rounded-full text-white shadow-e3 ring-1 ring-white/10 transition-[opacity,visibility] duration-(--dur-ui) ease-ui lg:inset-x-auto lg:end-6 lg:bottom-6 lg:mx-0 lg:max-w-none"
+      // Phones: with a crane on the hook the bar spans the width (the chip needs the room); without one it is a compact
+      // pill at the inline end, not a full-width bar with an empty half (Q.1 critique), and it covers less of the page.
+      className={`glass-dark bg-black/80 fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 rounded-full text-white shadow-e3 ring-1 ring-white/10 transition-[opacity,visibility] duration-(--dur-ui) ease-ui lg:inset-x-auto lg:end-6 lg:bottom-6 lg:mx-0 lg:max-w-none ${crane ? 'inset-x-3 mx-auto max-w-md' : 'end-3 max-w-[calc(100%-1.5rem)]'}`}
     >
       <div className="flex items-center gap-2 p-2 lg:gap-3">
         {crane ? (

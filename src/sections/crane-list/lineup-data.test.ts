@@ -5,9 +5,9 @@ import { craneSpecs } from '@/content/crane-specs';
 import { SPEC_ORDER } from '@/content/spec-rows';
 import type { Crane } from '@/content/types';
 import { craneListCopy } from '@/content/crane-list-copy';
-import { CARD_FACTS, keySpecs, ratingRadius } from './card-facts';
+import { CARD_FACTS, keySpecs, ratingDiffers, ratingRadius } from './card-facts';
 import { COMPARE_MAX, addToCompare, defaultCompare, toggleCompare } from './compare-store';
-import { SPEC_GROUPS, loadResult, rowMax, specCell, specOf } from './lineup-data';
+import { SPEC_GROUPS, capacityCell, loadResult, rowMax, specCell, specOf } from './lineup-data';
 import { parseLoad, ratedFor } from './load';
 import { CRANE_PHOTOS, craneMessage, sourcesOf, specGroups } from './sheet-data';
 
@@ -156,5 +156,31 @@ describe('comparison selection', () => {
   it('makes room for a model added from the sheet', () => {
     expect(addToCompare(['rt700e', 'ac200-1', 'gmk6350'], 'quy250')).toEqual(['ac200-1', 'gmk6350', 'quy250']);
     expect(addToCompare(['rt700e'], 'rt700e')).toEqual(['rt700e']);
+  });
+});
+
+describe('one capacity per crane on the page (QUY250: 250 t by the model name, 260 t on Fuwa’s page)', () => {
+  it('records the listed maximum exactly where the spec differs from the figure shown', () => {
+    for (const crane of visibleCranes) {
+      const spec = specOf(crane)!;
+      const differs = spec.maxCapacityT !== undefined && spec.maxCapacityT !== crane.capacityT;
+      expect(CARD_FACTS[crane.id]?.listedMaxT, crane.id).toBe(differs ? spec.maxCapacityT : undefined);
+      expect(ratingDiffers(crane), crane.id).toBe(differs);
+    }
+  });
+
+  it('shows the card figure, marked, in the comparison and the sheet; agrees elsewhere', () => {
+    const quy = byId('quy250');
+    expect(capacityCell(quy, specOf(quy)!, en, 'en')).toEqual({ text: `250${NBSP}t`, latin: false, secondary: false, conflict: true });
+    expect(capacityCell(byId('gmk6350'), specOf(byId('gmk6350'))!, en, 'en')).toBeNull();
+    const row = specGroups(specOf(quy)!, ar, craneListCopy.ar, 'ar', quy).flatMap((g) => g.rows).find((r) => r.id === 'maxCapacity');
+    expect(row?.cell).toMatchObject({ text: `250${NBSP}طن`, conflict: true });
+  });
+
+  it('explains the difference in the rating note, with both figures', () => {
+    for (const lang of ['ar', 'en'] as const) {
+      expect(craneListCopy[lang].capacityNotes.quy250).toMatch(/260/);
+      expect(craneListCopy[lang].capacityNotes.quy250).toMatch(/250/);
+    }
   });
 });

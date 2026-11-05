@@ -2,7 +2,7 @@ import type { CraneSpec, CraneSpecId, CraneSpecSource } from '@/content/crane-sp
 import type { Copy, Crane, CraneListCopy, Lang, SpecGroupId } from '@/content/types';
 import type { PhotoId } from '@/generated/images';
 import { fillTemplate } from '@/lib/whatsapp';
-import { SPEC_GROUPS, rowLabel, specCell, specIdOf, type RowId, type SpecCell } from './lineup-data';
+import { SPEC_GROUPS, capacityCell, rowLabel, specCell, specIdOf, type RowId, type SpecCell } from './lineup-data';
 
 /* Data only the detail sheet needs: kept beside the lazy CraneSheet chunk, out of the initial bundle. */
 
@@ -20,12 +20,22 @@ export function photosOf(crane: Crane): readonly PhotoId[] {
   return id ? CRANE_PHOTOS[id] : [crane.cardPhoto];
 }
 
-/** Groups with the rows `spec` has, for one machine (the sheet). Missing rows are left out, never shown as "—". */
-export function specGroups(spec: CraneSpec, copy: Copy, text: CraneListCopy, lang: Lang): { id: SpecGroupId; rows: { id: RowId; label: string; cell: SpecCell }[] }[] {
+/**
+ * Groups with the rows `spec` has, for one machine (the sheet). Missing rows are left out, never shown as "—". With
+ * `crane`, the maximum is the figure the cards show (capacityCell), so the sheet never contradicts its own headline.
+ */
+export function specGroups(
+  spec: CraneSpec,
+  copy: Copy,
+  text: CraneListCopy,
+  lang: Lang,
+  crane?: Crane,
+): { id: SpecGroupId; rows: { id: RowId; label: string; cell: SpecCell }[] }[] {
   return SPEC_GROUPS.map((group) => ({
     id: group.id,
     rows: group.rows.flatMap((id) => {
-      const cell = specCell(spec, id, copy, lang);
+      const own = crane && id === 'maxCapacity' ? capacityCell(crane, spec, copy, lang) : null;
+      const cell = own ?? specCell(spec, id, copy, lang);
       return cell ? [{ id, label: rowLabel(id, copy, text), cell }] : [];
     }),
   })).filter((group) => group.rows.length > 0);

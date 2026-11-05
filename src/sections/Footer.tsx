@@ -25,7 +25,8 @@ export function Footer() {
       {/* One reveal pattern for the whole footer: its three blocks rise 40 ms apart (below the fold only). */}
       <div {...reveal('stagger')}>
         <div className="grid items-end gap-10 lg:grid-cols-12">
-          <p className="t-display lg:col-span-8">{copy.footer.tagline}</p>
+          {/* Headline size, not display: the closing echo of the H1 must not shout louder than the hero (Q.1). */}
+          <p className="t-headline lg:col-span-8">{copy.footer.tagline}</p>
           <div className="flex flex-wrap items-center gap-3 lg:col-span-4 lg:justify-end">
             <Button href="#request" size="lg" magnetic>
               {copy.header.request}

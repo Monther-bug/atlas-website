@@ -21,11 +21,11 @@ export const en: Copy = {
   // §2
   header: {
     skipLink: 'Skip to content',
-    homeLabel: 'Atlas Alshraa, back to top',
+    homeLabel: 'back to top',
     name: 'Atlas Alshraa',
     nameAlt: 'أطلس الصحراء',
     nav: { services: 'Services', cranes: 'Cranes', sites: 'On site', contact: 'Contact' },
-    langSwitch: { text: 'عربي', label: 'اعرض الصفحة بالعربية' },
+    langSwitch: { text: 'عربي', label: 'عربي: اعرض الصفحة بالعربية' },
     request: 'Request a crane',
     call: { text: 'Call', label: 'Call us on {phone}' },
     menu: { open: 'Menu', close: 'Close menu', whatsapp: 'Message us on WhatsApp' },
@@ -76,6 +76,7 @@ export const en: Copy = {
     chapters: 'Go to a crane',
     ratingNotes: {
       gmk6350: "The 350 on the boom is the maker's rating in US tons, which is {capacity} metric.",
+      quy250: "The model name says {capacity}; Fuwa's page lists 260 t. We show {capacity} until Atlas confirms it.",
     },
   },
 
@@ -89,7 +90,7 @@ export const en: Copy = {
       {
         id: 'crane-hire',
         title: 'Crane hire',
-        body: 'Cranes for hire, from smaller cranes to the largest ones. Send us the load weight, radius and lift height, and we will suggest the right crane for your job.',
+        body: 'Cranes for hire. Send us the load weight, radius and lift height, and we will suggest the right crane for your job.',
         confirm: '[[CONFIRM: Every crane comes with an experienced operator.]]',
       },
       {
@@ -151,7 +152,7 @@ export const en: Copy = {
   // §3a (v2, new copy from confirmed facts)
   about: {
     title: 'Atlas Alshraa is a Libyan joint-stock company.',
-    statement: 'From smaller cranes to the largest ones, we help you choose the crane that fits your load and your site. Every crane photo on this site is real.',
+    statement: 'We help you choose the crane that fits your load and your site. Every crane photo on this site is real.',
     legalLabel: 'Legal name',
     legalName: 'شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات',
     fieldsLead: 'The name covers four lines of work:',
@@ -165,7 +166,7 @@ export const en: Copy = {
   // §7
   sites: {
     title: 'On site',
-    intro: 'Every photo on this page is real. They were taken at two places: a building site and a coastal site.',
+    intro: 'These photos were taken at two places: a building site and a coastal site.',
     all: 'All',
     filterLabel: 'Choose a site',
     galleries: { construction: 'Building site', coast: 'Coastal site' },

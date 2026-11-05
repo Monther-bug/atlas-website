@@ -30,24 +30,24 @@ colors:
   ok-bright: "#5FD394"
 typography:
   display:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
     fontSize: "clamp(2.5rem, 5vw, 5rem)"
     fontWeight: 700
     lineHeight: 1.04
     letterSpacing: "-0.03em"
   headline:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
     fontSize: "clamp(2rem, 3.6vw, 3.25rem)"
     fontWeight: 600
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
     fontSize: "clamp(1.25rem, 2vw, 1.75rem)"
     fontWeight: 600
     lineHeight: 1.25
   body:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
     fontSize: "clamp(1rem, 1.1vw, 1.0625rem)"
     fontWeight: 400
     lineHeight: 1.7

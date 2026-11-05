@@ -71,7 +71,19 @@ export interface SpecCell {
   latin: boolean;
   /** true when the figure comes from a spec database rather than the manufacturer's own document. */
   secondary: boolean;
+  /** true on a maximum that is the site's figure, not the manufacturer's listed one (a † and the rating note). */
+  conflict?: boolean;
   source?: CraneSpecSource;
+}
+
+/**
+ * The maximum-capacity cell: the figure the cards and the Hoist show (cranes.ts), so a model never reads as two
+ * capacities on one page. Where the manufacturer lists another maximum (QUY250: 260 t), the cell is marked and the
+ * rating note (capacityNotes) gives both. null when the spec agrees (use specCell).
+ */
+export function capacityCell(crane: Crane, spec: CraneSpec, copy: Copy, lang: Lang): SpecCell | null {
+  if (spec.maxCapacityT === undefined || spec.maxCapacityT === crane.capacityT) return null;
+  return { text: `${formatNumber(crane.capacityT, lang)}${NBSP}${copy.specs.units.t}`, latin: false, secondary: false, conflict: true };
 }
 
 const NBSP = ' ';

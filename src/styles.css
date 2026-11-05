@@ -266,6 +266,11 @@
     visibility: hidden;
     opacity: 0;
   }
+  /* A keyboard-focused control the bar would cover (RequestBar.tsx): the bar steps aside, still focusable. */
+  [data-request-bar][data-yield] {
+    opacity: 0;
+    pointer-events: none;
+  }
 
   /* Rendered by App (C9); Part D's motion.css shows it on desktop motion only. */
   .progress-rope {

@@ -53,6 +53,7 @@ export const craneListCopy: Record<Lang, CraneListCopy> = {
     dimensions: 'الأبعاد والأوزان',
   },
   dims: { length: 'الطول الكلي', width: 'العرض الكلي', height: 'الارتفاع الكلي' },
+  conflict: { label: 'حسب اسم الطراز، بانتظار التأكيد', mark: 'انظر ملاحظة هذا التصنيف' },
   capacityNotes: {
     rt700e: 'تصنيفها 60 طناً أمريكياً، أي 55 طناً مترياً: الرقمان للتصنيف نفسه بوحدتين مختلفتين.',
     'atf60-3':
@@ -109,6 +110,7 @@ export const craneListCopy: Record<Lang, CraneListCopy> = {
     dimensions: 'Dimensions and weights',
   },
   dims: { length: 'Overall length', width: 'Overall width', height: 'Overall height' },
+  conflict: { label: 'From the model name, to be confirmed', mark: 'see the note on this rating' },
   capacityNotes: {
     rt700e: 'Rated 60 US tons, which is 55 metric tonnes: the same rating in two units.',
     'atf60-3': '60 t is over the rear at 2.5 m with additional equipment; over the standard working range the chart shows 55 t at 2.5 m.',

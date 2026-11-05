@@ -171,6 +171,8 @@
   }
   .lineup-load__input {
     flex: 1;
+    /* The whole visible field takes the press, not only the line of text in its middle (44 px floor; Q.1). */
+    align-self: stretch;
     min-inline-size: 0;
     padding: 0;
     border: 0;

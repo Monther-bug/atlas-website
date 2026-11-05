@@ -50,14 +50,14 @@ Character counts were checked (limit 155 per language): title 52 AR / 55 EN; met
 | Element | العربية | English |
 |---|---|---|
 | Skip link | انتقل إلى المحتوى | Skip to content |
-| Logo link `aria-label` | أطلس الصحراء، العودة إلى أعلى الصفحة | Atlas Alshraa, back to top |
+| Logo link, hidden words after the visible name (no `aria-label`: the accessible name must contain the visible name, WCAG 2.5.3) | العودة إلى أعلى الصفحة | back to top |
 | Typeset name next to badge (needs Atlas approval) | أطلس الصحراء | Atlas Alshraa |
 | Nav 1 | الخدمات | Services |
 | Nav 2 | الرافعات *(switch to «الأسطول» once ownership is confirmed)* | Cranes *(switch to "Fleet" once ownership is confirmed)* |
 | Nav 3 | مواقع العمل | On site |
 | Nav 4 | تواصل معنا | Contact |
 | Language switch, visible text | English | عربي |
-| Language switch `aria-label` | View this page in English *(set `lang="en"`)* | اعرض الصفحة بالعربية *(set `lang="ar"`)* |
+| Language switch `aria-label` (must contain the visible word) | View this page in English *(set `lang="en"`)* | عربي: اعرض الصفحة بالعربية *(set `lang="ar"`)* |
 | Primary button | اطلب رافعة | Request a crane |
 | Call button (shown only when `[[PHONE]]` exists) | اتصل | Call |
 | Call button `aria-label` | اتصل بنا على [[PHONE]] | Call us on [[PHONE]] |
@@ -94,7 +94,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Element | العربية | English |
 |---|---|---|
 | Statement, heading part (H2) | أطلس الصحراء شركة مساهمة ليبية. | Atlas Alshraa is a Libyan joint-stock company. |
-| Statement, continuation (same size, after the H2) | من الرافعات الصغيرة إلى الكبيرة، نساعدك على اختيار الرافعة التي تناسب حمولتك وموقعك. وكل صور الرافعات في هذا الموقع حقيقية. | From smaller cranes to the largest ones, we help you choose the crane that fits your load and your site. Every crane photo on this site is real. |
+| Statement, continuation (same size, after the H2) | نساعدك على اختيار الرافعة التي تناسب حمولتك وموقعك. وكل صور الرافعات في هذا الموقع حقيقية. | We help you choose the crane that fits your load and your site. Every crane photo on this site is real. |
 | Fact label | الاسم القانوني | Legal name |
 | Fact value (Arabic on both pages) | شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات | same Arabic text, marked `lang="ar"` |
 | Bridge to the service chips | ويجمع الاسم أربعة مجالات عمل: | The name covers four lines of work: |
@@ -128,6 +128,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Closing button → form | أرسل التفاصيل | Send the details |
 | Stage progress links, accessible name (v2, desktop stage only) | انتقل إلى رافعة | Go to a crane |
 | Rating note, GMK6350 only (v2; `{capacity}` = the metric rating with its unit) | الرقم 350 على الذراع هو تصنيف الشركة المصنّعة بالطن الأمريكي، ويساوي {capacity} متري. | The 350 on the boom is the maker's rating in US tons, which is {capacity} metric. |
+| Rating note, QUY250 only (Q.1: one figure per crane on the page; Fuwa's 260 t is disclosed, open decision spec §15.2) | اسم الطراز يقول {capacity}، وصفحة Fuwa تذكر 260 طناً. نعرض {capacity} إلى أن تؤكّده أطلس. | The model name says {capacity}; Fuwa's page lists 260 t. We show {capacity} until Atlas confirms it. |
 
 *v2 rating note: the GMK6350's boom is marked "350 TON" (photos 6388, 6389). Manitowoc's product guide rates the crane 350 US tons (700,000 lb), which converts to 317.5 t (src/content/crane-specs.ts). The note keeps the photo from contradicting the readout. It is manufacturer data, draft-badged with the capacity until Atlas confirms.*
 
@@ -168,7 +169,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | | العربية | English |
 |---|---|---|
 | Title | تأجير الرافعات | Crane hire |
-| Text | رافعات للإيجار، من الرافعات الصغيرة إلى الكبيرة. أرسل لنا وزن الحمولة ونصف القطر وارتفاع الرفع، ونقترح عليك الرافعة المناسبة لعملك. | Cranes for hire, from smaller cranes to the largest ones. Send us the load weight, radius and lift height, and we will suggest the right crane for your job. |
+| Text | رافعات للإيجار. أرسل لنا وزن الحمولة ونصف القطر وارتفاع الرفع، ونقترح عليك الرافعة المناسبة لعملك. | Cranes for hire. Send us the load weight, radius and lift height, and we will suggest the right crane for your job. |
 | Add if confirmed | [[CONFIRM: كل رافعة تأتي مع مشغّل ذي خبرة.]] | [[CONFIRM: Every crane comes with an experienced operator.]] |
 
 **02. Heavy transport**
@@ -262,6 +263,7 @@ Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, s
 | Compare link (header) | قارن الطرازات | Compare models |
 | Details button (+ model for screen readers) | التفاصيل | Details |
 | Rating label | أقصى حمولة · تصنيف الشركة المصنّعة | Max capacity · Manufacturer rating |
+| Rating label where the figure shown is not the manufacturer's listed maximum (QUY250, Q.1); its comparison and sheet cell carry a † with screen-reader text «انظر ملاحظة هذا التصنيف» / "see the note on this rating" | أقصى حمولة · حسب اسم الطراز، بانتظار التأكيد | Max capacity · From the model name, to be confirmed |
 | Radius of the rating (only where the spec states it for the same rating) | على نصف قطر {radius} | at {radius} radius |
 | Key spec: longest main boom | أقصى طول للذراع | Max boom length |
 | Footnote for a spec-database figure (marked *) | من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة | From a spec database, not the manufacturer's own document |
@@ -330,7 +332,7 @@ Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, s
 | Element | العربية | English |
 |---|---|---|
 | Title | من مواقع العمل | On site |
-| Intro | كل الصور في هذه الصفحة حقيقية، التُقطت في موقعين: موقع إنشاءات وموقع ساحلي. | Every photo on this page is real. They were taken at two places: a building site and a coastal site. |
+| Intro | التُقطت هذه الصور في موقعين: موقع إنشاءات وموقع ساحلي. | These photos were taken at two places: a building site and a coastal site. |
 | Tab | الكل | All |
 | Site picker label (screen readers, v2) | اختر موقع العمل | Choose a site |
 | Tab | موقع إنشاءات | Building site |

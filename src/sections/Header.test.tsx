@@ -167,16 +167,16 @@ describe('Header behaviour', () => {
     expect(header?.hasAttribute('data-top')).toBe(true);
   });
 
-  it('outlines the request pill while the hero still reaches below the dock line, red after (one red action)', async () => {
-    const hero = addEl('<section id="top"></section>');
-    let bottom = 900;
-    hero.getBoundingClientRect = () => new DOMRect(0, bottom - 900, 1440, 900);
+  it('keeps the request pill out of red: white over dark grounds, ink over light ones (red stays with the content and the bar)', async () => {
+    addEl('<section id="top"></section>');
     const { host } = await mount(<Header />, 'en');
     const pill = () => host.querySelector('[data-testid="header-request"]')!;
-    expect(pill().className).toContain('border-white/40');
-    bottom = 200;
-    await scroll(700);
-    expect(pill().className).toContain('bg-red');
+    expect(pill().className).toContain('bg-white');
+    expect(pill().className).not.toContain('bg-red');
+    grounds = [addEl('<section data-ground="light"><p></p></section>')];
+    await scroll(1200);
+    expect(pill().className).toContain('bg-ink');
+    expect(pill().className).not.toContain('bg-red');
   });
 
   it('stays glass without a #top element', async () => {

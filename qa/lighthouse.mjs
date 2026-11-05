@@ -1,11 +1,16 @@
 // Lighthouse medians and performance budgets (spec §1, §9). For both pages it runs mobile and
-// desktop, LH_RUNS times each (default 3), with a fresh Chrome per run, and takes the median
-// of each metric. It adds one applied-throttling Slow 4G run of the Arabic page (informational)
-// and the bundle budget. Writes qa/reports/lighthouse.json and lighthouse.md. Exit 1 if any
-// budget fails. Usage (preview running): npm run lighthouse [-- baseUrl]
+// desktop, for a first visit and a repeat visit, LH_RUNS times each (default 3), with a fresh Chrome
+// per run, and takes the median of each metric.
+//   first:  a fresh profile, as Lighthouse always loads: the first-visit loader shows.
+//   repeat: the same tab loads the page once, then Lighthouse loads it again without clearing
+//           storage: the loader was seen this session (it does not show) and the HTTP cache is warm.
+// It adds one applied-throttling Slow 4G run of the Arabic page (first visit, informational) and the
+// bundle budget. Writes qa/reports/lighthouse.json and lighthouse.md. Exit 1 if any budget fails.
+// Usage (preview running): npm run lighthouse [-- baseUrl]. LH_VISITS=first|repeat|first,repeat.
 import { mkdir, writeFile } from 'node:fs/promises';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
+import puppeteer from 'puppeteer-core';
 import { measureBundle } from './bundle-budget.mjs';
 import { BUDGETS, checkBudgets, firstSnippet, medianResult, toMarkdown } from './lib/budgets.mjs';
 
@@ -18,6 +23,7 @@ const PAGES = [
   { id: 'en', path: '/en/' },
 ];
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
+const VISITS = (process.env.LH_VISITS ?? 'first,repeat').split(',').filter((v) => v === 'first' || v === 'repeat');
 
 // Presets from Lighthouse itself; the built-in copy is used only if that import fails (E.4 Step 3).
 const constants = await import('lighthouse/core/config/constants.js').catch(() => null);
@@ -72,20 +78,33 @@ function pick(lhr) {
     tbt: num('total-blocking-time'),
     fcp: num('first-contentful-paint'),
     si: num('speed-index'),
-    lcpElement: firstSnippet(lhr.audits['largest-contentful-paint-element']?.details),
+    // Lighthouse 13 moved the LCP element from 'largest-contentful-paint-element' into the LCP breakdown insight.
+    lcpElement: firstSnippet(lhr.audits['largest-contentful-paint-element']?.details ?? lhr.audits['lcp-breakdown-insight']?.details),
     failing,
     runtimeError: lhr.runtimeError?.message ?? null,
     version: lhr.lighthouseVersion,
   };
 }
 
-async function runOnce(url, config) {
+async function runOnce(url, config, visit = 'first') {
   const chrome = await chromeLauncher.launch({ chromePath: CHROME, chromeFlags: ['--headless=new', '--no-first-run', '--no-default-browser-check'] });
+  let browser = null;
   try {
-    const result = await lighthouse(url, { port: chrome.port, output: 'json', logLevel: 'error', onlyCategories: CATEGORIES }, config);
+    const flags = { port: chrome.port, output: 'json', logLevel: 'error', onlyCategories: CATEGORIES };
+    let page;
+    if (visit === 'repeat') {
+      // The visit before: same tab, so sessionStorage (the loader's once-per-session flag) and the HTTP cache carry over.
+      browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chrome.port}`, defaultViewport: null });
+      page = await browser.newPage();
+      await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+      await new Promise((r) => setTimeout(r, 1500));
+      flags.disableStorageReset = true;
+    }
+    const result = await lighthouse(url, flags, config, page);
     if (!result) throw new Error('Lighthouse returned no result');
     return pick(result.lhr);
   } finally {
+    await browser?.disconnect().catch(() => {});
     await chrome.kill();
   }
 }
@@ -104,28 +123,31 @@ console.table(bundle.rows);
 const configs = [];
 for (const p of PAGES) {
   for (const formFactor of ['mobile', 'desktop']) {
-    const runs = [];
-    for (let i = 1; i <= RUNS; i++) {
-      process.stdout.write(`${p.id} ${formFactor} run ${i}/${RUNS}… `);
-      try {
-        const r = await runOnce(BASE + p.path, CONFIGS[formFactor]);
-        runs.push(r);
-        console.log(`perf ${r.performance} a11y ${r.accessibility} bp ${r.bestPractices} seo ${r.seo} LCP ${Math.round(r.lcp)} ms CLS ${r.cls.toFixed(3)} TBT ${Math.round(r.tbt)} ms`);
-      } catch (e) {
-        runs.push({ error: e instanceof Error ? e.message : String(e) });
-        console.log(`ERROR ${e instanceof Error ? e.message : e}`);
+    for (const visit of VISITS) {
+      const runs = [];
+      for (let i = 1; i <= RUNS; i++) {
+        process.stdout.write(`${p.id} ${formFactor} ${visit} run ${i}/${RUNS}… `);
+        try {
+          const r = await runOnce(BASE + p.path, CONFIGS[formFactor], visit);
+          runs.push(r);
+          console.log(`perf ${r.performance} a11y ${r.accessibility} bp ${r.bestPractices} seo ${r.seo} LCP ${Math.round(r.lcp)} ms CLS ${r.cls.toFixed(3)} TBT ${Math.round(r.tbt)} ms`);
+        } catch (e) {
+          runs.push({ error: e instanceof Error ? e.message : String(e) });
+          console.log(`ERROR ${e instanceof Error ? e.message : e}`);
+        }
       }
+      const med = medianResult(runs);
+      configs.push({
+        page: p.id,
+        formFactor,
+        visit,
+        runs,
+        median: med,
+        checks: checkBudgets(med, BUDGETS),
+        lcpElement: runs.find((r) => r.lcpElement)?.lcpElement ?? null,
+        failingAudits: [...new Set(runs.flatMap((r) => r.failing ?? []))],
+      });
     }
-    const med = medianResult(runs);
-    configs.push({
-      page: p.id,
-      formFactor,
-      runs,
-      median: med,
-      checks: checkBudgets(med, BUDGETS),
-      lcpElement: runs.find((r) => r.lcpElement)?.lcpElement ?? null,
-      failingAudits: [...new Set(runs.flatMap((r) => r.failing ?? []))],
-    });
   }
 }
 
@@ -145,7 +167,7 @@ await writeFile(`${OUT}lighthouse.json`, JSON.stringify(report, null, 2));
 await writeFile(`${OUT}lighthouse.md`, toMarkdown(report));
 
 const failed = [
-  ...configs.flatMap((c) => c.checks.filter((x) => !x.pass).map((x) => `${c.page} ${c.formFactor} ${x.metric}=${x.value}`)),
+  ...configs.flatMap((c) => c.checks.filter((x) => !x.pass).map((x) => `${c.page} ${c.formFactor} ${c.visit} ${x.metric}=${x.value}`)),
   ...bundle.rows.filter((r) => !r.pass).map((r) => `bundle ${r.metric}=${r.value} KB`),
 ];
 console.log(failed.length ? `\nFAIL: ${failed.join(', ')}` : '\nAll budgets met.');

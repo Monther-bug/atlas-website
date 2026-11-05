@@ -295,6 +295,19 @@
     white-space: normal;
   }
 }
+@media (min-aspect-ratio: 1001/1000) {
+  /* English landscape (the cut on the reading-start side, k .5): the lead line steps furthest along the rake, and at
+     one line it ran past the viewport's end edge from 1024 to 1440 px (Q.1). It is set as two balanced lines instead;
+     --leadlines counts both, so its first line still starts on the cut. */
+  .hero:lang(en)[data-cut-d='start'] {
+    --leadlines: 2;
+  }
+  .hero:lang(en)[data-cut-d='start'] .hero-lead {
+    white-space: normal;
+    inline-size: 12.5em;
+    text-wrap: balance;
+  }
+}
 
 /* ── The load ──────────────────────────────────────────────────────── */
 .hero-rig {

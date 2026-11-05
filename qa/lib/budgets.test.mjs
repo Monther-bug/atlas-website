@@ -19,8 +19,14 @@ describe('median', () => {
 describe('checkBudgets', () => {
   it('passes a result inside every budget', () => expect(checkBudgets(GOOD, BUDGETS).every((c) => c.pass)).toBe(true));
   it('treats the limits as inclusive', () => {
-    const edge = { performance: 90, accessibility: 90, bestPractices: 90, seo: 90, lcp: 2000, cls: 0.05, tbt: 150 };
+    const edge = { performance: 90, accessibility: 100, bestPractices: 100, seo: 100, lcp: 2000, cls: 0.05, tbt: 150 };
     expect(checkBudgets(edge, BUDGETS).every((c) => c.pass)).toBe(true);
+  });
+  it('holds accessibility, best practices and SEO at 100 (Q.1 brief), performance at 90', () => {
+    const bad = checkBudgets({ ...GOOD, accessibility: 98, bestPractices: 96, seo: 92 }, BUDGETS)
+      .filter((c) => !c.pass)
+      .map((c) => c.metric);
+    expect(bad).toEqual(['accessibility', 'bestPractices', 'seo']);
   });
   it('fails each metric that is over its budget', () => {
     const bad = checkBudgets({ ...GOOD, performance: 89, lcp: 2001, cls: 0.06, tbt: 151 }, BUDGETS)
@@ -94,6 +100,7 @@ describe('toMarkdown', () => {
         {
           page: 'en',
           formFactor: 'mobile',
+          visit: 'repeat',
           runs: [GOOD],
           median: { ...GOOD, lcp: 2400 },
           checks: checkBudgets({ ...GOOD, lcp: 2400 }, BUDGETS),
@@ -105,8 +112,8 @@ describe('toMarkdown', () => {
       bundle: { rows: checkBundle({ initialJsKB: 100, cssKB: 20, firstLoadKB: 800, heroMobileKB: 60, heroDesktopKB: 90 }) },
     };
     const md = toMarkdown(report);
-    expect(md).toContain('| ar | mobile | 95 | 100 | 100 | 100 | 1800 | 0.010 | 90 | PASS |');
-    expect(md).toContain('| en | mobile | 95 | 100 | 100 | 100 | 2400 | 0.010 | 90 | FAIL (lcp) |');
+    expect(md).toContain('| ar | mobile | first | 95 | 100 | 100 | 100 | 1800 | 0.010 | 90 | PASS |');
+    expect(md).toContain('| en | mobile | repeat | 95 | 100 | 100 | 100 | 2400 | 0.010 | 90 | FAIL (lcp) |');
     expect(md).toContain('| first load, AR mobile | 800.0 | ≤ 1000 KB | PASS |');
     expect(md).toContain('  - performance: largest-contentful-paint (0.6) 2.4 s');
   });

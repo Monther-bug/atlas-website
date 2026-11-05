@@ -1,7 +1,15 @@
 // Pure helpers for qa/lighthouse.mjs and qa/bundle-budget.mjs (tested in budgets.test.mjs).
 
-/** Spec §1 and §9. Scores are 0–100. */
-export const BUDGETS = { minScore: 90, maxLcpMs: 2000, maxCls: 0.05, maxTbtMs: 150 };
+/**
+ * Spec §1 and §9 (E.4: every score ≥ 90), tightened by the Q.1 brief: performance ≥ 90, accessibility, best
+ * practices and SEO 100. Scores are 0–100.
+ */
+export const BUDGETS = {
+  minScores: { performance: 90, accessibility: 100, bestPractices: 100, seo: 100 },
+  maxLcpMs: 2000,
+  maxCls: 0.05,
+  maxTbtMs: 150,
+};
 /** Spec §9, in KB of 1,000 bytes. JS = what the page loads up front (the Hoist chunk is lazy). */
 export const BUNDLE_LIMITS = { initialJsKB: 110, cssKB: 25, firstLoadKB: 1000, heroMobileKB: 80, heroDesktopKB: 120 };
 
@@ -27,8 +35,8 @@ export function checkBudgets(result, budgets = BUDGETS) {
   const rows = SCORE_KEYS.map((k) => ({
     metric: k,
     value: result[k],
-    limit: `≥ ${budgets.minScore}`,
-    pass: finite(result[k]) && result[k] >= budgets.minScore,
+    limit: `≥ ${budgets.minScores[k]}`,
+    pass: finite(result[k]) && result[k] >= budgets.minScores[k],
   }));
   rows.push({ metric: 'lcp', value: result.lcp, limit: `≤ ${budgets.maxLcpMs} ms`, pass: finite(result.lcp) && result.lcp <= budgets.maxLcpMs });
   rows.push({ metric: 'cls', value: result.cls, limit: `≤ ${budgets.maxCls}`, pass: finite(result.cls) && result.cls <= budgets.maxCls });
@@ -86,19 +94,20 @@ export function toMarkdown(r) {
     `- Date: ${r.date}`,
     `- Base URL: ${r.base}`,
     `- Runs per configuration: ${r.runsPerConfig} (median of each metric, taken separately)`,
-    `- Budgets: scores ≥ ${r.budgets.minScore}; LCP ≤ ${r.budgets.maxLcpMs} ms; CLS ≤ ${r.budgets.maxCls}; TBT ≤ ${r.budgets.maxTbtMs} ms`,
+    `- Budgets: performance ≥ ${r.budgets.minScores.performance}, accessibility ≥ ${r.budgets.minScores.accessibility}, best practices ≥ ${r.budgets.minScores.bestPractices}, SEO ≥ ${r.budgets.minScores.seo}; LCP ≤ ${r.budgets.maxLcpMs} ms; CLS ≤ ${r.budgets.maxCls}; TBT ≤ ${r.budgets.maxTbtMs} ms`,
+    '- Visits: "first" = a fresh profile (the first-visit loader shows); "repeat" = the same tab again (loader seen this session, warm HTTP cache)',
     '- Sizes: KB = 1,000 bytes; text files measured as gzip -9 of the built file',
     '',
     '## Medians',
     '',
-    '| Page | Form factor | Perf | A11y | BP | SEO | LCP (ms) | CLS | TBT (ms) | Result |',
-    '|---|---|---|---|---|---|---|---|---|---|',
+    '| Page | Form factor | Visit | Perf | A11y | BP | SEO | LCP (ms) | CLS | TBT (ms) | Result |',
+    '|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const c of r.configs) {
     const m = c.median;
     const bad = c.checks.filter((x) => !x.pass).map((x) => x.metric);
     out.push(
-      `| ${c.page} | ${c.formFactor} | ${fmt(m.performance)} | ${fmt(m.accessibility)} | ${fmt(m.bestPractices)} | ${fmt(m.seo)} | ${fmt(m.lcp)} | ${fmt(m.cls, 3)} | ${fmt(m.tbt)} | ${bad.length ? `FAIL (${bad.join(', ')})` : 'PASS'} |`,
+      `| ${c.page} | ${c.formFactor} | ${c.visit ?? 'first'} | ${fmt(m.performance)} | ${fmt(m.accessibility)} | ${fmt(m.bestPractices)} | ${fmt(m.seo)} | ${fmt(m.lcp)} | ${fmt(m.cls, 3)} | ${fmt(m.tbt)} | ${bad.length ? `FAIL (${bad.join(', ')})` : 'PASS'} |`,
     );
   }
   out.push('', '## Slow 4G, applied throttling (1 run, informational)', '', '| Page | Perf | LCP (ms) | CLS | TBT (ms) | FCP (ms) |', '|---|---|---|---|---|---|');
@@ -113,7 +122,7 @@ export function toMarkdown(r) {
   for (const b of r.bundle.rows) out.push(`| ${b.metric} | ${fmt(b.value, 1)} | ${b.limit} | ${b.pass ? 'PASS' : 'FAIL'} |`);
   out.push('', '## Diagnostics', '');
   for (const c of r.configs) {
-    out.push(`### ${c.page} ${c.formFactor}`, '', `- LCP element: ${c.lcpElement ? '`' + c.lcpElement.replace(/`/g, "'") + '`' : 'n/a'}`);
+    out.push(`### ${c.page} ${c.formFactor} ${c.visit ?? 'first'}`, '', `- LCP element: ${c.lcpElement ? '`' + c.lcpElement.replace(/`/g, "'") + '`' : 'n/a'}`);
     const errors = c.runs.filter((x) => x.error || x.runtimeError).map((x) => x.error ?? x.runtimeError);
     if (errors.length) out.push(`- Run errors: ${errors.join(' | ')}`);
     if (c.failingAudits.length) out.push('- Audits below 0.9:', ...c.failingAudits.map((a) => `  - ${a}`));

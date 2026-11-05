@@ -141,4 +141,39 @@ describe('RequestBar', () => {
       await unmount();
     });
   });
+
+  describe('keyboard focus and the bar (WCAG 2.4.11)', () => {
+    const rect = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 400, width: 400, height: bottom - top, x: 0, y: top, toJSON() {} }) as DOMRect;
+
+    it('scrolls a control that lands under the bar clear of it, and steps aside when it cannot', async () => {
+      const { host, unmount } = await mount(<RequestBar />, 'en');
+      const bar = host.querySelector<HTMLElement>('[data-request-bar]')!;
+      bar.getBoundingClientRect = () => rect(760, 830);
+      const field = document.createElement('button');
+      document.body.append(field);
+      let box = rect(700, 790); // its lower part under the bar
+      field.getBoundingClientRect = () => box;
+      field.scrollIntoView = vi.fn(() => {
+        box = rect(500, 590); // cleared
+      });
+      await act(async () => field.focus());
+      expect(field.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+      expect(bar.hasAttribute('data-yield')).toBe(false);
+
+      // Too tall to clear: the bar steps aside while it has focus, and comes back when focus moves on.
+      const card = document.createElement('button');
+      document.body.append(card);
+      card.getBoundingClientRect = () => rect(80, 800);
+      card.scrollIntoView = vi.fn();
+      // jsdom has no keyboard modality: say this focus is a keyboard (focus-visible) one.
+      card.matches = ((selector: string) => selector === ':focus-visible' || Element.prototype.matches.call(card, selector)) as typeof card.matches;
+      await act(async () => card.focus());
+      expect(bar.hasAttribute('data-yield')).toBe(true);
+      await act(async () => card.blur());
+      expect(bar.hasAttribute('data-yield')).toBe(false);
+      field.remove();
+      card.remove();
+      await unmount();
+    });
+  });
 });

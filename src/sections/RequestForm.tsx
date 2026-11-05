@@ -58,7 +58,7 @@ export function RequestForm() {
         </Reveal>
         <div {...reveal('fade')} className="lg:col-span-7">
           {/* The form sits on a white card: its own light ground, so the Field primitives read dark-on-white. */}
-          <div data-ground="light" className="surface-white rounded-3xl p-6 shadow-e4 sm:p-8 lg:p-10">
+          <div data-ground="light" className="surface-white rounded-xl p-6 shadow-e4 sm:p-8 lg:p-10">
             <RequestFormBody />
           </div>
         </div>
@@ -312,7 +312,7 @@ function RequestFormBody() {
             ref={summary}
             tabIndex={-1}
             data-testid="form-error-summary"
-            className="rounded-2xl border border-(--surface-danger) bg-red-50 p-5"
+            className="rounded-lg border border-(--surface-danger) bg-red-50 p-5"
           >
             <p className="font-semibold">{f.errorSummary}</p>
             <ul className="mt-3 grid gap-2">
@@ -339,7 +339,7 @@ function RequestFormBody() {
             ref={result}
             tabIndex={-1}
             data-testid="form-failure"
-            className="rounded-2xl border border-(--surface-danger) bg-red-50 p-5"
+            className="rounded-lg border border-(--surface-danger) bg-red-50 p-5"
           >
             <p className="font-semibold">{f.failure.title}</p>
             <p className="t-body mt-2">{status === 'offline' ? f.failure.offline : f.failure.text}</p>
@@ -686,7 +686,7 @@ function LiftSummary({ values }: { values: RequestValues }) {
   ).filter((p): p is readonly ['weight' | 'radius' | 'height', number] => p[1] !== null && p[1] > 0);
   if (!parts.some(([k]) => k === 'weight')) return null;
   return (
-    <div data-testid="form-lift-summary" className="rounded-2xl bg-(--surface-sunken) p-5 sm:col-span-3">
+    <div data-testid="form-lift-summary" className="rounded-lg bg-(--surface-sunken) p-5 sm:col-span-3">
       <p className="t-title">{f.summary.title}</p>
       <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
         {parts.map(([key, n]) => (

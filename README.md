@@ -38,11 +38,25 @@ node qa/loader.mjs              # the first-visit loader
 node qa/bundle-budget.mjs       # JS/CSS/first-load budgets (below)
 npm run lighthouse              # Lighthouse, mobile and desktop, both pages, median of 3 runs; also runs the bundle budget
                                 # LH_RUNS=1 for a quick run. Reports go to qa/reports/ (git-ignored). Exits 1 if a budget fails.
+npm run qa                      # functional QA: both pages × 7 widths × desktop/touch/reduced motion + no-JS, every control,
+                                # axe (WCAG 2.2 A/AA), keyboard walk, SEO head, truth gate, the vercel.json CSP (about 25 min).
+                                # QA_ONLY=matrix,controls,keyboard,nojs,seo,truth,csp runs a part. Writes qa/reports/summary.md.
 ```
+
+For the full `npm run qa`, build with every optional channel set to test values, so the WhatsApp, call, analytics and form paths are all exercised (the runner answers the form endpoint itself, 500 then 200):
+
+```bash
+SITE_URL=http://localhost:4173 VITE_WHATSAPP=218910000000 VITE_PHONE=+218910000000 \
+  VITE_FORM_ENDPOINT=http://localhost:4173/__qa/form VITE_GA4_ID=G-QA00000000 npm run build
+npm run preview &
+QA_FORM_ENDPOINT=http://localhost:4173/__qa/form npm run qa
+```
+
+A plain staging build (none of those set) also works: the form is then checked for its WhatsApp / email hand-off.
 
 All QA scripts take a base URL (argument or `QA_BASE`; default `http://localhost:4173`).
 
-> **Known gap at this commit:** `package.json` also lists `npm run qa` (`qa/run-qa.mjs`), which is not in the repository yet, so that command fails. Use the individual scripts above until it is added.
+> `npm run qa` (preview running) drives every control on both pages across 7 widths and 3 motion modes, plus no-JS and a keyboard walk.
 >
 > `npm run pdf` (preview running) writes the screen exports to `docs/exports/atlas-{ar,en}-{desktop,mobile}.pdf` (one tall page each, drawn from browser captures, so the text is not selectable) with a first-screen PNG beside each.
 

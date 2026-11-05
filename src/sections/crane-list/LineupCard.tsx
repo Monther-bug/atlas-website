@@ -9,7 +9,8 @@ import { useLang } from '@/lib/lang';
 import { formatMetres, formatNumber } from '@/lib/numbers';
 import { setRequestedCrane, useRequestedCrane } from '@/lib/request';
 import { fillTemplate } from '@/lib/whatsapp';
-import { keySpecs, ratingRadius } from './card-facts';
+import { craneListCopy } from '@/content/crane-list-copy';
+import { keySpecs, ratingDiffers, ratingRadius } from './card-facts';
 import { parseLoad, ratedFor, useLoadText } from './load';
 
 /** Screen-reader suffix that makes every card action's name unique (": Grove GMK6350"). */
@@ -93,7 +94,8 @@ export function LineupCard({ crane, onDetails }: { crane: Crane; onDetails: (cra
             {copy.grid.card.capacity}
             {radius !== undefined ? ` ${fillTemplate(copy.grid.card.atRadius, { radius: formatMetres(radius, lang) })}` : ''}
             {' · '}
-            {copy.grid.card.rating}
+            {/* QUY250: the figure is not the manufacturer's listed maximum, so it is not called the manufacturer rating. */}
+            {ratingDiffers(crane) ? craneListCopy[lang].conflict.label : copy.grid.card.rating}
           </span>
           <DraftBadge verified={crane.verified} />
         </p>

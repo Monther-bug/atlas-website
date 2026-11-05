@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { lenisRef, noop, type MotionModule } from './shared';
+import { glide, lenisRef, noop, type MotionModule } from './shared';
 
 /* Ownership: startProgressRope is the sole writer of [data-progress-rope] (transform + .is-live); other modules only read its rect. */
 /** Desktop: a 1 px red line on the reading-start edge whose length is the page's scroll progress (v2 keeps it; the footer pad is gone). */
@@ -48,7 +48,7 @@ export const startBackToTop: MotionModule = () => {
     const lenis = lenisRef.current;
     if (!lenis) return; // touch: the browser follows href="#top" itself
     event.preventDefault();
-    lenis.scrollTo(0, {
+    glide(lenis, 0, {
       duration: 1.4,
       onComplete: () => {
         history.replaceState(null, '', '#top');

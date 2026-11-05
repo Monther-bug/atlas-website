@@ -86,7 +86,8 @@ export function SectionHeader({ id, title, continuation, lead, actions, level = 
         </H>
         {lead ? <p className="t-sub mt-5 max-w-[40rem] text-(--surface-fg-2)">{lead}</p> : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div> : null}
+      {/* max-w-full: on a 320 px phone a long action ("Combine them in one request") wraps inside the shell instead of widening the page. */}
+      {actions ? <div className="flex max-w-full shrink-0 flex-wrap items-center gap-3">{actions}</div> : null}
     </header>
   );
 }

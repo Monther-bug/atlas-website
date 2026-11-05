@@ -125,7 +125,7 @@ export interface Copy {
   /** Copy deck §2. */
   header: {
     skipLink: string;
-    homeLabel: string; // logo link aria-label
+    homeLabel: string; // logo link: sr-only words after the visible name (WCAG 2.5.3: the name starts with what is seen)
     name: string; // typeset name beside the badge
     nameAlt: string; // the same name in the other language (second line of the lockup)
     nav: { services: string; cranes: string; sites: string; contact: string };
@@ -422,6 +422,11 @@ export interface CraneListCopy {
   groups: Record<SpecGroupId, string>;
   /** v2: overall dimensions, one row each (the comparison reads them across models). */
   dims: { length: string; width: string; height: string };
+  /**
+   * v2: a crane whose shown maximum is not the manufacturer's listed one (QUY250): the label used instead of
+   * "Manufacturer rating", and the screen-reader text of the † mark on its capacity cell (the note explains it).
+   */
+  conflict: { label: string; mark: string };
   /** v2: what each maximum rating means, from the notes in crane-specs.ts (shown in the sheet and under the comparison). */
   capacityNotes: Record<Exclude<CraneId, 'cke2500'>, string>;
 }

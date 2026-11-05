@@ -17,7 +17,7 @@ import {
   type Point,
   type Rect,
 } from './math';
-import { lenisRef, noop, type Dispose } from './shared';
+import { lenisRef, noop, reaimGlide, type Dispose } from './shared';
 
 /*
  * The fleet showcase (v2). Desktop: one sticky, scrubbed stage. The first crane is hoisted in while the stage rises
@@ -38,9 +38,14 @@ const PARK = 56;
 const HOOK_GAP = 56;
 /** The rope hangs this far inside the readout's reading-start edge, in px (half the 36 px glyph). */
 const HOOK_INSET = 18;
-/** The glyph's bowl sits this far from its hook point (x right, y down), so it lands over the real hook, in px. */
-const LAND_DX = 6.75;
+/** The glyph's bowl sits this far below its hook point, in px: the real hook needs this much room above it to land. */
 const LAND_DY = 38;
+/**
+ * Where the rope's end lands: just above the real hook's bowl, on its block (px above the hook point). The drawn hook
+ * fades out on the way down, so the rope ends on the real hook in the photo instead of a drawn hook covering it
+ * (Q.1: the glyph used to land on top of the real hook and hide it).
+ */
+const ATTACH_DY = 22;
 /** The real hook stays this share of the frame width away from the frame's side edges. */
 const HOOK_MARGIN_X = 0.12;
 /** ...and no lower than this share of its height. */
@@ -56,8 +61,8 @@ const SETTLED = HOIST.setDownAt - 0.02;
  * comes down from SWITCH, where that crane also becomes the current one. Short gaps, so a keyboard scroll that stops
  * anywhere never shows a photo with no readout, or a readout under another crane's photo for long.
  */
-const LIFTED = 0.24;
-const SWITCH = 0.25;
+const LIFTED = 0.18;
+const SWITCH = 0.19;
 
 const px = (value: number) => `${value}px`;
 /** A crane hook block: sheave block with its axle, swivel, forged hook and safety latch. The rope meets it at (16, 0). */
@@ -274,6 +279,7 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
   section.classList.add('hoist--staged');
   const rig = buildRig();
   stage.append(rig.root);
+  const glyph = rig.hook.querySelector<SVGElement>('.hoist-rig__glyph');
 
   // Geometry in px, in the stage's coordinates; re-measured at the start of every ScrollTrigger refresh.
   const geo = {
@@ -320,7 +326,7 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
       const p = hookToBox(lastHook.hook, lastHook.rect, box, { x: ox, y: oy });
       if (box.width > 0 && p.x >= 24 && p.x <= box.width - 24 && p.y >= LAND_DY + 24 && p.y <= box.height - 16) {
         const frame = offsetIn(last.photo, stage);
-        geo.land = { x: frame.x + p.x + LAND_DX, y: frame.y + p.y - LAND_DY };
+        geo.land = { x: frame.x + p.x, y: frame.y + p.y - ATTACH_DY };
         last.photo.style.setProperty('--photo-ox', `${ox * 100}%`);
         last.photo.style.setProperty('--photo-oy', `${oy * 100}%`);
         last.photo.style.setProperty('--hook-ax', px(p.x));
@@ -421,7 +427,7 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
       tl.fromTo(rig.hook, { x: () => geo.ropeX[k - 1], y: () => geo.hookY[k - 1] }, { x: () => geo.ropeX[k - 1], y: -PARK, duration: LIFTED * b, ease: 'power2.in' }, s);
       if (prev.tag) {
         tl.fromTo(prev.tag, { y: 0 }, { y: () => parked(k - 1), duration: LIFTED * b, ease: 'power2.in' }, s);
-        tl.fromTo(prev.tag, { opacity: 1, filter: SHARP }, { opacity: 0, filter: BLUR, duration: 0.16 * b, ease: 'power1.in' }, s);
+        tl.fromTo(prev.tag, { opacity: 1, filter: SHARP }, { opacity: 0, filter: BLUR, duration: 0.13 * b, ease: 'power1.in' }, s);
       }
 
       // 12–55 %: the next photo opens bottom-up over the last one, which darkens; the image settles from 1.18.
@@ -434,7 +440,10 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
       const at = s + SWITCH * b;
       tl.fromTo(rig.hook, { x: () => geo.ropeX[k], y: -PARK }, { x: () => geo.ropeX[k], y: () => geo.hookY[k], duration: (lowerEnd - SWITCH) * b, ease: 'expo.out' }, at);
       if (p.tag) {
-        tl.fromTo(p.tag, { y: () => parked(k), opacity: 0, filter: BLUR }, { y: 0, opacity: 1, filter: SHARP, duration: (lowerEnd - SWITCH) * b, ease: 'expo.out' }, at);
+        tl.fromTo(p.tag, { y: () => parked(k), filter: BLUR }, { y: 0, filter: SHARP, duration: (lowerEnd - SWITCH) * b, ease: 'expo.out' }, at);
+        // The readout is legible within 8 % of the beat (it used to wait on the slow tail of the drop): the stretch with
+        // no readout on screen is now about a tenth of a beat (Q.1 measured 17 % of scroll samples before).
+        tl.fromTo(p.tag, { opacity: 0 }, { opacity: 1, duration: 0.08 * b, ease: 'power1.out' }, at);
       }
       const proxy = { value: steps[k].from };
       tl.fromTo(
@@ -449,12 +458,15 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
         tl.fromTo(rig.hook, { y: () => geo.hookY[k] }, { y: () => geo.exitY, duration: 0.07 * b, ease: 'power2.inOut' }, s + 0.6 * b);
         tl.fromTo(rig.hook, { x: () => geo.ropeX[k] }, { x: landX, duration: 0.08 * b, ease: 'power2.inOut' }, s + 0.65 * b);
         tl.fromTo(rig.hook, { y: () => geo.exitY }, { y: landY, duration: (SETTLED - 0.72) * b, ease: 'expo.out' }, s + 0.72 * b);
+        // The drawn hook dissolves as the rope reaches the real one, which stays visible.
+        if (glyph) tl.fromTo(glyph, { opacity: 1 }, { opacity: () => (geo.land ? 0 : 1), duration: 0.06 * b, ease: 'power1.in' }, s + (SETTLED - 0.07) * b);
       }
     }
 
     // Exit (30): the hook rises off the real hook, travels to the reading-start edge and hands over to the progress rope.
     const out = HOIST.outUnits;
     tl.fromTo(rig.hook, { y: landY }, { y: () => geo.exitY, duration: 0.45 * out, ease: 'power2.inOut' }, O);
+    if (glyph) tl.fromTo(glyph, { opacity: () => (geo.land ? 0 : 1) }, { opacity: 1, duration: 0.12 * out }, O);
     tl.fromTo(rig.hook, { x: landX }, { x: () => geo.exitX, duration: 0.7 * out, ease: 'power2.inOut' }, O + 0.3 * out);
     tl.fromTo(rig.hook, { opacity: 1 }, { opacity: 0, duration: 0.4 * out }, O + 0.6 * out);
     tl.set({}, {}, total); // the timeline spans exactly `total` units, so snap points line up
@@ -511,8 +523,10 @@ export function hoistDesktop(section: HTMLElement, lang: Lang, rtl: boolean): Di
 
   ScrollTrigger.sort();
   ScrollTrigger.refresh();
-  // After the refresh, which puts back the scroll position it cached earlier. Same task: no paint between.
-  shiftScroll(scrollBefore, shift);
+  // After the refresh, which puts back the scroll position it cached earlier. Same task: no paint between. A link glide
+  // passing the section (a nav link, back to top) is re-aimed at where its target now is, instead of being stopped.
+  const lenis = lenisRef.current;
+  if (!lenis || !reaimGlide(lenis)) shiftScroll(scrollBefore, shift);
   // A shared link to one crane (#hoist-gmk6350) opens on that crane, not on the first one.
   const linked = parts.findIndex((p) => p.item.id && `#${p.item.id}` === window.location.hash);
   if (st && linked >= 0) shiftScroll(window.scrollY, st.start + (st.end - st.start) * snaps[linked] - window.scrollY);

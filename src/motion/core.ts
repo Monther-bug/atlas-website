@@ -8,7 +8,7 @@ import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mod
 import { startServiceArt } from './services';
 import { startWhyBars, startWhyStepsDesktop, startWhyStepsTouch } from './why';
 import { startBackToTop, startProgressRope } from './rope';
-import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
+import { glide, lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
 import { afterLoader, loaderShowing } from './loader';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
@@ -36,7 +36,7 @@ function glideToAnchors(lenis: Lenis): Dispose {
     } catch {
       // A malformed escape: use the hash as written.
     }
-    lenis.scrollTo(target);
+    glide(lenis, target);
   };
   window.addEventListener('click', onClick);
   return () => window.removeEventListener('click', onClick);

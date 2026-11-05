@@ -13,6 +13,12 @@ export interface CardFacts {
   counterweightT: number;
   secondary: readonly KeySpecId[];
   radiusM?: number;
+  /**
+   * The maximum the manufacturer's sheet lists, only where it differs from the figure the site shows (QUY250: the
+   * model name and Lectura say 250 t, Fuwa's page 260 t; open decision, spec §15.2). The site keeps one figure per
+   * crane and labels it honestly instead of calling it the manufacturer's rating.
+   */
+  listedMaxT?: number;
 }
 
 export type KeySpecId = 'boomMax' | 'jib' | 'counterweight';
@@ -21,7 +27,7 @@ export const CARD_FACTS: Partial<Record<CraneId, CardFacts>> = {
   rt700e: { boomMaxM: 33.5, jibMaxM: 17.1, counterweightT: 5.553, secondary: [] },
   'atf60-3': { boomMaxM: 40.2, jibMaxM: 16, counterweightT: 13.2, secondary: [], radiusM: 2.5 },
   'ac200-1': { boomMaxM: 68, jibMaxM: 33, counterweightT: 69, secondary: [] },
-  quy250: { boomMaxM: 72.2, jibMaxM: 36, counterweightT: 88.5, secondary: ['jib', 'counterweight'] },
+  quy250: { boomMaxM: 72.2, jibMaxM: 36, counterweightT: 88.5, secondary: ['jib', 'counterweight'], listedMaxT: 260 },
   gmk6350: { boomMaxM: 60, jibMaxM: 61, counterweightT: 100, secondary: [], radiusM: 2.44 },
 };
 
@@ -49,4 +55,9 @@ export function keySpecs(crane: Crane, copy: Copy, lang: Lang): KeySpec[] {
 
 export function ratingRadius(crane: Crane): number | undefined {
   return CARD_FACTS[crane.id]?.radiusM;
+}
+
+/** True when the figure shown is not the manufacturer's listed maximum (it then carries the to-confirm label). */
+export function ratingDiffers(crane: Crane): boolean {
+  return CARD_FACTS[crane.id]?.listedMaxT !== undefined;
 }
