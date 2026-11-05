@@ -5,7 +5,7 @@ import { cranes, getCopy, siteInfo, sites, visibleCranes } from './index';
 describe('cranes', () => {
   it('lists the visible cranes from smallest to largest', () => {
     expect(visibleCranes.map((c) => c.id)).toEqual(['rt700e', 'atf60-3', 'ac200-1', 'quy250', 'gmk6350']);
-    expect(visibleCranes.map((c) => c.capacityT)).toEqual([55, 60, 200, 250, 350]);
+    expect(visibleCranes.map((c) => c.capacityT)).toEqual([55, 60, 200, 250, 317.5]);
   });
 
   it('never shows the Kobelco', () => {

@@ -25,7 +25,7 @@ describe('Hoist', () => {
 
   it('is an ordered list of the visible cranes, smallest first', () => {
     expect(items.map((li) => li.getAttribute('data-crane'))).toEqual(['rt700e', 'atf60-3', 'ac200-1', 'quy250', 'gmk6350']);
-    expect(items.map((li) => li.getAttribute('data-capacity'))).toEqual(['55', '60', '200', '250', '350']);
+    expect(items.map((li) => li.getAttribute('data-capacity'))).toEqual(['55', '60', '200', '250', '317.5']);
   });
 
   it('gives every item a photo box, a load tag and a final-value counter', () => {

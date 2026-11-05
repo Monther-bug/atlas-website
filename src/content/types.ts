@@ -13,7 +13,7 @@ export interface Crane {
   make: string;
   model: string;
   type: CraneType;
-  capacityT: number; // manufacturer max rating used on the site
+  capacityT: number; // manufacturer max rating in METRIC tonnes (GMK6350 is 350 US tons = 317.5 t; see crane-specs.ts)
   hoistPhoto: PhotoId;
   cardPhoto: PhotoId;
   verified: boolean; // Atlas confirmed ownership + capacity
