@@ -79,7 +79,6 @@ html[data-motion="reduced"] .progress-rope {
 }
 @media (prefers-reduced-motion: reduce) {
   .motion-ghost,
-  .service-sling,
   .hoist-rig {
     display: none !important;
   }
@@ -113,32 +112,10 @@ html.motion-ok [data-hero] {
   overflow-clip-margin: 0.15em;
 }
 
-/* ==== D.8: services sling (hover/focus, desktop only) ==== */
-html[data-motion="desktop"] [data-service-row] {
-  position: relative;
-}
-.service-sling {
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: calc(-1 * var(--sling-reach, 0px));
-  inline-size: var(--sling-reach, 0px);
-  block-size: 1.5rem;
-  margin-block-start: -0.75rem;
-  overflow: visible;
-  pointer-events: none;
-  fill: none;
-  stroke: var(--color-red-bright);
-  stroke-width: 1.5px;
-  stroke-linecap: round;
-}
-.service-sling path {
-  vector-effect: non-scaling-stroke;
-}
-/* The path is drawn rope-side first; in RTL the rope is on the right. */
-[dir="rtl"] .service-sling {
-  transform: scaleX(-1);
-}
-/* ==== end D.8 ==== */
+/* ==== Services + Why Atlas (v2, S.services) ====
+   The v1 service sling (D.8) is gone with the v1 rows. The v2 motion (services.ts, why.ts) only sets inline from-states
+   on elements below the fold, so nothing is pre-hidden here and nothing needs a failsafe. */
+/* ==== end Services + Why Atlas ==== */
 
 /* ==== The Hoist, desktop (D.5) ==========================================================
    hoist.ts adds .hoist--staged, the rig <li> and the runway <div>, and sets the custom

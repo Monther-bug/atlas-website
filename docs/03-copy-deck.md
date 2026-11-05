@@ -157,6 +157,7 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 | Title | خدماتنا | Our services |
 | Intro | أربع خدمات في شركة واحدة. اطلب خدمة واحدة، أو اجمع أكثر من خدمة في طلب واحد. | Four services from one company. Ask for one, or put several in a single request. |
 | Link on each service → WhatsApp, template C | اسأل عن هذه الخدمة | Ask about this service |
+| Header action → contact form (v2) | اجمعها في طلب واحد | Combine them in one request |
 
 **01. Crane hire**
 
@@ -302,6 +303,32 @@ The whole block stays out of the page until Atlas sends real facts. Show a proof
 | Point: inspection | فحص الرافعات من طرف ثالث: [[INSPECTION_BODY]] | Third-party crane inspection: [[INSPECTION_BODY]] |
 | Point: insurance | التأمين: [[INSURANCE]] | Insurance: [[INSURANCE]] |
 | Point: references (written permission only) | عملاء ومشاريع: [[CLIENTS_PROJECTS]] | Clients and projects: [[CLIENTS_PROJECTS]] |
+
+**8c. Why Atlas, v2 (staging; built from facts on hand only)**
+
+Added 5 Nov 2026 for the v2 site (spec `2026-11-05-atlas-v2-design.md` §10, open decision 4). It does **not** replace 8a: every 8a proof point stays HIDDEN UNTIL DATA. The block uses only what is already true on the page: the capacity range of the cranes shown (manufacturer ratings, DraftBadge until Atlas confirms them), the three crane types (§4 class names and explainers, with make and model), the hire process, and the channels that are configured. It does not repeat Services (no second list of the four services) or the Hoist (no repeated capacity footnote). No years, fleet counts, clients, regions or certificates. Order on the page: range → ground types → steps → channels (the band ends on the action). Strings live in `src/content/why.ts` (prerender-only, so they never ship in the main JS); the prerender's HTML token scan blocks production while a `[[CONFIRM]]` is left.
+
+| Element | العربية | English |
+|---|---|---|
+| Title (two-tone, first part) | لماذا أطلس الصحراء؟ | Why Atlas Alshraa? |
+| Title, continuation | رافعة بالحجم الذي يحتاجه عملك. | A crane the size your job needs. |
+| Lead | مدى واسع من الرافعات، ونوع يناسب كل أرض، وطريقة عمل واضحة من أول رسالة حتى تصل الرافعة إلى موقعك. | A wide range of cranes, a type for every kind of ground, and a clear way of working, from your first message until the crane reaches your site. |
+| Range figure (from data: smallest and largest capacity shown) | من {min} إلى {max} طن | {min}–{max} t |
+| Range label (+ DraftBadge) | أقصى حمولة للرافعات المعروضة في هذه الصفحة، من الأصغر إلى الأكبر، حسب تصنيف الشركة المصنّعة. | Maximum capacity of the cranes on this page, smallest to largest, as rated by each maker. |
+| Capacity list, accessible name | أقصى حمولة لكل طراز | Maximum capacity by model |
+| Crane types, title (+ DraftBadge; items = §4 class names, explainers, and the make and model of each crane of that type) | لكل أرض رافعتها | A crane for every kind of ground |
+| Steps, title | استئجار رافعة، خطوة بخطوة | Hiring a crane, step by step |
+| Step 1 | **أخبرنا بالحمولة والموقع.** وزن الحمولة، ونصف قطر الرفع وارتفاعه، ومكان العمل. | **Tell us the load and the site.** The load weight, the lift radius and height, and where the work is. |
+| Step 2 | **نختار الرافعة المناسبة.** نطابق رفعتك مع جدول الأحمال الصادر عن الشركة المصنّعة للرافعة. | **We match the right crane.** We check your lift against the crane maker's load chart. |
+| Step 3 | **نؤكد التوفر والموعد.** نخبرك بالرافعة المتاحة، ومتى تصل إليك. | **We confirm availability and dates.** We tell you which crane is free, and when it can reach you. |
+| Step 4 | **تصل الرافعة إلى موقعك.** تُنصب في المكان المتفق عليه، وتبدأ الرفعة. [[CONFIRM: ومعها مشغّل ذو خبرة.]] | **The crane arrives on site.** It is set up where we agreed, and the lift begins. [[CONFIRM: An experienced operator comes with it.]] |
+| Channels, title | اسأل بالطريقة التي تناسبك | Ask the way that suits you |
+| Channels, text ({list} = link to the crane list) | اختر رافعة من {list}، فيظهر اسمها جاهزاً في رسالتك وفي نموذج الطلب. | Pick a crane from {list} and its name is already filled in, in your message and in the request form. |
+| Channels, link text for {list} | قائمة الرافعات | the crane list |
+| Channels, buttons | راسلنا على واتساب (§2) · اتصل (§2, only when `[[PHONE]]` is set) · البريد الإلكتروني (§9) · املأ نموذج الطلب | Message us on WhatsApp (§2) · Call (§2, only when `[[PHONE]]` is set) · Email (§9) · Fill in the request form |
+| Channels, chip when a crane is picked | على الخطّاف: {model} (§10 bar) | On the hook: {model} (§10 bar) |
+
+Questions for Atlas on 8c: is step 2 how you work (checking each lift against the maker's load chart)? Is an operator included (step 4, and §5 crane hire)? Would you like to state a usual reply time here (`[[RESPONSE_TIME]]`, §13 E)?
 
 **8b. Documents**
 

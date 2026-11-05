@@ -80,6 +80,7 @@ export const en: Copy = {
     title: 'Our services',
     intro: 'Four services from one company. Ask for one, or put several in a single request.',
     ask: 'Ask about this service',
+    combine: 'Combine them in one request',
     items: [
       {
         id: 'crane-hire',
@@ -107,6 +108,8 @@ export const en: Copy = {
       },
     ],
   },
+
+  // §8c (v2): Why Atlas lives in src/content/why.ts (prerender-only strings, kept out of the main chunk)
 
   // §6 + spec §15.8
   grid: {

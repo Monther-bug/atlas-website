@@ -71,6 +71,35 @@ export interface ServiceCopy {
   confirm: string | null;
 }
 
+/** One step of the hire process (WhyCopy.steps). `text` may hold a [[CONFIRM]] clause. */
+export interface WhyStep {
+  title: string;
+  text: string;
+}
+
+/**
+ * v2 "Why Atlas" (copy deck §8c), strings in src/content/why.ts. Built only from facts on hand: the capacity range of
+ * the cranes on the page (manufacturer ratings, draft), the crane types, the four services of the legal name, the
+ * request channels and the hire process. No years, counts, clients or certificates (those stay in §8a, HIDDEN UNTIL
+ * DATA). Kept out of `Copy` on purpose: the section is static HTML on the client (src/sections/island.tsx), so these
+ * strings are only needed by the prerender and stay out of the main JS chunk. The prerender's HTML token scan
+ * (scripts/prerender.mjs) still blocks a production build on any [[CONFIRM]] left in them.
+ */
+export interface WhyCopy {
+  title: string;
+  continuation: string; // two-tone second sentence of the heading
+  lead: string;
+  range: {
+    figure: string; // {min} {max}: formatted numbers; the unit (hoist.unit) follows
+    label: string;
+    listLabel: string; // accessible name of the capacity bar list
+  };
+  types: { title: string };
+  steps: { title: string; items: readonly [WhyStep, WhyStep, WhyStep, WhyStep] };
+  /** The closing strip. `text` holds {list}, replaced by a link (`listLink`) to the crane list. */
+  channels: { title: string; text: string; listLink: string; form: string };
+}
+
 export interface CraneTypeCopy {
   full: string; // "Rough-terrain crane"
   chip: string; // "Rough-terrain"
@@ -138,6 +167,7 @@ export interface Copy {
     title: string;
     intro: string;
     ask: string; // link → WhatsApp template C
+    combine: string; // v2: header action → #request (several services in one request)
     items: readonly [ServiceCopy, ServiceCopy, ServiceCopy, ServiceCopy];
   };
 

@@ -12,6 +12,7 @@ import { Hoist } from '@/sections/Hoist';
 import { RequestForm } from '@/sections/RequestForm';
 import { Services } from '@/sections/Services';
 import { Sites } from '@/sections/Sites';
+import { WhyAtlas } from '@/sections/WhyAtlas';
 import { useSiteMotion } from '@/motion';
 import '@/motion/motion.css';
 
@@ -38,6 +39,7 @@ export function App() {
         <About />
         <Hoist />
         <Services />
+        <WhyAtlas />
         <CraneGrid />
         <Sites />
         <Documents />

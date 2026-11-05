@@ -5,7 +5,8 @@ import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import Lenis from 'lenis';
 import { startRide } from './ride';
 import { MOTION_QUERIES, detectMotionMode, langOf, type MotionMode } from './mode';
-import { startServiceSetDown, startServiceSlings } from './reveal';
+import { startServiceArt } from './services';
+import { startWhyBars, startWhyStepsDesktop, startWhyStepsTouch } from './why';
 import { startBackToTop, startProgressRope } from './rope';
 import { lenisRef, noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
 import { heroDock, heroIntro } from './hero';
@@ -112,8 +113,10 @@ const DESKTOP: MotionModule[] = [
   heroIntro,
   heroDock,
   startProgressRope,
-  startServiceSetDown,
-  startServiceSlings,
+  // Services + Why Atlas (v2): line drawings, capacity bars, the scrubbed process line.
+  startServiceArt,
+  startWhyBars,
+  startWhyStepsDesktop,
   startBackToTop,
   startRide,
   hoistLazy('desktop'),
@@ -133,7 +136,9 @@ const DESKTOP: MotionModule[] = [
 const TOUCH: MotionModule[] = [
   heroIntro,
   heroDock,
-  startServiceSetDown,
+  startServiceArt,
+  startWhyBars,
+  startWhyStepsTouch,
   startBackToTop,
   startRide,
   hoistLazy('touch'),

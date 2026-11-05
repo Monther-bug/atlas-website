@@ -79,6 +79,7 @@ export const ar: Copy = {
     title: 'خدماتنا',
     intro: 'أربع خدمات في شركة واحدة. اطلب خدمة واحدة، أو اجمع أكثر من خدمة في طلب واحد.',
     ask: 'اسأل عن هذه الخدمة',
+    combine: 'اجمعها في طلب واحد',
     items: [
       {
         id: 'crane-hire',
@@ -106,6 +107,8 @@ export const ar: Copy = {
       },
     ],
   },
+
+  // §8c (v2): Why Atlas lives in src/content/why.ts (prerender-only strings, kept out of the main chunk)
 
   // §6 + spec §15.8
   grid: {

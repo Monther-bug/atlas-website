@@ -20,7 +20,7 @@ describe('App', () => {
 
   it('renders the sections in spec order (documents hidden until files exist)', () => {
     const ids = [...renderHtml(<App />, 'ar').querySelectorAll('main#main > section[id]')].map((s) => s.id);
-    expect(ids).toEqual(['top', 'about', 'cranes', 'services', 'crane-list', 'sites', 'request']);
+    expect(ids).toEqual(['top', 'about', 'cranes', 'services', 'why-atlas', 'crane-list', 'sites', 'request']);
   });
 
   it('meets the v2 floor on both pages (spec 2026-11-05 §16)', () => {
