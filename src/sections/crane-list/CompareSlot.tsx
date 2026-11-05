@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState, type ComponentType } from 'react';
 import type { Crane } from '@/content/types';
 
-type CompareProps = { cranes: readonly Crane[]; onDetails?: (crane: Crane, media: HTMLElement | null) => void };
+type CompareProps = { cranes: readonly Crane[] };
 
 /**
  * The comparison for static rendering, filled only by server-islands.ts (prerender and tests). Kept here, not in
@@ -17,15 +17,7 @@ const LiveCompare = lazy(() => import('./CompareModels').then((m) => ({ default:
  * mount.tsx before it renders) and loads the live one when it comes within a viewport, so a visitor who never scrolls
  * that far never downloads it. The live comparison has the same boxes as the prerender, so the swap shifts nothing.
  */
-export function CompareSlot({
-  cranes,
-  onDetails,
-  kept = '',
-}: {
-  cranes: readonly Crane[];
-  onDetails: (crane: Crane, media: HTMLElement | null) => void;
-  kept?: string;
-}) {
+export function CompareSlot({ cranes, kept = '' }: { cranes: readonly Crane[]; kept?: string }) {
   const Static = compareRegistry.component;
   const ref = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
@@ -47,11 +39,11 @@ export function CompareSlot({
     io.observe(el);
     return () => io.disconnect();
   }, [Static, near]);
-  if (Static) return <Static cranes={cranes} onDetails={onDetails} />;
+  if (Static) return <Static cranes={cranes} />;
   const placeholder = <div ref={ref} dangerouslySetInnerHTML={{ __html: kept }} />;
   return near ? (
     <Suspense fallback={placeholder}>
-      <LiveCompare cranes={cranes} onDetails={onDetails} />
+      <LiveCompare cranes={cranes} />
     </Suspense>
   ) : (
     placeholder

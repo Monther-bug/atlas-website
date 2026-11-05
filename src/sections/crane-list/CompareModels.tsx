@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { Button, NewTabNote } from '@/components/Button';
 import { DraftBadge } from '@/components/DraftBadge';
 import { ArrowIcon, HookIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
 import { fill } from '@/components/ui/util';
 import { craneListCopy } from '@/content/crane-list-copy';
+import { cranePath } from '@/content/crane-pages';
 import type { CraneSpec } from '@/content/crane-specs';
 import type { Crane, CraneId, CraneListCopy } from '@/content/types';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
 import { setRequestedCrane } from '@/lib/request';
+import { nameForTransition } from '@/lib/view-transition';
 import { KEY_ROWS, MORE_GROUPS, keyCell, keyLabel, type CompareCell } from './compare-data';
 import { compareSlots, compareStore, swapCompare, useCompare } from './compare-store';
 import { ChevronDownIcon } from './icons';
@@ -140,7 +142,7 @@ function Head({ columns, corner }: { columns: Column[]; corner: string }) {
 
 /**
  * «قارن الطرازات» / "Compare models" (Apple compare, simplified). Three columns (two on phones), each with a native
- * model picker that sticks under the header, the crane's photo, Request and Details. One real <table> holds the seven
+ * model picker that sticks under the header, the crane's photo, Request and Details (a link to the crane's page). One real <table> holds the seven
  * key rows; "Show all specs" renders the other rows, grouped, in a second table on demand (live only, so the default
  * DOM stays small). Notes and sources fold into one disclosure per column. Every figure is from crane-specs.ts.
  *
@@ -149,13 +151,7 @@ function Head({ columns, corner }: { columns: Column[]; corner: string }) {
  * island (mount.tsx) rendered with createRoot, never hydrated, so the live markup may differ from the prerender; the
  * boxes it keeps (photo frame, picker, toggle) have the same size in both, so mounting shifts nothing.
  */
-export function CompareModels({
-  cranes,
-  onDetails,
-}: {
-  cranes: readonly Crane[];
-  onDetails?: (crane: Crane, media: HTMLElement | null) => void;
-}) {
+export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
   const { copy, lang } = useLang();
   const extra = craneListCopy[lang];
   const text = extra.compare;
@@ -331,20 +327,20 @@ export function CompareModels({
                     {text.request}
                     <CraneName crane={c.crane} />
                   </Button>
-                  {onDetails ? (
-                    <Button
-                      size="sm"
-                      variant="plain"
-                      iconEnd={<ArrowIcon className="size-4" />}
-                      aria-haspopup="dialog"
-                      data-compare-details=""
-                      data-crane={c.crane.id}
-                      onClick={(event) => onDetails(c.crane, event.currentTarget.closest('.cmp-model')?.querySelector<HTMLElement>('[data-cmp-photo]') ?? null)}
-                    >
-                      {copy.grid.card.details}
-                      <CraneName crane={c.crane} />
-                    </Button>
-                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="plain"
+                    href={cranePath(c.crane.id, lang)}
+                    iconEnd={<ArrowIcon className="size-4" />}
+                    className="ui-nudge"
+                    data-compare-details=""
+                    data-crane-page-link={c.crane.id}
+                    data-crane={c.crane.id}
+                    onClick={(event: MouseEvent<HTMLElement>) => nameForTransition(event.currentTarget.closest('.cmp-model')?.querySelector('[data-cmp-photo]'))}
+                  >
+                    {copy.grid.card.details}
+                    <CraneName crane={c.crane} />
+                  </Button>
                 </div>
               </div>
             ))}

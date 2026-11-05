@@ -889,33 +889,82 @@ async function loadCheck(page) {
   return { pass, detail: `«٢٠٠» → fits ${ok200.yes.join(',')} "${ok200.result}" · «abc» → ${JSON.stringify(bad)} · clear → ${JSON.stringify(cleared)}` };
 }
 
-async function sheetCheck(page) {
-  const btn = await page.$('#crane-list [data-details][data-crane="gmk6350"]');
-  if (!btn) return { pass: false, detail: 'no Details button for gmk6350' };
-  await btn.evaluate((b) => b.scrollIntoView({ block: 'center', behavior: 'instant' }));
-  await wait(300);
-  await btn.focus();
-  await page.keyboard.press('Enter');
-  await wait(1400);
-  const opened = await page.evaluate(() => {
-    const d = document.getElementById('crane-sheet');
-    return { open: !!d?.open, modal: !!d?.matches(':modal'), focusInside: !!document.activeElement?.closest('#crane-sheet'), title: d?.querySelector('h2')?.textContent?.trim() ?? '' };
-  });
-  let trapped = true;
-  for (let i = 0; i < 6; i++) {
-    await page.keyboard.press('Tab');
-    trapped &&= await page.evaluate(() => document.activeElement === document.body || !!document.activeElement?.closest('#crane-sheet'));
+/** The whole card, and Details, open the crane's own page (no dialog): photo, name, capacity, specs and the link itself; Request stays on the page. */
+/** A comparison column's Details opens that crane's page, in the page language. */
+async function compareDetailsCheck(page) {
+  const lang = await page.evaluate(() => document.documentElement.lang);
+  await page.$eval('#crane-compare', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  let link = null;
+  for (let i = 0; i < 30 && !link; i++) {
+    await wait(250);
+    link = await firstVisible(page, '#crane-compare a[data-compare-details]');
   }
-  await page.keyboard.press('Escape');
-  await wait(900);
-  const closed = await page.evaluate(() => ({
-    open: !!document.getElementById('crane-sheet')?.open,
-    back: document.activeElement?.matches('[data-details][data-crane="gmk6350"]') ?? false,
-  }));
-  return {
-    pass: opened.open && opened.modal && opened.focusInside && /GMK6350/.test(opened.title) && trapped && !closed.open && closed.back,
-    detail: `Enter → ${JSON.stringify(opened)} · Tab stays inside=${trapped} · Esc → ${JSON.stringify(closed)}`,
-  };
+  if (!link) return { pass: false, detail: 'no live comparison Details link' };
+  const id = await link.evaluate((a) => a.getAttribute('data-crane'));
+  const want = `${lang === 'en' ? '/en' : ''}/cranes/${id}/`;
+  await follow(page, link);
+  const path = await page.evaluate(() => location.pathname);
+  return { pass: path === want, detail: `Details of ${id} → ${path}` };
+}
+
+async function cardNavCheck(page) {
+  const lang = await page.evaluate(() => document.documentElement.lang);
+  const want = lang === 'en' ? '/en/cranes/gmk6350/' : '/cranes/gmk6350/';
+  const home = page.url();
+  const card = '#crane-list [data-testid="crane-card"][data-crane="gmk6350"]';
+  const shape = await page.$eval(card, (c, w) => {
+    const stops = [...c.querySelectorAll('a[href], button')];
+    const link = c.querySelector('a[data-details]');
+    return { stops: stops.length, links: c.querySelectorAll('a[href]').length, href: link?.getAttribute('href'), name: link?.textContent.trim(), dialog: !!document.querySelector('dialog#crane-sheet'), w };
+  }, want);
+  const problems = [];
+  if (shape.stops !== 2 || shape.links !== 1) problems.push(`card has ${shape.links} link(s) and ${shape.stops} tab stop(s), want 1 and 2`);
+  if (shape.href !== want) problems.push(`href ${shape.href}`);
+  if (!/GMK6350/.test(shape.name ?? '')) problems.push(`link name "${shape.name}"`);
+  const parts = [
+    ['photo', '.lineup-card__media'],
+    ['name', '.lineup-card__name'],
+    ['capacity', '.lineup-card__capacity'],
+    ['specs', '.lineup-card__specs'],
+    ['Details', 'a[data-details]'],
+  ];
+  for (const [label, sel] of parts) {
+    if (!(await lineupLive(page))) return { pass: false, detail: 'lineup not live' };
+    const el = await page.$(`${card} ${sel}`);
+    if (!el) {
+      problems.push(`no ${label}`);
+      continue;
+    }
+    await el.evaluate((e) => e.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+    await wait(450);
+    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }), el.click()]).catch(() => undefined);
+    const path = await page.evaluate(() => location.pathname);
+    if (path !== want) problems.push(`click ${label} → ${path}`);
+    await page.goBack({ waitUntil: 'networkidle0' }).catch(() => undefined);
+    await wait(600);
+  }
+  // Keyboard: Tab reaches the link, Enter follows it.
+  if (await lineupLive(page)) {
+    const link = await page.$(`${card} a[data-details]`);
+    await link.evaluate((e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await link.focus();
+    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }), page.keyboard.press('Enter')]).catch(() => undefined);
+    const path = await page.evaluate(() => location.pathname);
+    if (path !== want) problems.push(`Enter on Details → ${path}`);
+    await page.goBack({ waitUntil: 'networkidle0' }).catch(() => undefined);
+    await wait(600);
+  }
+  // Request on the same card stays on the page and puts that crane on the hook.
+  if (await lineupLive(page)) {
+    const req = await page.$(`${card} [data-testid="request-crane-button"]`);
+    await tap(page, req);
+    await wait(1400);
+    const after = await page.evaluate(() => ({ url: location.href, hook: document.querySelector('#crane-list [data-crane="gmk6350"][data-testid="crane-card"]')?.hasAttribute('data-on-hook') }));
+    if (after.url !== home) problems.push(`Request navigated to ${after.url}`);
+    if (!after.hook) problems.push('Request did not put the crane on the hook');
+  }
+  if (shape.dialog) problems.push('a #crane-sheet dialog exists');
+  return { pass: problems.length === 0, detail: problems.join('; ') || `photo, name, capacity, specs, Details and Enter → ${want}; Request stays` };
 }
 
 /**
@@ -1044,21 +1093,6 @@ async function requestRideCheck(page, motion) {
     !!r.formChip &&
     !!ev;
   return { pass, detail: `ride ghost=${flying} (motion ${motion}) left=${r.ghosts} chip="${(chip ?? '').trim()}" card on hook=${r.card} form=${form} formChip="${r.formChip}" analytics=${ga ? !!ev : 'off'} href=${decodedHref(href).slice(0, 60).replace(/\n/g, ' / ')}` };
-}
-
-/** The sheet's own Request closes the sheet and puts its crane on the hook. */
-async function sheetRequestCheck(page) {
-  const btn = await page.$('#crane-list [data-details][data-crane="quy250"]');
-  if (!btn) return { pass: false, detail: 'no Details for quy250' };
-  await tap(page, btn);
-  await wait(1400);
-  const req = await page.$('#crane-sheet [data-testid="sheet-request"]');
-  if (!req) return { pass: false, detail: 'sheet did not open' };
-  await req.click();
-  await wait(1600);
-  const open = await page.evaluate(() => !!document.getElementById('crane-sheet')?.open);
-  const chip = await barChip(page);
-  return { pass: !open && chip !== null && normModel(chip).includes('QUY250'), detail: `sheet open=${open} chip="${(chip ?? '').trim()}"` };
 }
 
 // Gallery ───────────────────────────────────────────────────────────────────
@@ -1430,11 +1464,11 @@ async function controlsFor(p, c) {
     record('lineup', `${tag} lineup island mounts when near`, live);
     await step('lineup', `${tag} type filters show the right cranes, one pressed, live count`, () => filterCheck(page));
     await step('lineup', `${tag} load check: «٢٠٠» marks the cranes rated ≥ 200 t; invalid input flagged; clear refocuses`, () => loadCheck(page));
-    await step('lineup', `${tag} Details sheet: Enter opens a modal, focus stays inside, Esc returns focus`, () => sheetCheck(page));
+    await step('lineup', `${tag} the card, its photo, name, capacity and Details open the crane page (GMK6350) in the page language; Enter works; Request stays and goes on the hook`, () => cardNavCheck(page));
     await step('lineup', `${tag} compare: three models (two on phones) on the key rows; a picker swaps and announces; a shown model trades places; show all on demand`, () => compareCheck(page));
     await step('request', `${tag} Request this crane rides into the bar: chip, encoded text, form select`, () => requestRideCheck(page, motion));
-    await step('request', `${tag} the sheet's Request closes it and puts its crane on the hook`, () => sheetRequestCheck(page));
     await step('request', `${tag} compare column Request: bar chip, WhatsApp text, form select`, () => compareRequestCheck(page));
+    await step('lineup', `${tag} compare column Details opens that crane's page`, () => compareDetailsCheck(page));
   });
   await group('gallery', async ({ page }) => {
     await step('gallery', `${tag} site picker narrows the strip and comes back`, () => galleryPickerCheck(page));
@@ -1751,7 +1785,7 @@ async function cspChecks() {
 
 // ── 9. Dark theme (src/lib/theme.ts) ────────────────────────────────────────
 // Light is the default on a first visit whatever the OS prefers; a saved dark theme paints from the first frame; the
-// dark page passes axe (contrast included) with its open states (menu, detail sheet, lightbox, form errors); the toggle
+// dark page passes axe (contrast included) with its open states (menu, lightbox, form errors); the toggle
 // works from the keyboard, changes no layout, is remembered across a reload and across the two languages.
 const themeState = (page) =>
   page.evaluate(() => ({
@@ -1819,20 +1853,6 @@ async function darkChecks(p, c) {
         return { pass: v.length === 0 && named === p.themeName, detail: `${v.join(' | ') || 'axe clean'} · name "${named}"` };
       }, kase);
     } else {
-      await step('axe', `${tag} detail sheet open: axe clean`, async () => {
-        const btn = await page.$('#crane-list [data-details][data-crane="gmk6350"]');
-        await btn.evaluate((b) => b.scrollIntoView({ block: 'center', behavior: 'instant' }));
-        await wait(300);
-        await btn.click();
-        await wait(1400);
-        // `list` is left out here: the photo carousel in the sheet (src/components/ui/Carousel.tsx) has <li role="group">
-        // in its <ul>, in both themes since before the dark theme (reported, not a colour issue). The whole-page run above
-        // keeps every rule.
-        const v = (await axeIn(page, '#crane-sheet')).filter((x) => !x.startsWith('list '));
-        await page.keyboard.press('Escape');
-        await wait(900);
-        return { pass: v.length === 0, detail: v.join(' | ') || 'axe clean' };
-      }, kase);
       await step('axe', `${tag} lightbox open: axe clean`, async () => {
         const photo = await page.$('#sites-track [data-testid="site-photo"]');
         await photo.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
@@ -2451,7 +2471,8 @@ async function compareDeepLinkCheck(page, p) {
   await page.$eval('#crane-compare', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' })).catch(() => {});
   let pressed = [];
   for (let i = 0; i < 30; i++) {
-    pressed = await page.$$eval('[data-testid="compare-pick"][aria-pressed="true"]', (bs) => bs.map((b) => b.dataset.crane));
+    // The comparison's column pickers are <select data-testid="compare-slot">; their values are the picked cranes.
+    pressed = await page.$$eval('select[data-testid="compare-slot"]', (ss) => ss.map((s) => s.value));
     if (pressed.includes(p.crane)) break;
     await wait(200);
   }

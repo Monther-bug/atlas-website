@@ -196,7 +196,7 @@ export interface Copy {
       capacity: string;
       request: string;
       formLink: string;
-      details: string; // opens the detail sheet; the model is appended for screen readers
+      details: string; // link to the crane's page (the whole card too); the model is appended for screen readers
       rating: string; // "Manufacturer rating": the capacity is the maker's figure, not Atlas's
       atRadius: string; // {radius}
       boomMax: string; // key spec label: the longest main boom
@@ -343,7 +343,7 @@ export interface Copy {
     slide: string; // aria-roledescription of one slide
     slideOf: string; // {i} {n}
     scrollTable: string; // {name}: label of a table that scrolls sideways
-    details: string; // {name}: opens a crane's detail sheet
+    details: string; // {name}: opens a crane's page
     notStated: string; // screen-reader text for an empty comparison cell
     specification: string; // corner header of a comparison table
   };
@@ -383,7 +383,7 @@ export type SpecFieldId =
   | 'country';
 
 /**
- * v2 «اعثر على رافعتك»: copy of the parts that load on demand (load check, detail sheet, comparison). It lives in
+ * v2 «اعثر على رافعتك»: copy of the parts that load on demand (load check, comparison, strings shared with the crane pages). It lives in
  * src/content/crane-list-copy.ts, outside `Copy`, so it ships in those lazy chunks and not in the initial bundle.
  */
 export interface CraneListCopy {
@@ -398,7 +398,7 @@ export interface CraneListCopy {
     invalid: string;
     result: { none: string; one: string; two: string; few: string; many: string }; // {n} {load}
   };
-  /** v2 detail sheet. */
+  /** v2 strings the crane pages use (the quick-view sheet is gone). */
   sheet: {
     whatsapp: string;
     compareWith: string;
@@ -406,7 +406,6 @@ export interface CraneListCopy {
     noteHeading: string;
     sourcesHeading: string;
     /** Link from the quick view to the crane's own page (/cranes/<id>/). */
-    fullPage: string;
   };
   /** v2 comparison: key rows by default, every other row on demand (CompareModels.tsx). */
   compare: {
@@ -428,7 +427,7 @@ export interface CraneListCopy {
     secondary: string; // screen-reader text of the * mark
     secondaryNote: string;
   };
-  /** v2: spec groups in the sheet and the comparison. */
+  /** v2: spec groups on the crane pages and in the comparison. */
   groups: Record<SpecGroupId, string>;
   /** v2: overall dimensions, one row each (the comparison reads them across models). */
   dims: { length: string; width: string; height: string };
@@ -437,11 +436,11 @@ export interface CraneListCopy {
    * "Manufacturer rating", and the screen-reader text of the † mark on its capacity cell (the note explains it).
    */
   conflict: { label: string; mark: string };
-  /** v2: what each maximum rating means, from the notes in crane-specs.ts (shown in the sheet and under the comparison). */
+  /** v2: what each maximum rating means, from the notes in crane-specs.ts (shown on the crane pages and under the comparison). */
   capacityNotes: Record<Exclude<CraneId, 'cke2500'>, string>;
 }
 
-/** v2: groups of spec rows in the detail sheet and the comparison (src/sections/crane-list/lineup-data.ts). */
+/** v2: groups of spec rows on the crane pages and in the comparison (src/sections/crane-list/lineup-data.ts). */
 export type SpecGroupId = 'lifting' | 'boom' | 'carrier' | 'engine' | 'dimensions';
 
 export type SpecUnit = 't' | 'm' | 'kw' | 'kmh' | 'pct' | 'mpa';

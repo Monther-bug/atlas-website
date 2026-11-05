@@ -11,7 +11,7 @@ import { CompareModels } from './CompareModels';
 function prerender(lang: 'ar' | 'en') {
   const html = renderToStaticMarkup(
     <LangProvider lang={lang} copy={getCopy(lang)}>
-      <CompareModels cranes={visibleCranes} onDetails={() => undefined} />
+      <CompareModels cranes={visibleCranes} />
     </LangProvider>,
   );
   return { html, doc: new JSDOM(html).window.document };

@@ -43,17 +43,6 @@ afterEach(() => {
   trackMock.mockClear();
 });
 
-/** Presses Details and waits for the lazy sheet chunk to render and open itself. */
-async function openSheet(host: Element, id: string): Promise<HTMLDialogElement> {
-  await click(host.querySelector(`button[data-details][data-crane="${id}"]`));
-  for (let i = 0; i < 100; i++) {
-    const dialog = host.querySelector<HTMLDialogElement>('dialog#crane-sheet');
-    if (dialog?.open && dialog.querySelector('h2')?.textContent?.includes(id === 'gmk6350' ? 'GMK6350' : '')) return dialog;
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
-  }
-  throw new Error(`sheet for ${id} did not open`);
-}
-
 const chipValues = (root: Element) =>
   [...root.querySelectorAll('button[data-testid="filter-chip"]')].map((chip) => chip.getAttribute('data-value'));
 
@@ -171,7 +160,7 @@ describe('CraneGridView', () => {
     const buttons = names('button[data-testid="request-crane-button"]');
     expect(new Set(buttons).size).toBe(5);
     expect(buttons[4]).toContain('Grove GMK6350');
-    const details = names('button[data-details]');
+    const details = names('a[data-details]');
     expect(new Set(details).size).toBe(5);
     expect(details[0]).toBe('Details: Grove RT700E');
     expect(html.querySelector('button[data-testid="request-crane-button"]')?.hasAttribute('aria-describedby')).toBe(false);
@@ -191,38 +180,36 @@ describe('CraneGridView', () => {
     expect(quy?.textContent).toContain('من قاعدة بيانات مواصفات');
   });
 
-  it('opens the detail sheet for the chosen crane, with the grouped manufacturer specification', async () => {
-    const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
-    const dialog = await openSheet(host, 'gmk6350');
-    expect(dialog.open).toBe(true);
-    expect(dialog?.querySelector('h2')?.textContent).toBe('Grove GMK6350');
-    expect([...(dialog?.querySelectorAll('h4') ?? [])].map((h) => h.textContent)).toEqual([
-      'Lifting',
-      'Boom and jib',
-      'Carrier',
-      'Engine and travel',
-      'Dimensions and weights',
-      'Where the figures come from',
-    ]);
-    expect(dialog?.textContent).toContain('Manufacturer specification');
-    expect(dialog?.textContent).toContain(craneListCopy.en.capacityNotes.gmk6350);
-    expect(dialog?.querySelector('[data-testid="sheet-whatsapp"]')?.getAttribute('href')).toContain(encodeURIComponent('Grove GMK6350 (All-terrain)'));
-    await unmount();
+  it('makes Details a real link to the crane page in the page language (the card is that link; Request stays a button)', () => {
+    for (const [lang, prefix] of [['en', '/en/cranes/'], ['ar', '/cranes/']] as const) {
+      const html = renderHtml(<CraneGridView cranes={unverified} />, lang);
+      expect(html.querySelector('dialog')).toBeNull();
+      for (const card of html.querySelectorAll('[data-testid="crane-card"]')) {
+        const id = card.getAttribute('data-crane');
+        const links = card.querySelectorAll('a[href]');
+        expect(links, `${lang} ${id} has one link`).toHaveLength(1);
+        expect(links[0]?.getAttribute('href')).toBe(`${prefix}${id}/`);
+        expect(links[0]?.hasAttribute('data-details')).toBe(true);
+        expect(card.querySelector('button[data-testid="request-crane-button"]')).not.toBeNull();
+        expect(card.querySelector('a[data-details] button, button a')).toBeNull();
+      }
+    }
   });
 
-  it('requests from the sheet: closes it and rides from the card button', async () => {
+  it('requests from the card without following the page link', async () => {
     const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
     const seen: HookEventDetail[] = [];
     const onHook = (event: Event) => seen.push((event as CustomEvent<HookEventDetail>).detail);
     window.addEventListener(HOOK_EVENT, onHook);
-    await openSheet(host, 'quy250');
-    await click(host.querySelector('[data-testid="sheet-request"]'));
+    const link = host.querySelector('[data-testid="crane-card"][data-crane="quy250"] a[data-details]');
+    let followed = false;
+    link?.addEventListener('click', () => (followed = true));
+    await click(host.querySelector('[data-testid="request-crane-button"][data-crane="quy250"]'));
     window.removeEventListener(HOOK_EVENT, onHook);
+    expect(followed).toBe(false);
     expect(getRequestedCrane()).toBe('quy250');
-    expect(host.querySelector<HTMLDialogElement>('dialog#crane-sheet')?.open).toBe(false);
     expect(seen).toHaveLength(1);
-    expect(seen[0]?.craneId).toBe('quy250');
-    expect(trackMock).toHaveBeenCalledWith('request_crane', { crane_id: 'quy250', location: 'sheet' });
+    expect(trackMock).toHaveBeenCalledWith('request_crane', { crane_id: 'quy250', location: 'card' });
     expect(host.querySelector('[data-testid="crane-card"][data-crane="quy250"]')?.hasAttribute('data-on-hook')).toBe(true);
     await unmount();
   });
@@ -320,28 +307,12 @@ describe('CraneGridView', () => {
     await unmount();
   });
 
-  it('opens the detail sheet from a comparison column', async () => {
+  it('links Details in each comparison column to the crane page', async () => {
     const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
-    await click(host.querySelector('[data-compare-details][data-crane="gmk6350"]'));
-    for (let i = 0; i < 100 && !host.querySelector<HTMLDialogElement>('dialog#crane-sheet')?.open; i++) {
-      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
-    }
-    const dialog = host.querySelector<HTMLDialogElement>('dialog#crane-sheet');
-    expect(dialog?.open).toBe(true);
-    expect(dialog?.querySelector('h2')?.textContent).toBe('Grove GMK6350');
-    await unmount();
-  });
-
-  it('adds a model to the comparison from its sheet', async () => {
-    const { host, unmount } = await mount(<CraneGridView cranes={unverified} />, 'en');
-    await openSheet(host, 'atf60-3');
-    const link = host.querySelector('dialog#crane-sheet a[href="#crane-compare"]');
-    link?.addEventListener('click', (e) => e.preventDefault());
-    await click(link);
-    const slots = [...host.querySelectorAll<HTMLSelectElement>('select[data-testid="compare-slot"]')].map((s) => s.value);
-    expect(slots).toEqual(['ac200-1', 'gmk6350', 'atf60-3']);
-    expect(host.querySelector('#crane-compare [aria-live="polite"]')?.textContent).toContain('Tadano Faun ATF 60-3');
-    expect(host.querySelector<HTMLDialogElement>('dialog#crane-sheet')?.open).toBe(false);
+    const links = [...host.querySelectorAll('a[data-compare-details]')];
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) expect(a.getAttribute('href')).toBe(`/en/cranes/${a.getAttribute('data-crane')}/`);
+    expect(host.querySelector('a[data-compare-details][data-crane="gmk6350"]')?.textContent).toBe('Details: Grove GMK6350');
     await unmount();
   });
 });

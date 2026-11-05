@@ -4,7 +4,7 @@ import type { PhotoId } from '@/generated/images';
 import { fillTemplate } from '@/lib/whatsapp';
 import { SPEC_GROUPS, capacityCell, rowLabel, specCell, specIdOf, type RowId, type SpecCell } from './lineup-data';
 
-/* Data only the detail sheet needs: kept beside the lazy CraneSheet chunk, out of the initial bundle. */
+/* Data only the crane pages need (photos, grouped specs, the WhatsApp text): kept out of the home page's bundle. */
 
 /** Photos per crane, lead first (v2 spec §7; Kobelco excluded). The lead is the card photo. */
 export const CRANE_PHOTOS: Record<CraneSpecId, readonly PhotoId[]> = {

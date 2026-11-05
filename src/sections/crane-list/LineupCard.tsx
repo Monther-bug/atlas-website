@@ -26,10 +26,13 @@ export function CraneName({ crane }: { crane: Crane }) {
 
 /**
  * One crane in the lineup (Apple-style product card): photo, make + model in mono, the capacity as the hero number,
- * the manufacturer-rating label, three key specs, and Request / Details. Contract C9: article[data-testid=crane-card]
- * and its request button keep their hooks; ride.ts flies the chip from that button into the bar.
+ * the manufacturer-rating label, three key specs, and Request / Details. The whole card opens the crane's own page:
+ * Details is the one real link and its ::after covers the card (the "stretched link" pattern, so one tab stop and one
+ * screen-reader link, with no click handler on the article); Request sits above it as a separate control. Contract C9:
+ * article[data-testid=crane-card] and its request button keep their hooks; ride.ts flies the chip from that button into
+ * the bar.
  */
-export function LineupCard({ crane, onDetails }: { crane: Crane; onDetails: (crane: Crane, media: HTMLElement | null) => void }) {
+export function LineupCard({ crane }: { crane: Crane }) {
   const { copy, lang } = useLang();
   const onHook = useRequestedCrane() === crane.id;
   const media = useRef<HTMLDivElement>(null);
@@ -69,19 +72,10 @@ export function LineupCard({ crane, onDetails }: { crane: Crane; onDetails: (cra
       </div>
 
       <div className="lineup-card__body">
-        {/* The model links to the crane's own page (prerendered, so crawlers find all ten pages from here); its photo
-            grows into that page's hero where cross-document view transitions run. Details stays the quick view. */}
         <h3 id={titleId} className="t-spec lineup-card__name">
-          <a
-            href={cranePath(crane.id, lang)}
-            className="lineup-card__link"
-            data-crane-page-link={crane.id}
-            onClick={() => nameForTransition(media.current?.querySelector('[data-lineup-photo]'))}
-          >
-            <bdi lang="en" dir="ltr">
-              {crane.make} {crane.model}
-            </bdi>
-          </a>
+          <bdi lang="en" dir="ltr">
+            {crane.make} {crane.model}
+          </bdi>
         </h3>
 
         <p className="lineup-card__capacity">
@@ -155,19 +149,20 @@ export function LineupCard({ crane, onDetails }: { crane: Crane; onDetails: (cra
             {copy.grid.card.request}
             <CraneName crane={crane} />
           </Button>
-          <Button
-            size="md"
-            variant="plain"
-            iconEnd={<ArrowIcon className="size-4" />}
-            className="ui-nudge"
-            aria-haspopup="dialog"
+          {/* The page link: prerendered, so crawlers and no-JS visitors reach all ten pages from here. Its ::after covers
+              the card; the photo grows into the page's hero where cross-document view transitions run. */}
+          <a
+            href={cranePath(crane.id, lang)}
+            className="ui-nudge lineup-card__details"
             data-details=""
+            data-crane-page-link={crane.id}
             data-crane={crane.id}
-            onClick={() => onDetails(crane, media.current)}
+            onClick={() => nameForTransition(media.current?.querySelector('[data-lineup-photo]'))}
           >
-            {copy.grid.card.details}
+            <span>{copy.grid.card.details}</span>
             <CraneName crane={crane} />
-          </Button>
+            <ArrowIcon className="size-4" />
+          </a>
         </div>
       </div>
     </article>

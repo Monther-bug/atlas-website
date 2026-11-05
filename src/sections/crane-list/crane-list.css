@@ -415,11 +415,6 @@
   .lineup-card__actions > :first-child {
     flex: 1 1 auto;
   }
-  /* Without JS the sheet cannot open; every figure is in the comparison table instead. */
-  html:not(.js) [data-details] {
-    display: none;
-  }
-
   /* Wide card (the one that closes a row): photo beside the text. */
   @container lineup-card (width >= 44rem) {
     .lineup-card {
@@ -448,74 +443,8 @@
     }
   }
 
-  /* ── Detail sheet ── */
-  .lineup-sheet .ui-carousel__track {
-    padding-block-start: 0;
-  }
-  .lineup-sheet__photo {
-    aspect-ratio: 16 / 10;
-    border-radius: var(--radius-lg);
-  }
-  .lineup-sheet__type {
-    margin: 1.25rem 0 0;
-    color: var(--surface-fg-2);
-  }
-  .lineup-sheet__type strong {
-    color: var(--surface-fg);
-    font-weight: 600;
-  }
-  .lineup-sheet__rating {
-    margin-block-start: 1.5rem;
-    padding: 1.25rem 1.5rem;
-    border-radius: var(--radius-lg);
-    background-color: var(--surface-sunken);
-  }
-  .lineup-sheet__rating .lineup-card__capacity {
-    margin: 0;
-  }
-  .lineup-sheet__note {
-    margin-block-start: 1rem;
-    padding-block-start: 1rem;
-    border-block-start: 1px solid var(--surface-line);
-  }
-  .lineup-sheet__note > * {
-    margin: 0;
-  }
-  .lineup-sheet__note h3 {
-    font-weight: 600;
-    color: var(--surface-fg);
-  }
-  .lineup-sheet__note p {
-    margin-block-start: 0.25rem;
-    color: var(--surface-fg-2);
-  }
-  .lineup-sheet__specs {
-    margin-block-start: 2.5rem;
-  }
-  .lineup-sheet__specs-title {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-    margin: 0;
-  }
-  .lineup-sheet__muted,
   .lineup-compare__muted {
     color: var(--surface-fg-3);
-  }
-  .lineup-sheet__specs > p {
-    margin: 0.5rem 0 0;
-  }
-  .lineup-sheet__group {
-    margin-block-start: 1.75rem;
-  }
-  .lineup-sheet__group-title {
-    margin: 1.75rem 0 0.5rem;
-    font-weight: 600;
-    color: var(--surface-accent);
-  }
-  .lineup-sheet__group .lineup-sheet__group-title {
-    margin-block-start: 0;
   }
   .lineup-sources {
     display: flex;
@@ -535,25 +464,6 @@
   }
   .lineup-sources a:hover {
     text-decoration-color: currentColor;
-  }
-  .lineup-sheet__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.5rem;
-    margin-block-start: 2rem;
-  }
-  .lineup-sheet__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.625rem;
-  }
-  .lineup-sheet__actions > * {
-    flex: 1 1 12rem;
-  }
-  /* Opened by a view transition, or closed for the ride: no slide of its own (src/motion/morph.ts). */
-  .ui-sheet[data-snap],
-  .ui-sheet[data-snap]::backdrop {
-    transition: none !important;
   }
 
   /* ── Comparison (CompareModels.tsx): Apple-style columns, key rows, the rest on demand ── */
@@ -906,21 +816,6 @@
   }
 }
 
-/* Card photo → sheet photo (src/motion/morph.ts). Exit faster than entry is the sheet's own job; this is entry only. */
-::view-transition-group(crane-photo) {
-  animation-duration: var(--dur-layout);
-  animation-timing-function: var(--ease-set);
-}
-::view-transition-old(crane-photo),
-::view-transition-new(crane-photo) {
-  block-size: 100%;
-  object-fit: cover;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: var(--dur-ui);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .lineup-card,
   .lineup-card__photo img {
@@ -934,26 +829,56 @@
   }
 }
 
-/* The model name links to the crane's own page (/cranes/<id>/). Its target is 44 px tall at every width while it
-   takes exactly one line in the card (the negative margin gives back what the target adds beyond the line height); it
-   sits above the capacity figure that follows, whose line box would otherwise take the lower half of that target. */
-.lineup-card__link {
-  position: relative;
-  z-index: 1;
+/* The whole card opens the crane's page: "Details" is the one real link and its ::after covers the card (position is
+   static on the link, so the card, which is position: relative, is the containing block). Request sits above it. Hover
+   and keyboard focus are drawn on the card (lift and ring), because the link's own box is only the label. */
+.lineup-card {
+  cursor: pointer;
+}
+.lineup-card__details {
   display: inline-flex;
   align-items: center;
+  gap: 0.625rem;
   min-block-size: 2.75rem;
-  margin-block: -0.6875rem;
-  margin-block: calc((1lh - 2.75rem) / 2);
-  color: inherit;
+  padding-inline: 0.25rem;
+  font-weight: 600;
+  color: var(--surface-accent);
   text-decoration: underline;
   text-decoration-color: transparent;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.25em;
-  transition: text-decoration-color var(--dur-state) var(--ease-ui), color var(--dur-state) var(--ease-ui);
+  text-underline-offset: 0.28em;
+  transition: text-decoration-color var(--dur-state) var(--ease-ui);
 }
-.lineup-card__link:hover,
-.lineup-card__link:focus-visible {
-  color: var(--surface-fg);
+.lineup-card__details::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.lineup-card:hover .lineup-card__details,
+.lineup-card__details:focus-visible {
   text-decoration-color: currentColor;
+}
+.lineup-card__details:focus-visible {
+  outline: none;
+}
+.lineup-card:has(.lineup-card__details:focus-visible) {
+  outline-color: var(--ring, currentColor);
+  outline-offset: 2px;
+}
+.lineup-card:has(.lineup-card__details:focus-visible)[data-on-hook] {
+  outline-color: var(--surface-red);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lineup-card:hover .lineup-card__details svg:last-child {
+    transform: translateX(3px);
+  }
+  [dir='rtl'] .lineup-card:hover .lineup-card__details svg:last-child {
+    transform: translateX(-3px);
+  }
+}
+.lineup-card__actions > [data-testid='request-crane-button'] {
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
 }

@@ -20,9 +20,6 @@ export const SPEC_GROUPS: readonly { id: SpecGroupId; rows: readonly RowId[] }[]
   { id: 'dimensions', rows: ['transportWeight', 'length', 'width', 'height'] },
 ];
 
-/** id of the detail sheet's <dialog> (rendered on demand by CraneList). */
-export const SHEET_ID = 'crane-sheet';
-
 export function specIdOf(id: CraneId): CraneSpecId | null {
   return Object.prototype.hasOwnProperty.call(craneSpecs, id) ? (id as CraneSpecId) : null;
 }

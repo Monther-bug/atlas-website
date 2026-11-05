@@ -1,23 +1,17 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { ArrowIcon } from '@/components/Icons';
 import { SectionHeader } from '@/components/ui/Section';
-import type { Crane, CraneId } from '@/content/types';
+import type { Crane } from '@/content/types';
 import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/lang';
 import { announceLineup } from '@/lib/lineup';
 import { applyFilter, availableFilters, bandLabel, resultCount, type FilterValue } from '../crane-filters';
-import type { SheetRequest } from './CraneSheet';
 import { CompareSlot } from './CompareSlot';
 import { LineupCard } from './LineupCard';
 import { LoadCheck } from './LoadCheck';
 import { SECTION_PROPS } from './section';
 import { TypeFilter } from './TypeFilter';
-
-/** The detail sheet is a lazy chunk: never prerendered (a closed dialog shows nothing, and every figure in it is also
- *  in the comparison), fetched when the lineup comes near, rendered on the first Details press. */
-const loadSheet = () => import('./CraneSheet');
-const CraneSheet = lazy(loadSheet);
 
 /**
  * «اعثر على رافعتك» / "Find your crane" (v2), as the prerender renders it. Contract C9 hooks kept: section#crane-list,
@@ -34,18 +28,16 @@ export function CraneList({ cranes }: { cranes: readonly Crane[] }) {
 }
 
 /**
- * Everything inside the section: header, filter, load check, cards, comparison, and the lazy sheet. `keptCompare` is
+ * Everything inside the section: header, filter, load check, cards and comparison. `keptCompare` is
  * the prerendered comparison, shown until its own chunk loads (CompareSlot.tsx).
  */
 export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[]; keptCompare?: string }) {
   const { copy } = useLang();
   const countRef = useRef<HTMLParagraphElement>(null);
   const [filter, setFilter] = useState<FilterValue>('all');
-  const [sheet, setSheet] = useState<SheetRequest | null>(null);
 
   const { types, bands } = availableFilters(cranes);
   const shown = applyFilter(cranes, filter);
-  const active = sheet ? (cranes.find((c) => c.id === sheet.id) ?? null) : null;
 
   // Flip: the motion layer records the cards before React changes the list and plays the move right after commit.
   const first = useRef(true);
@@ -57,22 +49,11 @@ export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[
     announceLineup('after');
   }, [filter]);
 
-  // The body mounts when the section is near (or is the static prerender): fetch the sheet chunk now, after the
-  // first paint, so the first Details press opens at once.
-  useEffect(() => {
-    const id = window.setTimeout(() => void loadSheet().catch(() => undefined), 200);
-    return () => window.clearTimeout(id);
-  }, []);
-
   const choose = (value: FilterValue) => {
     if (value === filter) return;
     announceLineup('before');
     setFilter(value);
     track('filter_use');
-  };
-
-  const openDetails = (crane: Crane, media: HTMLElement | null) => {
-    setSheet((prev) => ({ id: crane.id as CraneId, media, seq: (prev?.seq ?? 0) + 1 }));
   };
 
   const typeOptions = [
@@ -128,7 +109,7 @@ export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[
             <ul className="lineup">
               {shown.map((crane) => (
                 <li key={crane.id} data-lineup-item="" data-crane={crane.id}>
-                  <LineupCard crane={crane} onDetails={openDetails} />
+                  <LineupCard crane={crane} />
                 </li>
               ))}
             </ul>
@@ -146,13 +127,7 @@ export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[
         </div>
       </div>
 
-      <CompareSlot cranes={cranes} onDetails={openDetails} kept={keptCompare} />
-
-      {active && sheet ? (
-        <Suspense fallback={null}>
-          <CraneSheet crane={active} request={sheet} />
-        </Suspense>
-      ) : null}
+      <CompareSlot cranes={cranes} kept={keptCompare} />
     </>
   );
 }

@@ -344,7 +344,7 @@ html[data-theme='dark'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* The theme switch (src/lib/theme.ts) and the sheet morph: no cross-fade, the new state at once. */
+  /* The theme switch (src/lib/theme.ts): no cross-fade, the new state at once. */
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {

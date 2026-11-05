@@ -253,18 +253,18 @@ Hero photo alt text: see section 12 (IMG_6398 or IMG_6359).
 
 ---
 
-### 6b. Find your crane v2 additions (lineup, load check, detail sheet, comparison)
+### 6b. Find your crane v2 additions (lineup, load check, comparison)
 
-Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, sheet and comparison strings load on demand with their code, so they live in `src/content/crane-list-copy.ts` (type `CraneListCopy` in `types.ts`); the same copy rules and font-coverage checks apply (`crane-list-copy.test.ts`). Every figure next to these labels is the manufacturer's, shown with the DRAFT badge until Atlas confirms.
+Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, comparison and the strings the crane pages share (under `sheet`) load on demand with their code, so they live in `src/content/crane-list-copy.ts` (type `CraneListCopy` in `types.ts`); the same copy rules and font-coverage checks apply (`crane-list-copy.test.ts`). Every figure next to these labels is the manufacturer's, shown with the DRAFT badge until Atlas confirms.
 
 **Card**
 
 | Element | العربية | English |
 |---|---|---|
 | Compare link (header) | قارن الطرازات | Compare models |
-| Details button (+ model for screen readers) | التفاصيل | Details |
+| Details link to the crane's page (+ model for screen readers; the whole card is the same link, Request stays separate) | التفاصيل | Details |
 | Rating label | أقصى حمولة · تصنيف الشركة المصنّعة | Max capacity · Manufacturer rating |
-| Rating label where the figure shown is not the manufacturer's listed maximum (QUY250, Q.1); its comparison and sheet cell carry a † with screen-reader text «انظر ملاحظة هذا التصنيف» / "see the note on this rating" | أقصى حمولة · حسب اسم الطراز، بانتظار التأكيد | Max capacity · From the model name, to be confirmed |
+| Rating label where the figure shown is not the manufacturer's listed maximum (QUY250, Q.1); its comparison cell and crane page carry a † with screen-reader text «انظر ملاحظة هذا التصنيف» / "see the note on this rating" | أقصى حمولة · حسب اسم الطراز، بانتظار التأكيد | Max capacity · From the model name, to be confirmed |
 | Radius of the rating (only where the spec states it for the same rating) | على نصف قطر {radius} | at {radius} radius |
 | Key spec: longest main boom | أقصى طول للذراع | Max boom length |
 | Footnote for a spec-database figure (marked *) | من قاعدة بيانات مواصفات، لا من وثيقة الشركة المصنّعة | From a spec database, not the manufacturer's own document |
@@ -287,7 +287,7 @@ Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, s
 | Result, 3–10 | {n} طرازات تصنيفها الأقصى {load} أو أكثر. | {n} models have a maximum rating of {load} or more. |
 | Result, 11+ | {n} طرازاً تصنيفها الأقصى {load} أو أكثر. | {n} models have a maximum rating of {load} or more. |
 
-**Detail sheet**
+**Crane page, strings kept under `sheet`** (the quick-view dialog is gone: the card and Details open the page)
 
 | Element | العربية | English |
 |---|---|---|
@@ -309,7 +309,7 @@ Card and heading strings live in `ar.ts` / `en.ts` (`grid.*`). The load check, s
 | A column's model picker (screen readers, {n} = column) | الطراز {n} في المقارنة | Model {n} in the comparison |
 | Announced after the columns change ({models}, joined with «، » / ", ") | في المقارنة الآن: {models}. | Now comparing: {models}. |
 | Request (per column, + model for screen readers) | اطلبها | Request |
-| Details (per column, + model for screen readers) | التفاصيل | Details |
+| Details (per column, link to the crane's page, + model for screen readers) | التفاصيل | Details |
 | Key table name (screen readers) | مقارنة مواصفات الرافعات | Crane specification comparison |
 | Key rows | أقصى حمولة · طول الذراع الرئيسي · أقصى ارتفاع لرأس الذراع · ثقل الموازنة · الهيكل والقيادة · قدرة المحرك · الوزن الأساسي | Max capacity · Main boom · Max tip height · Counterweight · Carrier · Engine power · Basic weight |
 | Show the other rows | اعرض كل المواصفات | Show all specs |
@@ -372,7 +372,6 @@ One page per visible crane (five; never the hidden Kobelco). Strings in `src/con
 | Other cranes | رافعات أخرى | Other cranes |
 | Logo link on a crane page (screen readers) | الصفحة الرئيسية | home page |
 | Footer column on a crane page | في الصفحة الرئيسية | On the home page |
-| Quick view → crane page (§6b sheet) | افتح الصفحة الكاملة | Open the full page |
 
 ## 7. Sites gallery
 
