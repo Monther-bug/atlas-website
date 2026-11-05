@@ -42,7 +42,9 @@ npm run lighthouse              # Lighthouse, mobile and desktop, both pages, me
 
 All QA scripts take a base URL (argument or `QA_BASE`; default `http://localhost:4173`).
 
-> **Known gap at this commit:** `package.json` also lists `npm run qa` (`qa/run-qa.mjs`) and `npm run pdf` (`scripts/export-pdf.mjs`), but those two files are not in the repository yet, so those two commands fail. Use the individual scripts above until they are added.
+> **Known gap at this commit:** `package.json` also lists `npm run qa` (`qa/run-qa.mjs`), which is not in the repository yet, so that command fails. Use the individual scripts above until it is added.
+>
+> `npm run pdf` (preview running) writes the screen exports to `docs/exports/atlas-{ar,en}-{desktop,mobile}.pdf` (one tall page each, drawn from browser captures, so the text is not selectable) with a first-screen PNG beside each.
 
 ## Environment variables
 
