@@ -138,6 +138,8 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
   const state = { formStatus: 200 };
   page.on('console', (m) => {
     const text = m.text();
+    // Newer Chrome logs a launched mailto:/whatsapp:/tel: hand-off as an info line, older Chrome as an error.
+    if (m.type() !== 'error' && /Launched external handler for '(mailto|whatsapp|tel):/i.test(text)) problems.external.push(text);
     if (m.type() === 'error') {
       // Headless Chrome cannot launch mailto:/whatsapp:/tel: handlers; that is a hand-off working, not an error.
       if (/Failed to launch '(mailto|whatsapp|tel):/i.test(text)) problems.external.push(text);
@@ -1097,13 +1099,11 @@ async function fillFormCheck(page) {
   await wait(900);
   const r = await page.evaluate(() => {
     const ph = document.querySelector('[data-testid="form-phone"]');
-    const summary = document.querySelector('[data-testid="form-lift-summary"]')?.textContent ?? '';
     const alt = [...document.querySelectorAll('[data-testid="request-form"] a[href^="https://wa.me"], [data-testid="request-form"] a[href^="mailto:"]')].at(-1);
     return {
       phoneDir: ph ? getComputedStyle(ph).direction : null,
       phoneValue: ph?.value,
       phoneStartsPlus: ph ? ph.getBoundingClientRect().left : 0,
-      summary,
       alt: alt?.getAttribute('href') ?? '',
       weightInvalid: document.querySelector('[data-testid="form-weight"]')?.getAttribute('aria-invalid'),
     };
@@ -1114,8 +1114,6 @@ async function fillFormCheck(page) {
   const pass =
     r.phoneDir === 'ltr' &&
     r.phoneValue === '+218 91 234 5678' &&
-    /35\.5/.test(r.summary) &&
-    !EASTERN_DIGITS.test(r.summary) &&
     isEncodedHref(r.alt) &&
     digitsOk &&
     normModel(sent).includes('AC200-1') &&
@@ -1123,7 +1121,7 @@ async function fillFormCheck(page) {
     normModel(chip).includes('AC200-1');
   return {
     pass,
-    detail: `phone dir=${r.phoneDir} value="${r.phoneValue}" · lift summary 35.5=${/35\.5/.test(r.summary)} · hand-off link Western=${digitsOk} names AC200-1=${normModel(sent).includes('AC200-1')} · select → bar chip "${(chip ?? '').trim()}"`,
+    detail: `phone dir=${r.phoneDir} value="${r.phoneValue}" · hand-off link Western=${digitsOk} names AC200-1=${normModel(sent).includes('AC200-1')} · select → bar chip "${(chip ?? '').trim()}"`,
   };
 }
 
@@ -1261,7 +1259,7 @@ async function controlsFor(p, c) {
     await s.page.$eval('#request', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
     await wait(900);
     await step('form', `${tag} empty submit: summary focused, links focus their fields`, () => emptySubmitCheck(s.page));
-    await step('form', `${tag} «٣٥٫٥» t, bidi phone, crane select: echoed, Western digits in the hand-off`, () => fillFormCheck(s.page));
+    await step('form', `${tag} «٣٥٫٥» t, bidi phone, crane select: Western digits in the hand-off`, () => fillFormCheck(s.page));
     await step('form', `${tag} ${FORM_STUB ? 'endpoint 500 → failure focused; 200 → success focused' : 'submit hands the request off (WhatsApp / email)'}`, () => submitCheck(s.page, s));
   });
   await group('footer', async ({ page }) => {

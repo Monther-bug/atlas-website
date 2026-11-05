@@ -30,15 +30,23 @@ describe('RequestForm', () => {
     expect(h2?.nextElementSibling?.textContent).toBe('تواصلوا معانا وخلي الباقي علينا');
   });
 
-  it('has the C9 fields in order, with hints wired to every control', () => {
+  it('shows five fields by default and keeps the other six behind one closed disclosure', () => {
     const form = renderHtml(<RequestForm />, 'en').querySelector('form[data-testid="request-form"]');
-    const controls = [...(form?.querySelectorAll<HTMLElement>('[name]') ?? [])];
-    expect(controls.map((el) => el.getAttribute('name'))).toEqual([...REQUEST_FIELDS]);
-    for (const el of controls) {
-      const hint = el.getAttribute('aria-describedby');
-      expect(hint).toBe(`${el.id}-hint`);
-      expect(form?.querySelector(`#${hint}`)).not.toBeNull();
+    const names = (root: ParentNode | null | undefined) => [...(root?.querySelectorAll<HTMLElement>('[name]') ?? [])].map((el) => el.getAttribute('name'));
+    const more = form?.querySelector('details[data-testid="form-more"]');
+    expect(more?.hasAttribute('open')).toBe(false);
+    expect(more?.querySelector('summary')?.textContent).toContain('Add more details (optional)');
+    expect(names(more)).toEqual(['company', 'radius', 'height', 'start', 'duration', 'message']);
+    expect(names(form).filter((n) => !names(more).includes(n))).toEqual(['phone', 'weight', 'crane', 'site', 'name']);
+    expect([...REQUEST_FIELDS].sort()).toEqual(names(form).sort());
+    // Only the phone keeps a hint; the controls carry no stray describedby.
+    for (const el of form?.querySelectorAll<HTMLElement>('[name]') ?? []) {
+      const d = el.getAttribute('aria-describedby');
+      if (el.getAttribute('name') === 'phone') expect(form?.querySelector(`#${d}`)?.textContent).toContain('country code');
+      else expect(d).toBeNull();
     }
+    expect(form?.querySelectorAll('legend, fieldset, h3').length).toBe(0);
+    expect(form?.querySelector('[data-testid="form-lift-summary"]')).toBeNull();
     const weight = form?.querySelector('[data-testid="form-weight"]');
     expect([weight?.getAttribute('inputmode'), weight?.getAttribute('aria-required')]).toEqual(['decimal', 'true']);
     const phone = form?.querySelector('[data-testid="form-phone"]');
@@ -86,6 +94,7 @@ describe('RequestForm', () => {
       '#request-weight',
     ]);
     expect(host.querySelector('[data-testid="form-weight"]')?.getAttribute('aria-invalid')).toBe('true');
+    expect(host.querySelector('[data-testid="form-weight"]')?.getAttribute('aria-describedby')).toBe('request-weight-error');
     await changeValue(host.querySelector('[data-testid="form-weight"]'), '٣٥٠');
     await changeValue(host.querySelector('[data-testid="form-phone"]'), '0912345678');
     expect(host.querySelector('[data-testid="form-error-summary"]')).toBeNull();
@@ -273,15 +282,27 @@ describe('RequestForm', () => {
     mockEnv.whatsapp = null;
   });
 
-  it('shows the crane chip and a lift summary echo without capacity claims', async () => {
+  it('shows the crane chip when a crane is on the hook', async () => {
     const { host, unmount } = await mount(<RequestForm />, 'en');
-    expect(host.querySelector('[data-testid="form-lift-summary"]')).toBeNull();
+    expect(host.querySelector('[data-testid="form-hook-chip"]')).toBeNull();
     await act(async () => setRequestedCrane('gmk6350'));
     expect(host.querySelector('[data-testid="form-hook-chip"]')?.textContent).toContain('GMK6350');
-    await changeValue(host.querySelector('[data-testid="form-weight"]'), '12');
-    const summary = host.querySelector('[data-testid="form-lift-summary"]');
-    expect(summary?.textContent).toContain('12');
-    expect(summary?.textContent).toContain('Your lift');
+    await unmount();
+  });
+
+  it('opens the disclosure for an error inside it, and its summary link focuses that field', async () => {
+    const { host, unmount } = await mount(<RequestForm />, 'en');
+    await fill(host);
+    const more = host.querySelector<HTMLDetailsElement>('details[data-testid="form-more"]');
+    expect(more?.open).toBe(false);
+    await changeValue(host.querySelector('[name="radius"]'), 'abc');
+    await click(host.querySelector('[data-testid="form-submit"]'));
+    expect(more?.open).toBe(true);
+    const link = host.querySelector<HTMLAnchorElement>('[data-testid="form-error-summary"] a[href="#request-radius"]');
+    expect(link).not.toBeNull();
+    await click(link);
+    expect(document.activeElement?.id).toBe('request-radius');
+    expect(host.querySelector('[name="radius"]')?.getAttribute('aria-invalid')).toBe('true');
     await unmount();
   });
 });

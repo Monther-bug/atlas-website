@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { Fill } from '@/components/Fill';
 import { HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
@@ -9,7 +10,7 @@ import { Section, SectionHeader } from '@/components/ui/Section';
 import { siteInfo, visibleCranes } from '@/content';
 import { env } from '@/env';
 import { track } from '@/lib/analytics';
-import { parseDecimal, toAsciiDigits } from '@/lib/digits';
+import { toAsciiDigits } from '@/lib/digits';
 import { useLang } from '@/lib/lang';
 import { formatNumber } from '@/lib/numbers';
 import { getRequestedCrane, setRequestedCrane, useRequestedCrane } from '@/lib/request';
@@ -17,7 +18,6 @@ import { mailtoHref, telHref, whatsappHref } from '@/lib/whatsapp';
 import {
   DURATIONS,
   LIMITS,
-  REQUEST_FIELDS,
   buildFollowUpMessage,
   handoffMessage,
   craneFromOption,
@@ -33,6 +33,11 @@ import {
   type RequestField,
   type RequestValues,
 } from './request-form-logic';
+
+/** Fields behind the one disclosure. They open it when they hold a value or an error. */
+const MORE_FIELDS: readonly RequestField[] = ['company', 'radius', 'height', 'start', 'duration', 'message'];
+/** Order on screen, which is also the order of the error summary. */
+const FORM_ORDER: readonly RequestField[] = ['phone', 'weight', 'crane', 'site', 'name', ...MORE_FIELDS];
 
 type Status = 'idle' | 'handoff' | 'sending' | 'sent' | 'failed' | 'offline';
 const TIMEOUT_MS = 10_000;
@@ -52,7 +57,6 @@ export function RequestForm() {
       <div className="grid items-start gap-14 lg:grid-cols-12 lg:gap-16">
         <Reveal kind="rise" className="lg:sticky lg:top-28 lg:col-span-5">
           <SectionHeader id="request-title" title={f.title} lead={f.lead} className="mb-0" />
-          <p className="t-body mt-6 max-w-[34rem] text-(--surface-fg-2)">{f.intro}</p>
           <Channels />
           <NextSteps />
         </Reveal>
@@ -159,6 +163,7 @@ function RequestFormBody() {
   const [errors, setErrors] = useState<RequestErrors>({});
   const [attempts, setAttempts] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
+  const [moreOpen, setMoreOpen] = useState(() => MORE_FIELDS.some((key) => emptyRequest()[key] !== ''));
   const lockedUntil = useRef(0);
   const handoffTimer = useRef<number | undefined>(undefined);
 
@@ -196,7 +201,7 @@ function RequestFormBody() {
 
   // Capped: every wa.me / mailto URL built from the request carries at most HANDOFF_MESSAGE_MAX characters of free text.
   const message = handoffMessage(values, copy);
-  const errorKeys = REQUEST_FIELDS.filter((key) => errors[key]);
+  const errorKeys = FORM_ORDER.filter((key) => errors[key]);
 
   const update = (key: RequestField) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const next: RequestValues = { ...values, [key]: event.target.value };
@@ -214,6 +219,7 @@ function RequestFormBody() {
     const found = validateRequest(values, copy, today);
     setErrors(found);
     setAttempts((n) => n + 1);
+    if (MORE_FIELDS.some((key) => found[key])) setMoreOpen(true);
     if (Object.keys(found).length > 0) return;
 
     if (!env.formEndpoint) {
@@ -306,7 +312,7 @@ function RequestFormBody() {
   return (
     <div>
       {live}
-      <form noValidate onSubmit={onSubmit} data-testid="request-form" aria-describedby="request-privacy" className="grid gap-10">
+      <form noValidate onSubmit={onSubmit} data-testid="request-form" aria-describedby="request-privacy" className="grid gap-6">
         {attempts > 0 && errorKeys.length > 0 && (
           <div
             ref={summary}
@@ -322,6 +328,8 @@ function RequestFormBody() {
                     href={`#request-${key}`}
                     onClick={(event) => {
                       event.preventDefault();
+                      // A field inside the closed disclosure must be rendered before it can take focus.
+                      if (MORE_FIELDS.includes(key)) flushSync(() => setMoreOpen(true));
                       document.getElementById(`request-${key}`)?.focus();
                     }}
                     className="underline underline-offset-4 hover:decoration-2"
@@ -363,23 +371,108 @@ function RequestFormBody() {
           </div>
         )}
 
-        <fieldset>
-          <legend className="t-title">{f.groups.details}</legend>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field name="name" label={f.fields.name.label} hint={f.fields.name.hint} error={errors.name}>
-              {(a11y) => (
-                <input
-                  {...a11y}
-                  type="text"
-                  autoComplete="name"
-                  dir="auto"
-                  value={values.name}
-                  onChange={update('name')}
-                  className={controlClass()}
-                />
-              )}
-            </Field>
-            <Field name="company" label={f.fields.company.label} hint={f.fields.company.hint} error={errors.company}>
+        <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+          <Field name="phone" required label={f.fields.phone.label} hint={f.fields.phone.hint} error={errors.phone}>
+            {(a11y) => (
+              // dir="ltr" keeps a leading "+" before the digits in an RTL page.
+              <input
+                {...a11y}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                dir="ltr"
+                data-testid="form-phone"
+                value={values.phone}
+                onChange={update('phone')}
+                className={`${controlClass()} tabular-nums`}
+              />
+            )}
+          </Field>
+          <Field name="weight" required unit={f.fields.weight.unit} label={f.fields.weight.label} error={errors.weight}>
+            {(a11y) => (
+              <input
+                {...a11y}
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                data-testid="form-weight"
+                value={values.weight}
+                onChange={update('weight')}
+                className={`${controlClass({ unit: true })} tabular-nums`}
+              />
+            )}
+          </Field>
+          <Field name="crane" label={f.fields.crane.label} className="sm:col-span-2">
+            {(a11y) => (
+              <>
+                {requested && (
+                  <Chip data-testid="form-hook-chip" className="mb-2 self-start bg-ink text-white">
+                    <HookIcon className="size-4" />
+                    <span>
+                      {copy.bar.onHook} <bdi>{craneOrServiceLabel(values.crane, copy)}</bdi>
+                    </span>
+                  </Chip>
+                )}
+                <select {...a11y} value={values.crane} onChange={update('crane')} className={controlClass()}>
+                  <option value="">{f.fields.crane.unsure}</option>
+                  <optgroup label={f.fields.crane.servicesGroup}>
+                    {copy.services.items.map((service) => (
+                      <option key={service.id} value={serviceOptionValue(service.id)}>
+                        {service.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={f.fields.crane.cranesGroup}>
+                    {visibleCranes.map((crane) => (
+                      <option key={crane.id} value={craneOptionValue(crane.id)}>
+                        {`${crane.make} ${crane.model}`}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </>
+            )}
+          </Field>
+          <Field name="site" label={f.fields.site.label} error={errors.site}>
+            {(a11y) => (
+              <input {...a11y} type="text" dir="auto" value={values.site} onChange={update('site')} className={controlClass()} />
+            )}
+          </Field>
+          <Field name="name" label={f.fields.name.label} error={errors.name}>
+            {(a11y) => (
+              <input
+                {...a11y}
+                type="text"
+                autoComplete="name"
+                dir="auto"
+                value={values.name}
+                onChange={update('name')}
+                className={controlClass()}
+              />
+            )}
+          </Field>
+        </div>
+
+        <details
+          open={moreOpen}
+          onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+          data-testid="form-more"
+          className="group"
+        >
+          <summary
+            data-testid="form-more-toggle"
+            className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-semibold underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden"
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-6 place-items-center rounded-full border border-(--surface-control) text-base leading-none transition-transform group-open:rotate-45"
+            >
+              +
+            </span>
+            {f.more}
+          </summary>
+          <div className="mt-4 grid gap-x-5 gap-y-4 sm:grid-cols-2">
+            <Field name="company" label={f.fields.company.label} error={errors.company} className="sm:col-span-2">
               {(a11y) => (
                 <input
                   {...a11y}
@@ -392,94 +485,7 @@ function RequestFormBody() {
                 />
               )}
             </Field>
-            <Field
-              name="phone"
-              required
-              label={f.fields.phone.label}
-              hint={f.fields.phone.hint}
-              error={errors.phone}
-              className="sm:col-span-2"
-            >
-              {(a11y) => (
-                // dir="ltr" keeps a leading "+" before the digits in an RTL page.
-                <input
-                  {...a11y}
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  dir="ltr"
-                  data-testid="form-phone"
-                  value={values.phone}
-                  onChange={update('phone')}
-                  className={`${controlClass()} tabular-nums`}
-                />
-              )}
-            </Field>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="t-title">{f.groups.lift}</legend>
-          <div className="mt-5 grid gap-5 sm:grid-cols-3">
-            <Field name="crane" label={f.fields.crane.label} hint={f.fields.crane.hint} className="sm:col-span-3">
-              {(a11y) => (
-                <>
-                  {requested && (
-                    <Chip data-testid="form-hook-chip" className="mb-2 self-start bg-ink text-white">
-                      <HookIcon className="size-4" />
-                      <span>
-                        {copy.bar.onHook} <bdi>{craneOrServiceLabel(values.crane, copy)}</bdi>
-                      </span>
-                    </Chip>
-                  )}
-                  <select {...a11y} value={values.crane} onChange={update('crane')} className={`${controlClass()}`}>
-                    <option value="">{f.fields.crane.unsure}</option>
-                    <optgroup label={f.fields.crane.servicesGroup}>
-                      {copy.services.items.map((service) => (
-                        <option key={service.id} value={serviceOptionValue(service.id)}>
-                          {service.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label={f.fields.crane.cranesGroup}>
-                      {visibleCranes.map((crane) => (
-                        <option key={crane.id} value={craneOptionValue(crane.id)}>
-                          {`${crane.make} ${crane.model}`}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </>
-              )}
-            </Field>
-            <Field
-              name="weight"
-              required
-              unit={f.fields.weight.unit}
-              label={f.fields.weight.label}
-              hint={f.fields.weight.hint}
-              error={errors.weight}
-            >
-              {(a11y) => (
-                <input
-                  {...a11y}
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  data-testid="form-weight"
-                  value={values.weight}
-                  onChange={update('weight')}
-                  className={`${controlClass({ unit: true })} tabular-nums`}
-                />
-              )}
-            </Field>
-            <Field
-              name="radius"
-              unit={f.fields.radius.unit}
-              label={f.fields.radius.label}
-              hint={f.fields.radius.hint}
-              error={errors.radius}
-            >
+            <Field name="radius" unit={f.fields.radius.unit} label={f.fields.radius.label} error={errors.radius}>
               {(a11y) => (
                 <input
                   {...a11y}
@@ -492,13 +498,7 @@ function RequestFormBody() {
                 />
               )}
             </Field>
-            <Field
-              name="height"
-              unit={f.fields.height.unit}
-              label={f.fields.height.label}
-              hint={f.fields.height.hint}
-              error={errors.height}
-            >
+            <Field name="height" unit={f.fields.height.unit} label={f.fields.height.label} error={errors.height}>
               {(a11y) => (
                 <input
                   {...a11y}
@@ -511,32 +511,7 @@ function RequestFormBody() {
                 />
               )}
             </Field>
-            <LiftSummary values={values} />
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="t-title">{f.groups.site}</legend>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field
-              name="site"
-              label={f.fields.site.label}
-              hint={f.fields.site.hint}
-              error={errors.site}
-              className="sm:col-span-2"
-            >
-              {(a11y) => (
-                <input
-                  {...a11y}
-                  type="text"
-                  dir="auto"
-                  value={values.site}
-                  onChange={update('site')}
-                  className={controlClass()}
-                />
-              )}
-            </Field>
-            <Field name="start" label={f.fields.start.label} hint={f.fields.start.hint} error={errors.start}>
+            <Field name="start" label={f.fields.start.label} error={errors.start}>
               {(a11y) => (
                 <input
                   {...a11y}
@@ -548,9 +523,9 @@ function RequestFormBody() {
                 />
               )}
             </Field>
-            <Field name="duration" label={f.fields.duration.label} hint={f.fields.duration.hint}>
+            <Field name="duration" label={f.fields.duration.label}>
               {(a11y) => (
-                <select {...a11y} value={values.duration} onChange={update('duration')} className={`${controlClass()}`}>
+                <select {...a11y} value={values.duration} onChange={update('duration')} className={controlClass()}>
                   <option value="">{f.fields.duration.unsure}</option>
                   {DURATIONS.map((d) => (
                     <option key={d} value={d}>
@@ -560,32 +535,21 @@ function RequestFormBody() {
                 </select>
               )}
             </Field>
+            <div className="sm:col-span-2">
+              <Field name="message" label={f.fields.message.label} error={errors.message}>
+                {(a11y) => (
+                  <textarea {...a11y} rows={4} dir="auto" value={values.message} onChange={update('message')} className={controlClass()} />
+                )}
+              </Field>
+              <p className="t-small mt-1 text-end tabular-nums text-(--surface-fg-3)">
+                <Fill
+                  template={f.fields.message.counter}
+                  vars={{ n: formatNumber(values.message.length, lang), max: formatNumber(LIMITS.message, lang) }}
+                />
+              </p>
+            </div>
           </div>
-        </fieldset>
-
-        <div>
-          <Field name="message" label={f.fields.message.label} hint={f.fields.message.hint} error={errors.message}>
-            {(a11y) => (
-              <textarea
-                {...a11y}
-                rows={5}
-                dir="auto"
-                value={values.message}
-                onChange={update('message')}
-                className={controlClass()}
-              />
-            )}
-          </Field>
-          <p className="t-small mt-1 text-end tabular-nums text-(--surface-fg-3)">
-            <Fill
-              template={f.fields.message.counter}
-              vars={{
-                n: formatNumber(values.message.length, lang),
-                max: formatNumber(LIMITS.message, lang),
-              }}
-            />
-          </p>
-        </div>
+        </details>
 
         <div className="flex flex-col items-start gap-5">
           <p id="request-privacy" className="t-small max-w-[36rem] [&:lang(ar)]:max-w-[38rem] text-(--surface-fg-3)">
@@ -607,7 +571,7 @@ function RequestFormBody() {
 interface FieldA11y {
   id: string;
   name: RequestField;
-  'aria-describedby': string;
+  'aria-describedby'?: string;
   'aria-invalid'?: true;
   'aria-required'?: true;
 }
@@ -624,7 +588,7 @@ function Field({
 }: {
   name: RequestField;
   label: string;
-  hint: string;
+  hint?: string;
   required?: boolean;
   error?: string;
   unit?: string;
@@ -633,12 +597,12 @@ function Field({
 }) {
   const { copy } = useLang();
   const id = `request-${name}`;
-  const hintId = `${id}-hint`;
+  const hintId = hint ? `${id}-hint` : undefined;
   const errorId = `${id}-error`;
   const a11y: FieldA11y = {
     id,
     name,
-    'aria-describedby': error ? `${errorId} ${hintId}` : hintId,
+    ...(error || hintId ? { 'aria-describedby': error ? (hintId ? `${errorId} ${hintId}` : errorId) : hintId } : {}),
     ...(error ? { 'aria-invalid': true as const } : {}),
     ...(required ? { 'aria-required': true as const } : {}),
   };
@@ -651,9 +615,6 @@ function Field({
         {/* Only required fields are tagged: the intro says the rest is optional, and nine repeated "Optional" tags were noise. */}
         {required && <span className="t-caption text-(--surface-fg-3)">{copy.form.required}</span>}
       </div>
-      <p id={hintId} className="t-small mt-1 grow text-(--surface-fg-2)">
-        {hint}
-      </p>
       <div className="relative mt-2 flex flex-col">
         {children(a11y)}
         {unit && (
@@ -665,41 +626,15 @@ function Field({
           </span>
         )}
       </div>
+      {hint && (
+        <p id={hintId} className="t-small mt-2 text-(--surface-fg-2)">
+          {hint}
+        </p>
+      )}
       {/* Danger red on white is 6.3:1; the border and a bold message both mark the field. */}
-      <p id={errorId} aria-live="polite" className="t-small mt-2 min-h-5 font-semibold text-(--surface-danger)">
+      <p id={errorId} aria-live="polite" className={`t-small font-semibold text-(--surface-danger) ${error ? 'mt-2' : ''}`}>
         {error ?? ''}
       </p>
-    </div>
-  );
-}
-
-/** Echo of the entered lift (no capacity claims). Appears once the weight is a valid number. */
-function LiftSummary({ values }: { values: RequestValues }) {
-  const { copy, lang } = useLang();
-  const f = copy.form;
-  const parts = (
-    [
-      ['weight', parseDecimal(values.weight)],
-      ['radius', parseDecimal(values.radius)],
-      ['height', parseDecimal(values.height)],
-    ] as const
-  ).filter((p): p is readonly ['weight' | 'radius' | 'height', number] => p[1] !== null && p[1] > 0);
-  if (!parts.some(([k]) => k === 'weight')) return null;
-  return (
-    <div data-testid="form-lift-summary" className="rounded-lg bg-(--surface-sunken) p-5 sm:col-span-3">
-      <p className="t-title">{f.summary.title}</p>
-      <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
-        {parts.map(([key, n]) => (
-          <div key={key}>
-            <dt className="t-small text-(--surface-fg-2)">{f.fields[key].label.replace(/\s*[(（].*$/, '')}</dt>
-            <dd className="m-0 text-2xl font-semibold tabular-nums">
-              <bdi>{formatNumber(n, lang)}</bdi>
-              <span className="ms-1 text-base font-medium text-(--surface-fg-2)">{f.fields[key].unit}</span>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <p className="t-small mt-3 text-(--surface-fg-3)">{f.summary.note}</p>
     </div>
   );
 }

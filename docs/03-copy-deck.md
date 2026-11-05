@@ -443,7 +443,6 @@ Document slots. List only the files Atlas actually has:
 |---|---|---|
 | Eyebrow (the one warm line from Facebook) | تواصلوا معانا وخلي الباقي علينا | Get in touch and leave the rest to us. |
 | Title | اطلب رافعة | Request a crane |
-| Intro | املأ ما تعرفه فقط. نحتاج رقم هاتفك ووزن الحمولة، وسنسألك عن الباقي. | Fill in only what you know. We need your phone number and the load weight. We will ask about the rest. |
 
 **Contact details panel**
 
@@ -462,9 +461,7 @@ Document slots. List only the files Atlas actually has:
 
 | Element | العربية | English |
 |---|---|---|
-| Group 1 legend | بياناتك | Your details |
-| Group 2 legend | تفاصيل الرفع | Lift details |
-| Group 3 legend | الموقع والموعد | Site and dates |
+| Optional-details disclosure (the one toggle for company, radius, height, start date, duration, message) | أضف تفاصيل أكثر (اختياري) | Add more details (optional) |
 | Required tag | مطلوب | Required |
 | Optional tag | اختياري | Optional |
 | Submit | أرسل الطلب | Send request |
@@ -481,7 +478,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | الاسم | Your name |
-| Hint | كما تحب أن نناديك. | So we know who to ask for. |
 | Error: too long | الاسم طويل جداً. اكتبه في 80 حرفاً أو أقل. | That name is too long. Keep it to 80 characters or fewer. |
 
 *2. Company (optional)*
@@ -489,7 +485,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | الشركة | Company |
-| Hint | اسم الشركة أو الجهة، إن وُجد. | Company or organisation, if any. |
 | Error: too long | الاسم طويل جداً. اكتبه في 120 حرفاً أو أقل. | That name is too long. Keep it to 120 characters or fewer. |
 
 *3. Phone (required)*
@@ -497,7 +492,7 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | رقم الهاتف أو واتساب | Phone or WhatsApp number |
-| Hint | نتصل بك أو نراسلك على هذا الرقم. أضف رمز الدولة إن كنت خارج ليبيا. | We will call or message you on this number. Add the country code if you are outside Libya. |
+| Hint | أضف رمز الدولة إن كنت خارج ليبيا. | Add the country code if you are outside Libya. |
 | Error: empty | أدخل رقم هاتف لنتواصل معك. | Enter a phone number so we can reach you. |
 | Error: format | يبدو أن الرقم غير مكتمل. تأكد من الأرقام وحاول مرة أخرى. | This number looks incomplete. Check the digits and try again. |
 
@@ -506,7 +501,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | الرافعة أو الخدمة | Crane or service |
-| Hint | إن ضغطت «اطلب هذه الرافعة»، ستجدها مختارة هنا. | If you tapped "Request this crane", it is already selected here. |
 | Option (default) | لست متأكداً، ساعدوني في الاختيار | Not sure, help me choose |
 | Option group | الخدمات | Services |
 | Options | تأجير الرافعات / النقل الثقيل / المناولة / الخدمات النفطية | Crane hire / Heavy transport / Handling and rigging / Oil services |
@@ -519,7 +513,6 @@ Document slots. List only the files Atlas actually has:
 |---|---|---|
 | Label | وزن الحمولة (طن) | Load weight (t) |
 | Unit suffix | طن | t |
-| Hint | يكفي رقم تقريبي. | A rough figure is fine. |
 | Error: empty | أدخل وزن الحمولة بالطن. يكفي رقم تقريبي. | Enter the load weight in tonnes. A rough figure is fine. |
 | Error: format | أدخل رقماً أكبر من صفر، مثل 12 أو 7.5. | Enter a number above zero, such as 12 or 7.5. |
 
@@ -530,7 +523,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | نصف قطر الرفع (م) | Lift radius (m) |
-| Hint | المسافة الأفقية من مركز الرافعة إلى الحمولة. اترك الحقل فارغاً إن لم تعرفها. | The flat distance from the centre of the crane to the load. Leave it blank if you don't know. |
 | Error: format | أدخل رقماً بالمتر، أو اترك الحقل فارغاً. | Enter a number in metres, or leave this blank. |
 
 *7. Lift height, m (optional)*
@@ -538,7 +530,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | ارتفاع الرفع (م) | Lift height (m) |
-| Hint | أعلى نقطة يجب أن تصل إليها الحمولة، من سطح الأرض. | The highest point the load must reach, measured from the ground. |
 | Error: format | أدخل رقماً بالمتر، أو اترك الحقل فارغاً. | Enter a number in metres, or leave this blank. |
 
 *8. Site location (optional)*
@@ -546,7 +537,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | موقع العمل | Site location |
-| Hint | المدينة أو المنطقة. يمكنك لصق رابط من خرائط جوجل. | City or area. You can paste a Google Maps link. |
 | Error: too long | النص طويل جداً. اختصره إلى 200 حرف. | That is too long. Keep it to 200 characters. |
 
 *9. Start date (optional)*
@@ -554,7 +544,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | تاريخ البدء | Start date |
-| Hint | متى تحتاج الرافعة في الموقع؟ | When do you need the crane on site? |
 | Error: past date | اختر تاريخ اليوم أو تاريخاً لاحقاً. | Pick today or a later date. |
 
 *10. Duration (optional, select)*
@@ -562,7 +551,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | المدة | Duration |
-| Hint | تقديرك يكفي. | Your best guess is fine. |
 | Options | يوم واحد أو أقل / من يومين إلى أسبوع / من أسبوع إلى شهر / أكثر من شهر / لا أعرف بعد | One day or less / Two days to a week / One week to a month / More than a month / Not sure yet |
 
 *11. Message (optional)*
@@ -570,7 +558,6 @@ Document slots. List only the files Atlas actually has:
 | | العربية | English |
 |---|---|---|
 | Label | رسالة | Message |
-| Hint | أي تفاصيل أخرى: نوع الحمولة ومقاساتها، وصعوبة الوصول إلى الموقع، وهل تحتاج إلى نقل أيضاً. | Anything else: what the load is, its size, site access, or whether you also need transport. |
 | Counter | {n} من 1000 | {n} / 1,000 |
 | Error: too long | الرسالة طويلة. اختصرها إلى 1000 حرف. | Your message is too long. Keep it to 1,000 characters. |
 
@@ -827,5 +814,3 @@ Every token above, grouped by what it blocks.
 | Step 1 | ترسل رقم هاتفك ووزن الحمولة. | You send your phone number and the load weight. |
 | Step 2 | نتواصل معك على الرقم نفسه. | We contact you on that number. |
 | Step 3 | نتفق معك على الرافعة والتفاصيل. | We agree the crane and the details with you. |
-| Lift summary title | رفعتك | Your lift |
-| Lift summary note | هذا تكرار لما كتبته فقط. نؤكد معك الرافعة المناسبة. | This only repeats what you entered. We confirm the right crane with you. |

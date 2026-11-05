@@ -702,13 +702,13 @@ export function Kitchen() {
           ))}
         </ul>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <Field label={copy.form.fields.weight.label} hint={copy.form.fields.weight.hint} error={copy.form.fields.weight.empty} required tag={copy.form.required}>
+          <Field label={copy.form.fields.weight.label} error={copy.form.fields.weight.empty} required tag={copy.form.required}>
             {(p) => <input {...p} inputMode="decimal" placeholder={copy.form.fields.weight.unit} />}
           </Field>
           <Field label={copy.form.fields.phone.label} hint={copy.form.fields.phone.hint} required tag={copy.form.required}>
             {(p) => <input {...p} type="tel" dir="ltr" />}
           </Field>
-          <Field label={copy.form.fields.crane.label} hint={copy.form.fields.crane.hint} tag={copy.form.optional}>
+          <Field label={copy.form.fields.crane.label} tag={copy.form.optional}>
             {(p) => (
               <select {...p} defaultValue="">
                 <option value="">{copy.form.fields.crane.unsure}</option>
@@ -720,7 +720,7 @@ export function Kitchen() {
               </select>
             )}
           </Field>
-          <Field label={copy.form.fields.message.label} hint={copy.form.fields.message.hint} tag={copy.form.optional}>
+          <Field label={copy.form.fields.message.label} tag={copy.form.optional}>
             {(p) => <textarea {...p} rows={3} />}
           </Field>
         </div>

@@ -216,12 +216,10 @@ export const en: Copy = {
   form: {
     title: 'Which crane does your project need?',
     lead: 'Get in touch and leave the rest to us.',
-    intro: 'Fill in only what you know. We need your phone number and the load weight. We will ask about the rest.',
     next: {
       title: 'What happens next',
       steps: ['You send your phone number and the load weight.', 'We contact you on that number.', 'We agree the crane and the details with you.'],
     },
-    summary: { title: 'Your lift', note: 'This only repeats what you entered. We confirm the right crane with you.' },
     contact: {
       email: 'Email',
       phone: 'Phone',
@@ -229,7 +227,7 @@ export const en: Copy = {
       address: 'Address',
       facebook: 'Our Facebook page',
     },
-    groups: { details: 'Your details', lift: 'Lift details', site: 'Site and dates' },
+    more: 'Add more details (optional)',
     required: 'Required',
     optional: 'Optional',
     submit: 'Send request',
@@ -241,59 +239,50 @@ export const en: Copy = {
     fields: {
       name: {
         label: 'Your name',
-        hint: 'So we know who to ask for.',
         tooLong: 'That name is too long. Keep it to 80 characters or fewer.',
       },
       company: {
         label: 'Company',
-        hint: 'Company or organisation, if any.',
         tooLong: 'That name is too long. Keep it to 120 characters or fewer.',
       },
       phone: {
         label: 'Phone or WhatsApp number',
-        hint: 'We will call or message you on this number. Add the country code if you are outside Libya.',
+        hint: 'Add the country code if you are outside Libya.',
         empty: 'Enter a phone number so we can reach you.',
         format: 'This number looks incomplete. Check the digits and try again.',
       },
       crane: {
         label: 'Crane or service',
-        hint: 'If you tapped "Request this crane", it is already selected here.',
         unsure: 'Not sure, help me choose',
         servicesGroup: 'Services',
         cranesGroup: 'Cranes',
       },
       weight: {
         label: 'Load weight (t)',
-        hint: 'A rough figure is fine.',
         unit: 't',
         empty: 'Enter the load weight in tonnes. A rough figure is fine.',
         format: 'Enter a number above zero, such as 12 or 7.5.',
       },
       radius: {
         label: 'Lift radius (m)',
-        hint: "The flat distance from the centre of the crane to the load. Leave it blank if you don't know.",
         unit: 'm',
         format: 'Enter a number in metres, or leave this blank.',
       },
       height: {
         label: 'Lift height (m)',
-        hint: 'The highest point the load must reach, measured from the ground.',
         unit: 'm',
         format: 'Enter a number in metres, or leave this blank.',
       },
       site: {
         label: 'Site location',
-        hint: 'City or area. You can paste a Google Maps link.',
         tooLong: 'That is too long. Keep it to 200 characters.',
       },
       start: {
         label: 'Start date',
-        hint: 'When do you need the crane on site?',
         past: 'Pick today or a later date.',
       },
       duration: {
         label: 'Duration',
-        hint: 'Your best guess is fine.',
         unsure: 'Not sure yet',
         options: {
           day: 'One day or less',
@@ -304,7 +293,6 @@ export const en: Copy = {
       },
       message: {
         label: 'Message',
-        hint: 'Anything else: what the load is, its size, site access, or whether you also need transport.',
         counter: '{n} / {max}',
         tooLong: 'Your message is too long. Keep it to 1,000 characters.',
       },

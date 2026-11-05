@@ -108,7 +108,6 @@ export interface CraneTypeCopy {
 
 export interface FieldCopy {
   label: string;
-  hint: string;
 }
 
 /**
@@ -257,11 +256,9 @@ export interface Copy {
   form: {
     title: string; // the dialect question (spec §5.8)
     lead: string; // the dialect line, BELOW the title (deck "Eyebrow"; spec §15.1)
-    intro: string;
     next: { title: string; steps: [string, string, string] }; // what happens after sending: no times promised
-    summary: { title: string; note: string }; // live echo of the entered lift, no capacity claims
     contact: { email: string; phone: string; whatsapp: string; address: string; facebook: string };
-    groups: { details: string; lift: string; site: string };
+    more: string; // the one disclosure holding the optional fields
     required: string;
     optional: string;
     submit: string;
@@ -273,7 +270,7 @@ export interface Copy {
     fields: {
       name: FieldCopy & { tooLong: string };
       company: FieldCopy & { tooLong: string };
-      phone: FieldCopy & { empty: string; format: string };
+      phone: FieldCopy & { hint: string; empty: string; format: string };
       crane: FieldCopy & { unsure: string; servicesGroup: string; cranesGroup: string };
       weight: FieldCopy & { unit: string; empty: string; format: string };
       radius: FieldCopy & { unit: string; format: string };
