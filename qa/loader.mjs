@@ -22,7 +22,7 @@ const PAGES = [
 ];
 const VIEWPORTS = [
   { id: '1440', viewport: { width: 1440, height: 900, deviceScaleFactor: 1 } },
-  { id: '390', viewport: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
+  { id: '390', phone: true, viewport: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
 ];
 
 let failures = 0;
@@ -139,6 +139,21 @@ for (const p of PAGES) {
   for (const v of VIEWPORTS) {
     const tag = `${p.id} ${v.id}`;
 
+    // 0. Phones (< 768 px) get no curtain at all: the hero is the first thing painted (perf plan, loader).
+    if (v.phone) {
+      const { context, page, errors, url } = await open(browser, { viewport: v.viewport, path: p.path });
+      await page.goto(url, { waitUntil: 'load' });
+      await sleep(600);
+      const s = await page.evaluate(() => {
+        const al = document.getElementById('al');
+        return { loader: document.documentElement.hasAttribute('data-loader'), shown: !!al && getComputedStyle(al).display !== 'none', events: window.__loader?.events ?? 0 };
+      });
+      report(!s.loader && !s.shown, `${tag} first visit: no curtain on a phone`);
+      report(errors.length === 0, `${tag} first visit: no console errors`, errors.join(' | '));
+      await context.close();
+    }
+
+    if (!v.phone) {
     // 1. First visit: the curtain is up at its first frame, lifts within the cap, hands over once, then a reload in the
     //    same tab session shows nothing.
     {
@@ -173,6 +188,8 @@ for (const p of PAGES) {
       await context.close();
     }
 
+    }
+
     // 2. Deep link, reduced motion, no JS: never.
     for (const c of [
       { label: 'deep link /#request', path: `${p.path}#request` },
@@ -190,6 +207,7 @@ for (const p of PAGES) {
       await context.close();
     }
 
+    if (!v.phone) {
     // 3. Skip: a key (Escape) or a press lifts it at once.
     for (const how of ['Escape', 'press']) {
       const { context, page, url } = await open(browser, { viewport: v.viewport, path: p.path });
@@ -204,6 +222,7 @@ for (const p of PAGES) {
       const t = (await state(page)).t;
       report(t.gone !== null && t.gone - at < 600 && t.lift - at < 100, `${tag} ${how} skips at once`, `lift +${Math.round(t.lift - at)} ms, gone +${Math.round(t.gone - at)} ms`);
       await context.close();
+    }
     }
   }
 
@@ -260,8 +279,8 @@ for (const p of PAGES) {
     // Removed before the first paint = the visitor never saw it (the script drops it when the first frame comes late).
     const seen = t.gone === null || t.paint === null || t.gone > t.paint;
     const detail = t.gone === null ? 'never removed' : `first paint ${Math.round(t.paint)} ms, curtain removed ${Math.round(t.gone)} ms (${seen ? `${Math.round(t.gone - t.paint)} ms on screen` : 'dropped before it was painted'})`;
-    report(!s.loader && !s.present && t.gone !== null && t.gone <= FAILSAFE_MS, `${p.id} 390 Slow 4G: no stuck screen, gone by ${FAILSAFE_MS} ms after navigation`, detail);
-    report(t.events === 1, `${p.id} 390 Slow 4G: hands over once`, `events=${t.events}, shown=${seen}`);
+    report(!s.loader && t.gone === null, `${p.id} 390 Slow 4G: phone has no curtain`, detail);
+    report(t.events === 0, `${p.id} 390 Slow 4G: no loader hand-over`, `events=${t.events}`);
     report(errors.length === 0, `${p.id} 390 Slow 4G: no console errors`, errors.join(' | '));
     timings.push({ page: p.id, viewport: '390 Slow 4G', firstFrame: Math.round(t.first), liftStart: Math.round(t.lift), gone: Math.round(t.gone), held: Math.round(t.lift - t.first), total: Math.round(t.gone - t.first), motionStart: t.motion && Math.round(t.motion) });
     await context.close();

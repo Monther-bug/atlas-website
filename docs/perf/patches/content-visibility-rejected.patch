@@ -1,0 +1,35 @@
+diff --git a/src/styles.css b/src/styles.css
+index dc2482b..e527ead 100644
+--- a/src/styles.css
++++ b/src/styles.css
+@@ -288,3 +288,30 @@
+     transition-duration: 0.01ms !important;
+   }
+ }
++
++/* Below-the-fold sections are skipped by style, layout and paint until they are near the viewport
++   (content-visibility: auto). `auto` in the size keeps the real height once rendered; the first number is the
++   measured height at 412 px, the second at 1440 px, so the scrollbar and anchors barely move.
++   Not on #top (the first screen) or #cranes (the pinned Hoist stage: ScrollTrigger measures it). */
++@layer components {
++  #crane-list,
++  #services,
++  #why-atlas,
++  #sites,
++  #request,
++  [data-footer] {
++    content-visibility: auto;
++  }
++  #crane-list { contain-intrinsic-size: auto 5400px; }
++  #services { contain-intrinsic-size: auto 2600px; }
++  #why-atlas { contain-intrinsic-size: auto 2570px; }
++  #sites { contain-intrinsic-size: auto 1030px; }
++  #request { contain-intrinsic-size: auto 3470px; }
++  [data-footer] { contain-intrinsic-size: auto 900px; }
++  @media (min-width: 1024px) {
++    #services { contain-intrinsic-size: auto 1740px; }
++    #why-atlas { contain-intrinsic-size: auto 1860px; }
++    #sites { contain-intrinsic-size: auto 1250px; }
++    #request { contain-intrinsic-size: auto 2230px; }
++  }
++}

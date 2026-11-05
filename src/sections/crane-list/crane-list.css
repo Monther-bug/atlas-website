@@ -934,15 +934,17 @@
   }
 }
 
-/* The model name links to the crane's own page (/cranes/<id>/). The padding grows the target to 44 px without moving
-   the card's lines (the negative margin gives the space back); it sits above the capacity figure that follows, whose
-   line box would otherwise take the lower half of that target. */
+/* The model name links to the crane's own page (/cranes/<id>/). Its target is 44 px tall at every width while it
+   takes exactly one line in the card (the negative margin gives back what the target adds beyond the line height); it
+   sits above the capacity figure that follows, whose line box would otherwise take the lower half of that target. */
 .lineup-card__link {
   position: relative;
   z-index: 1;
-  display: inline-block;
-  padding-block: 0.625rem;
-  margin-block: -0.625rem;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  margin-block: -0.6875rem;
+  margin-block: calc((1lh - 2.75rem) / 2);
   color: inherit;
   text-decoration: underline;
   text-decoration-color: transparent;

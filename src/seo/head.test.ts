@@ -46,7 +46,7 @@ describe.each(PAGES)('$lang page head', (p) => {
     expect(head.meta['og:locale']).toBe(p.locale);
     expect(head.meta['og:locale:alternate']).toBe(p.altLocale);
     expect(head.meta['theme-color']).toBe('#0D0C2B');
-    expect(head.icons).toEqual(['/brand/badge.png', '/brand/badge.png']);
+    expect(head.icons).toEqual(['/brand/badge-64.png', '/brand/badge-180.png']);
   });
   it('keeps the prerender markers and the module entry', () => {
     expect(p.html).toContain('<div id="root"><!--app--></div>');

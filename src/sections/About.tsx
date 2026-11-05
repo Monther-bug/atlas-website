@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { NewTabNote, buttonClass, externalProps } from '@/components/Button';
 import { ArrowIcon } from '@/components/Icons';
-import { BADGE_SRC } from '@/components/Logo';
+import { BADGE_MEDIUM } from '@/components/Logo';
 import { Picture } from '@/components/Picture';
 import { Chip, Section, parallax, reveal } from '@/components/ui';
 import { siteInfo } from '@/content';
@@ -53,7 +53,7 @@ export function About() {
       <div data-about-statement="" className="about-statement">
         <h2 id="about-title" className="inline">
           <span data-about-badge="" className="about-badge">
-            <img src={BADGE_SRC} alt="" width={96} height={96} loading="lazy" decoding="async" />
+            <img src={BADGE_MEDIUM} alt="" width={96} height={96} loading="lazy" decoding="async" />
           </span>{' '}
           <Words text={a.title} />
         </h2>{' '}

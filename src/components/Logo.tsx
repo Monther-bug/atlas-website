@@ -2,6 +2,8 @@ import { useLang } from '@/lib/lang';
 
 // Temporary badge cropped from IMG_6363 by A2.4 until Atlas sends the vector (see README).
 export const BADGE_SRC = '/brand/badge.png';
+/** 192 px WebP (10 KB) for the 96 px About badge and the loader. */
+export const BADGE_MEDIUM = '/brand/badge-192.webp';
 /** The same badge at 128 px (WebP, ~6 KB instead of 79 KB): enough for the 40 px header and 64 px footer up to 3x / 2x. */
 export const BADGE_SMALL = '/brand/badge-128.webp';
 

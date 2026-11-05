@@ -13,8 +13,8 @@
     <link rel="alternate" hreflang="en" href="%SITE_URL%/en/" />
     <link rel="alternate" hreflang="x-default" href="%SITE_URL%/" />
     <!-- Temporary icon cropped from IMG_6363 (A2.4). Replace with the vector logo: see README. -->
-    <link rel="icon" href="/brand/badge.png" type="image/png" />
-    <link rel="apple-touch-icon" href="/brand/badge.png" />
+    <link rel="icon" href="/brand/badge-64.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/brand/badge-180.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="%SITE_URL%/" />
@@ -51,7 +51,7 @@
         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         c.add('motion-ok');
         try {
-          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
+          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro') || w.matchMedia('(max-width: 767px)').matches) return; // phones: no intro
           sessionStorage.setItem('atlas-intro', 1);
         } catch (e) {
           return;
@@ -161,7 +161,7 @@
       <div class="al-v">
         <div class="al-m">
           <svg class="al-h" viewBox="0 0 28 40" width="28" height="40"><path class="al-r" d="M14 0V-2000" /><rect x="7" width="14" height="14" rx="2" /><path d="M14 14v9a7 7 0 1 1-7 7" /></svg>
-          <img class="al-i" src="/brand/badge.png" alt="" width="80" height="80" />
+          <img class="al-i" src="/brand/badge-192.webp" alt="" width="80" height="80" />
           <span class="al-w" style="--i: 1" data-w="أطلس الصحراء"></span>
           <span class="al-t" style="--i: 2" lang="en" data-w="Atlas Alshraa"></span>
         </div>

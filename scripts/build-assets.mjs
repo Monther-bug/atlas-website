@@ -80,7 +80,7 @@ for (const [id, photo] of used) {
     const plan = encodePlan(cropName, rect.width, HERO.has(id));
     for (const width of plan.widths) {
       const [avif, webp] = await Promise.all([
-        pipeline().resize({ width }).avif({ quality: plan.avifQuality, effort: 4 }).toBuffer(),
+        pipeline().resize({ width }).avif({ quality: plan.avifQuality, effort: 6 }).toBuffer(),
         pipeline().resize({ width }).webp({ quality: 72 }).toBuffer(),
       ]);
       for (const [format, bytes] of [['avif', avif], ['webp', webp]]) {

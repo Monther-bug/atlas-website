@@ -1,0 +1,26 @@
+diff --git a/en/index.html b/en/index.html
+index babcf09..963cdc9 100644
+--- a/en/index.html
++++ b/en/index.html
+@@ -47,7 +47,7 @@
+         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+         c.add('motion-ok');
+         try {
+-          if (location.hash || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
++          if (location.hash || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro') || w.matchMedia('(max-width: 767px)').matches) return; // phones: no intro
+           sessionStorage.setItem('atlas-intro', 1);
+         } catch (e) {
+           return;
+diff --git a/index.html b/index.html
+index a75d16d..7fea72f 100644
+--- a/index.html
++++ b/index.html
+@@ -47,7 +47,7 @@
+         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+         c.add('motion-ok');
+         try {
+-          if (location.hash || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
++          if (location.hash || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro') || w.matchMedia('(max-width: 767px)').matches) return; // phones: no intro
+           sessionStorage.setItem('atlas-intro', 1);
+         } catch (e) {
+           return;

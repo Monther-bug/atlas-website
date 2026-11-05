@@ -14,7 +14,8 @@
 //   QA_FORM_ENDPOINT   the build's VITE_FORM_ENDPOINT; this script answers it (500, then 200) to test failure and
 //                      success. Unset: the form is expected to hand the request off to WhatsApp / email instead.
 //   QA_ONLY            comma list of sections: matrix,controls,keyboard,nojs,seo,truth,csp,dark, and cranes (all of section 8)
-//                      or one part of it: crane-seo,crane-links,crane-matrix,crane-nojs,crane-flows,crane-keyboard (default: all)
+//                      or one part of it: crane-seo,crane-links,crane-deploy,crane-matrix,crane-nojs,crane-flows,crane-keyboard
+//                      (default: all)
 //   QA_CRANES          crane pages to check (default all five, both languages); QA_CRANE_FLOWS = the cranes whose request
 //                      flows and keyboard walks run (default gmk6350,quy250)
 //   QA_CONCURRENCY     parallel matrix cases (default 3); QA_PAGES=ar,en QA_WIDTHS=320,1440 QA_MODES=touch narrow the matrix
@@ -246,7 +247,15 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
     document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
     try {
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries()) window.__shifts.push({ value: e.value, startTime: e.startTime, hadRecentInput: e.hadRecentInput });
+        for (const e of list.getEntries()) {
+          // What moved (for the failure detail): the first two sources, as tag#id.class and the vertical move.
+          const src = (e.sources ?? []).slice(0, 2).map((x) => {
+            const n = x.node;
+            const name = n ? `${n.nodeName.toLowerCase()}${n.id ? `#${n.id}` : ''}${typeof n.className === 'string' && n.className ? `.${n.className.trim().split(/\s+/)[0]}` : ''}` : '?';
+            return `${name} y${Math.round(x.previousRect.y)}→${Math.round(x.currentRect.y)} h${Math.round(x.previousRect.height)}→${Math.round(x.currentRect.height)}`;
+          });
+          window.__shifts.push({ value: e.value, startTime: e.startTime, hadRecentInput: e.hadRecentInput, src });
+        }
       }).observe({ type: 'layout-shift', buffered: true });
     } catch {}
   }, !loader, theme);
@@ -256,6 +265,12 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
 }
 
 const errorsOf = (s) => [...s.problems.console, ...s.problems.page].join(' | ');
+/** "CLS 0.15", and when over budget the largest shifts with what moved (window.__shifts entries from open()). */
+function clsDetail(shifts, cls) {
+  if (cls <= 0.05) return `CLS ${cls}`;
+  const big = [...shifts].filter((e) => !e.hadRecentInput).sort((a, b) => b.value - a.value).slice(0, 3);
+  return `CLS ${cls} · largest: ${big.map((e) => `${e.value.toFixed(3)} @${Math.round(e.startTime)} ms [${(e.src ?? []).join('; ')}]`).join(' | ')}`;
+}
 /**
  * Jumps the page to `y`. A Lenis glide still easing out (its lerp tail can run past 2 s on a long way) would put its
  * own position back on the next frame, so wait for it to finish first, as a visitor's next action would.
@@ -426,8 +441,9 @@ async function matrixCase(p, vp, mode) {
     });
     rec('hero', 'hero WhatsApp button on screen, ≥ 44 px; H1 inside the viewport', hero.ok, hero.detail);
 
-    const loadCls = sessionCls(await page.evaluate(() => window.__shifts));
-    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, `CLS ${loadCls}`);
+    const loadShifts = await page.evaluate(() => window.__shifts);
+    const loadCls = sessionCls(loadShifts);
+    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, clsDetail(loadShifts, loadCls));
 
     await scrollThrough(page);
     const end = await page.evaluate(barCoversText);
@@ -451,8 +467,9 @@ async function matrixCase(p, vp, mode) {
     else rec('truth', 'no draft badge, no [[CONFIRM]] token (production)', m.badges === 0 && m.tokens === 0, `${m.badges} badges, ${m.tokens} tokens`);
     if (reduced) rec('motion', 'reduced: all content visible, no smooth scroll', m.hiddenReveal === 0 && !m.lenis, `hidden=${m.hiddenReveal} lenis=${m.lenis}`);
     else rec('motion', 'reveals have finished after scrolling through; no ghost left', m.hiddenReveal === 0 && m.ghosts === 0, `hidden=${m.hiddenReveal} ghosts=${m.ghosts}`);
-    const allCls = sessionCls(await page.evaluate(() => window.__shifts));
-    rec('cls', 'CLS over the whole visit (load + scroll) ≤ 0.05', allCls <= 0.05, `CLS ${allCls}`);
+    const allShifts = await page.evaluate(() => window.__shifts);
+    const allCls = sessionCls(allShifts);
+    rec('cls', 'CLS over the whole visit (load + scroll) ≤ 0.05', allCls <= 0.05, clsDetail(allShifts, allCls));
 
     await page.evaluate(axeSource);
     const axe = await page.evaluate(async (tags) => {
@@ -1900,7 +1917,7 @@ async function darkAcrossLanguages() {
 }
 
 // ── 8. Crane pages (/cranes/<id>/, /en/cranes/<id>/) ────────────────────────
-// QA_ONLY=cranes runs all of this; crane-seo, crane-links, crane-matrix, crane-nojs, crane-flows, crane-keyboard run one
+// QA_ONLY=cranes runs all of this; crane-seo, crane-links, crane-deploy, crane-matrix, crane-nojs, crane-flows, crane-keyboard run one
 // part. QA_CRANES=gmk6350,rt700e narrows the pages (QA_PAGES=ar|en, QA_WIDTHS and QA_MODES apply too); QA_CRANE_FLOWS
 // names the cranes whose request flows and keyboard walks run in a browser (default gmk6350, and quy250, which the
 // comparison does not pick by default, so its Compare deep link is a real test).
@@ -2081,6 +2098,43 @@ async function craneLinkChecks() {
   }
 }
 
+// Deploy: the vercel.json CSP on the crane pages; the /cranes redirects ─────────
+async function craneDeployChecks() {
+  const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const csp = vercel.headers.flatMap((h) => h.headers).find((h) => h.key === 'Content-Security-Policy')?.value;
+  if (!csp) return record('crane-deploy', 'vercel.json has a Content-Security-Policy', false);
+  for (const p of CRANE_PAGES) {
+    const s = await open(p.path, { width: 1440, height: 900, csp });
+    try {
+      await step('crane-deploy', `${p.id} under the vercel.json CSP: the head script and styles apply, the motion layer starts, no violations`, async () => {
+        const r = await s.page.evaluate(() => ({
+          cls: document.documentElement.className,
+          motion: document.documentElement.dataset.motion ?? null,
+          violations: window.__csp,
+          // The inline <style> in the head (the view-transition opt-in) must not be blocked: CSSOM sees its rule.
+          inlineStyles: [...document.querySelectorAll('head style')].map((st) => st.sheet?.cssRules.length ?? 0),
+        }));
+        const pass = /\bjs\b/.test(r.cls) && /\bmotion-ok\b/.test(r.cls) && r.motion === 'desktop' && r.violations.length === 0 && r.inlineStyles.every((n) => n > 0);
+        return { pass, detail: `class="${r.cls}" data-motion=${r.motion} inline style rules ${r.inlineStyles.join('/') || 'none'} violations: ${r.violations.join(' | ') || 'none'}` };
+      });
+    } finally {
+      await s.context.close();
+    }
+  }
+  await step('crane-deploy', 'vercel.json: /cranes and /en/cranes redirect to their lineup (the anchor exists); crane pages have a Cache-Control rule', async () => {
+    const bad = [];
+    for (const [src, home] of [['/cranes', '/'], ['/en/cranes', '/en/']]) {
+      const r = (vercel.redirects ?? []).find((x) => x.source === src);
+      const t = r ? linkTarget(r.destination, '/') : null;
+      if (!r || !t || t.path !== home) bad.push(`${src} → ${r?.destination ?? 'no redirect'}`);
+      else if (t.hash && !(await served(home)).ids.has(t.hash)) bad.push(`${r.destination}: no #${t.hash}`);
+    }
+    const sources = vercel.headers.filter((h) => h.headers.some((x) => x.key === 'Cache-Control')).map((h) => h.source);
+    for (const want of ['/cranes/(.*)', '/en/cranes/(.*)']) if (!sources.includes(want)) bad.push(`no Cache-Control for ${want}`);
+    return { pass: bad.length === 0, detail: bad.join('; ') };
+  });
+}
+
 // Matrix: page × viewport × mode ────────────────────────────────────────────
 /** In the page, after scrolling through: tickers and meters final, the story layout, the specification, rail, photos. */
 function auditCraneBody() {
@@ -2158,8 +2212,9 @@ async function craneMatrixCase(p, vp, mode) {
       normModel(first.h1).endsWith(normModel(crane.model)) && first.h1InView && Number(toWestern(first.readout)) === crane.t && first.ctaOk,
       JSON.stringify(first),
     );
-    const loadCls = sessionCls(await page.evaluate(() => window.__shifts));
-    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, `CLS ${loadCls}`);
+    const loadShifts = await page.evaluate(() => window.__shifts);
+    const loadCls = sessionCls(loadShifts);
+    rec('cls', 'CLS while loading ≤ 0.05', loadCls <= 0.05, clsDetail(loadShifts, loadCls));
 
     await scrollThrough(page);
     const end = await page.evaluate(barCoversText);
@@ -2209,8 +2264,9 @@ async function craneMatrixCase(p, vp, mode) {
       b.heroCrop === heroCrop && eager.length === 0 && blurry.length === 0 && heavy.length === 0 && b.photos.length > 2,
       `hero ${b.heroCrop} · ${b.photos.length} checked · eager ${eager.join(', ') || 'none'} · blurry ${blurry.join(', ') || 'none'} · heavy ${heavy.join(', ') || 'none'}`,
     );
-    const allCls = sessionCls(await page.evaluate(() => window.__shifts));
-    rec('cls', 'CLS over the whole visit (load + scroll) ≤ 0.05', allCls <= 0.05, `CLS ${allCls}`);
+    const allShifts = await page.evaluate(() => window.__shifts);
+    const allCls = sessionCls(allShifts);
+    rec('cls', 'CLS over the whole visit (load + scroll) ≤ 0.05', allCls <= 0.05, clsDetail(allShifts, allCls));
 
     await page.evaluate(axeSource);
     const axe = await page.evaluate(async (tags) => {
@@ -2548,6 +2604,7 @@ try {
   // Section 8: the crane pages.
   if (wantCrane('seo')) await craneSeoChecks();
   if (wantCrane('links')) await craneLinkChecks();
+  if (wantCrane('deploy')) await craneDeployChecks();
   if (wantCrane('matrix')) {
     const cases = CRANE_PAGES.flatMap((p) =>
       CRANE_VIEWPORTS.filter((vp) => !WIDTHS_ONLY.length || WIDTHS_ONLY.includes(vp.width)).flatMap((vp) => MODES.map((mode) => ({ p, vp, mode }))),

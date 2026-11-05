@@ -4,14 +4,14 @@ import { encodePlan, hookInRect, imageFileName, widthsFor } from './assets-helpe
 
 describe('encodePlan', () => {
   it('caps the 9:16 mobile hero at 1080 px with AVIF q45', () => {
-    expect(encodePlan('mobile_9x16', 1351, true)).toEqual({ widths: [640, 828, 1080], avifQuality: 45 });
+    expect(encodePlan('mobile_9x16', 1351, true)).toEqual({ widths: [640, 828, 1080], avifQuality: 40 });
   });
   it('ships the crop width when narrower than the smallest ladder width', () => {
-    expect(encodePlan('mobile_9x16', 500, true)).toEqual({ widths: [500], avifQuality: 45 });
+    expect(encodePlan('mobile_9x16', 500, true)).toEqual({ widths: [500], avifQuality: 40 });
   });
   it('uses widthsFor and q50 for every other crop', () => {
-    expect(encodePlan('desktop_16x9', 4240, true)).toEqual({ widths: [640, 1280, 1920, 2560], avifQuality: 50 });
-    expect(encodePlan('mobile_4x5', 1921, false)).toEqual({ widths: [640, 1280, 1920], avifQuality: 50 });
+    expect(encodePlan('desktop_16x9', 4240, true)).toEqual({ widths: [640, 1280, 1920, 2560], avifQuality: 42 });
+    expect(encodePlan('mobile_4x5', 1921, false)).toEqual({ widths: [640, 1280, 1920], avifQuality: 42 });
   });
 });
 

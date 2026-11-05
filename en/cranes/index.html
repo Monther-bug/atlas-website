@@ -27,7 +27,7 @@
         if (w.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         c.add('motion-ok');
         try {
-          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro')) return;
+          if (location.hash || h.hasAttribute('data-no-intro') || d.visibilityState == 'hidden' || sessionStorage.getItem('atlas-intro') || w.matchMedia('(max-width: 767px)').matches) return; // phones: no intro
           sessionStorage.setItem('atlas-intro', 1);
         } catch (e) {
           return;
