@@ -75,6 +75,14 @@ describe('Sites', () => {
     expect(html.innerHTML).not.toMatch(/bg-concrete|t-h2|t-h3|section-y/);
   });
 
+  it('wraps the track in a viewport and ships a named Pause button for the drift loop (WCAG 2.2.2)', () => {
+    expect(html.querySelector('[data-sites-strip] > .sites-viewport > ul#sites-track')).not.toBeNull();
+    const button = html.querySelector<HTMLButtonElement>('button[data-sites-motion]');
+    expect(button?.textContent).toBe(copy.ui.pause);
+    expect(button?.getAttribute('data-play')).toBe(copy.ui.play);
+    expect(html.querySelectorAll('[data-clone]')).toHaveLength(0); // the copies are made in the browser, never prerendered
+  });
+
   it('narrows the strip to one site and back', async () => {
     const { host, unmount } = await mount(<Sites />, 'en');
     const pick = async (value: string) => {

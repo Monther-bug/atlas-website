@@ -122,6 +122,77 @@
     }
   }
 
+  /* ── Drift loop (src/motion/sites.ts sets [data-loop] on the strip; never under reduced motion or without JS).
+     The viewport clips and fades the strip's ends; the track is one max-content row moved by a single transform. ── */
+  .sites-viewport {
+    position: relative;
+  }
+  .sites-carousel[data-loop] .sites-viewport {
+    overflow: clip;
+    touch-action: pan-y;
+    cursor: grab;
+    --sites-fade: clamp(1.5rem, 7vw, 6rem);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--sites-fade), #000 calc(100% - var(--sites-fade)), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 var(--sites-fade), #000 calc(100% - var(--sites-fade)), transparent);
+  }
+  .sites-carousel[data-loop] .ui-carousel__track {
+    overflow: visible;
+    inline-size: max-content;
+    padding-inline-end: 0;
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+    will-change: transform;
+  }
+  .sites-carousel[data-loop] .ui-carousel__track > li {
+    scroll-snap-align: none;
+    animation: none;
+  }
+  .sites-carousel[data-dragging] .sites-viewport {
+    cursor: grabbing;
+    user-select: none;
+  }
+  /* A keyboard-focused card whose visible twin is a copy: the copy wears the focus ring. */
+  .sites-carousel .is-mirror .sites-card {
+    outline: 2px solid var(--ring, var(--color-brand));
+    outline-offset: 4px;
+    box-shadow: var(--shadow-e2);
+  }
+
+  /* Pause / Play (WCAG 2.2.2): only while the loop runs; the icon is drawn here, the name is swapped by the loop. */
+  .sites-motion {
+    margin-inline-end: auto;
+  }
+  .sites-motion__icon {
+    position: relative;
+    display: block;
+    inline-size: 0.875rem;
+    block-size: 1rem;
+  }
+  .sites-motion__icon::before,
+  .sites-motion__icon::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inline-size: 0.3125rem;
+    border-radius: 1px;
+    background-color: currentColor;
+  }
+  .sites-motion__icon::before {
+    inset-inline-start: 0.0625rem;
+  }
+  .sites-motion__icon::after {
+    inset-inline-end: 0.0625rem;
+  }
+  .sites-motion[data-state='paused'] .sites-motion__icon::before {
+    inset-inline: 0;
+    inline-size: auto;
+    border-radius: 0;
+    clip-path: polygon(10% 0, 100% 50%, 10% 100%);
+  }
+  .sites-motion[data-state='paused'] .sites-motion__icon::after {
+    display: none;
+  }
+
   /* Mouse drag (desktop motion, src/motion/sites.ts): no snapping or text selection while the pointer pulls. */
   [data-sites-strip][data-dragging] .ui-carousel__track {
     scroll-snap-type: none;
@@ -133,12 +204,20 @@
 
 /* Paddles in brand navy while they can move the strip; neutral at the ends. Unlayered on purpose: IconButton's
    tone is a Tailwind utility (utilities layer), and only unlayered rules outrank it without !important. */
-.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']) {
+.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):not([data-sites-motion]) {
   background-color: var(--color-brand);
   color: var(--color-white);
 }
-.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):hover {
+.sites-carousel .ui-carousel__controls > button:not([aria-disabled='true']):not([data-sites-motion]):hover {
   background-color: var(--color-brand-600);
+}
+
+/* Unlayered: IconButton's inline-flex is a utility and would win inside a layer. */
+.sites-carousel .sites-motion {
+  display: none;
+}
+.sites-carousel[data-loop] .sites-motion {
+  display: inline-flex;
 }
 
 @keyframes sites-settle {

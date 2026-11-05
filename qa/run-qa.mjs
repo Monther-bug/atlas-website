@@ -949,9 +949,14 @@ async function sheetRequestCheck(page) {
 const stripState = (page) =>
   page.evaluate(() => {
     const t = document.getElementById('sites-track');
-    const [prev, next] = document.querySelectorAll('#sites .ui-carousel__controls button');
+    const [prev, next] = document.querySelectorAll('#sites .ui-carousel__controls button[aria-controls="sites-track"]');
+    const strip = document.querySelector('[data-sites-strip]');
+    const tx = /translate3d\((-?[\d.]+)px/.exec(t?.style.transform ?? '');
     return {
-      n: t?.children.length ?? 0,
+      // The drift loop (src/motion/sites.ts) adds aria-hidden copies of the cards: count only the real ones.
+      n: t?.querySelectorAll('[data-testid="site-photo"]').length ?? 0,
+      loop: !!strip?.dataset.loop,
+      phase: tx ? Math.round(Number(tx[1])) : 0,
       x: Math.round(Math.abs(t?.scrollLeft ?? 0)),
       prev: prev?.getAttribute('aria-disabled') === 'true',
       next: next?.getAttribute('aria-disabled') === 'true',
@@ -978,11 +983,76 @@ async function galleryPickerCheck(page) {
   return { pass, detail: `all ${all.n} · ${a.n} "${a.label}" · ${b.n} "${b.label}" · back ${back.n}` };
 }
 
+/** Drift loop (motion on): it moves by itself, Pause stops it, paddles and arrow keys nudge by one card, a drag takes over. */
+async function galleryLoopCheck(page, p, touch) {
+  const rtl = p.dir === 'rtl';
+  const phase = async () => (await stripState(page)).phase;
+  const forward = (a, b) => (rtl ? b - a : a - b); // content travels towards the start edge
+  await page.mouse.move(2, 2);
+  await page.$eval('#sites-track', (t) => t.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await wait(1500);
+  const a0 = await phase();
+  await wait(1000);
+  const a1 = await phase();
+  const drifts = forward(a0, a1) > 20; // ~120 px/s towards the reading start (Arabic: left to right)
+  const toggle = await page.$('#sites [data-sites-motion]');
+  const name0 = await toggle.evaluate((e) => e.textContent.trim());
+  await toggle.click();
+  await wait(1600);
+  const name1 = await toggle.evaluate((e) => e.textContent.trim());
+  const b0 = await phase();
+  await wait(800);
+  const b1 = await phase();
+  const stopped = Math.abs(b1 - b0) < 2 && name1 !== name0;
+  const step = await page.evaluate(() => {
+    const l = document.querySelectorAll('#sites-track > li');
+    return Math.abs(l[13].offsetLeft - l[12].offsetLeft);
+  });
+  const [prev, next] = await page.$$('#sites .ui-carousel__controls button[aria-controls="sites-track"]');
+  await next.click();
+  await wait(1100);
+  const c1 = await phase();
+  await prev.click();
+  await wait(1100);
+  const c2 = await phase();
+  await page.$eval('#sites-track li:not([data-clone]) button', (b) => b.focus());
+  await page.keyboard.press(nextKey(p.dir));
+  await wait(1100);
+  const c3 = await phase();
+  const nudge = Math.abs(forward(b1, c1) - step) < 4 && Math.abs(c2 - b1) < 4 && Math.abs(forward(c2, c3) - step) < 4;
+  await page.$eval('#sites-track', (t) => t.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await wait(300);
+  const box = await page.$eval('#sites .sites-viewport', (v) => {
+    const r = v.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: Math.min(Math.max(r.top + r.height / 2, 80), window.innerHeight - 140) };
+  });
+  const dx = (rtl ? 1 : -1) * 240;
+  if (touch) {
+    await page.touchscreen.touchStart(box.x - dx / 2, box.y);
+    for (let i = 1; i <= 10; i++) await page.touchscreen.touchMove(box.x - dx / 2 + (dx * i) / 10, box.y);
+    await page.touchscreen.touchEnd();
+  } else {
+    await page.mouse.move(box.x - dx / 2, box.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(box.x - dx / 2 + (dx * i) / 8, box.y, { steps: 2 });
+    await page.mouse.up();
+  }
+  await wait(300);
+  const d1 = await phase();
+  const dragged = Math.abs(d1 - c3) > 100;
+  await page.mouse.move(2, 2);
+  await toggle.click(); // play again, so later checks see the loop as a visitor would
+  await wait(400);
+  const pass = drifts && stopped && nudge && dragged;
+  return { pass, detail: `drift ${forward(a0, a1)} px/s · Pause "${name0}" → "${name1}" stops (${b1 - b0}) · paddle ${forward(b1, c1)} / back ${c2 - b1} / key ${forward(c2, c3)} (card ${step}) · ${touch ? 'swipe' : 'drag'} ${d1 - c3}` };
+}
+
 async function galleryPaddleKeyCheck(page, p, touch, drag) {
   await page.$eval('#sites', (e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
   await wait(700);
   const s0 = await stripState(page);
-  const [prev, next] = await page.$$('#sites .ui-carousel__controls button');
+  if (s0.loop) return galleryLoopCheck(page, p, touch);
+  const [prev, next] = await page.$$('#sites .ui-carousel__controls button[aria-controls="sites-track"]');
   await next.click();
   await wait(1000);
   const s1 = await stripState(page);

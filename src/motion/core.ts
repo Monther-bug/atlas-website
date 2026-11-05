@@ -13,7 +13,7 @@ import { heroDock, heroIntro } from './hero';
 import { afterLoader, loaderShowing } from './loader';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
 import { startAboutDesktop, startAboutTouch } from './about';
-import { startSitesDrag, startSitesDrift, startSitesSlidesDesktop, startSitesSlidesTouch } from './sites';
+import { startSitesLoopDesktop, startSitesLoopTouch, startSitesSlidesDesktop, startSitesSlidesTouch } from './sites';
 
 /** Motion that starts later than this (ms after navigation) finds the hero already revealed by the CSS failsafe. */
 const LATE_MS = 2800;
@@ -165,11 +165,10 @@ const DESKTOP: MotionModule[] = [
   startTickers,
   startMagnetic,
   startParallax,
-  // S.about: About statement highlight (scrubbed); On site cards stagger, strip drift and mouse drag.
+  // S.about: About statement highlight (scrubbed); On site cards stagger, then the strip drifts in a loop (drag, wheel, paddles).
   startAboutDesktop,
   startSitesSlidesDesktop,
-  startSitesDrift,
-  startSitesDrag,
+  startSitesLoopDesktop,
 ];
 
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
@@ -188,6 +187,7 @@ const TOUCH: MotionModule[] = [
   // S.about: About statement highlight (one pass); On site cards stagger.
   startAboutTouch,
   startSitesSlidesTouch,
+  startSitesLoopTouch,
 ];
 
 function setMode(mode: MotionMode): void {

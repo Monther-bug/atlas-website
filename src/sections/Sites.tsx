@@ -27,7 +27,7 @@ const TRACK_STYLE = {
  * the slides settle in (CSS). The strip is the shared carousel pattern (spec §8.9: .ui-carousel CSS, region + slide
  * groups, paddles that page by whole cards and turn aria-disabled at the ends), written inline because the strip
  * remounts per site and every byte of main JS counts. Arrow keys on the track, swipe on touch, mouse drag on desktop. A photo opens in the lazy-loaded Lightbox, which grows it
- * out of its card. Without JS the picker hides and all twelve photos stay in the strip.
+ * out of its card. With motion on, the strip drifts in a seamless loop (src/motion/sites.ts: copies of the cards, one transform on the track, a Pause button). Without JS the picker hides and all twelve photos stay in the strip.
  */
 export function Sites() {
   const { copy, dir } = useLang();
@@ -49,10 +49,11 @@ export function Sites() {
       setOpen(index);
     });
   };
-  const originFor = useCallback(
-    (photo: GalleryPhotoId) => strip.current?.querySelector<HTMLElement>(`[data-photo="${photo}"] [data-sites-thumb]`) ?? null,
-    [],
-  );
+  /** The thumb the lightbox flies from: the drift loop (src/motion/sites.ts) picks the copy on screen; else the card. */
+  const originFor = useCallback((photo: GalleryPhotoId) => {
+    const el = strip.current as (HTMLDivElement & { sitesOrigin?: (p: GalleryPhotoId) => HTMLElement | null }) | null;
+    return el?.sitesOrigin?.(photo) ?? el?.querySelector<HTMLElement>(`[data-photo="${photo}"] [data-sites-thumb]`) ?? null;
+  }, []);
 
   /** The navy fill glides from the old pick to the new one (WAAPI on ::before; sizes measured now, so resizes are safe). */
   const choose = (next: SiteFilter, to: HTMLElement) => {
@@ -173,18 +174,24 @@ export function Sites() {
         onFocus={preload}
         className={`flex flex-col gap-4 ${switched ? 'sites-carousel is-switched' : 'sites-carousel'}`}
       >
-        <ul
-          key={filter}
-          ref={track}
-          id="sites-track"
-          tabIndex={0}
-          onScroll={onScroll}
-          className="ui-carousel__track"
-          style={TRACK_STYLE}
-        >
-          {slides}
-        </ul>
+        <div className="sites-viewport">
+          <ul
+            key={filter}
+            ref={track}
+            id="sites-track"
+            tabIndex={0}
+            onScroll={onScroll}
+            className="ui-carousel__track"
+            style={TRACK_STYLE}
+          >
+            {slides}
+          </ul>
+        </div>
         <div className="ui-carousel__controls" style={{ paddingInline: INSET }}>
+          {/* Shown only while the drift loop runs (src/motion/sites.ts swaps the name and icon). WCAG 2.2.2. */}
+          <IconButton label={copy.ui.pause} data-sites-motion="" data-play={copy.ui.play} className="sites-motion">
+            <span aria-hidden="true" className="sites-motion__icon" />
+          </IconButton>
           <IconButton
             label={copy.ui.prev}
             aria-controls="sites-track"
