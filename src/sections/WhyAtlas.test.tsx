@@ -31,14 +31,13 @@ describe('WhyAtlas', () => {
     expect(h2?.previousElementSibling).toBeNull(); // no eyebrow
   });
 
-  it('shows the capacity range from the data, draft-badged, with a final value for screen readers', () => {
+  it('shows the capacity range from the data, with a final value for screen readers', () => {
     const min = visibleCranes[0]!.capacityT;
     const max = visibleCranes.at(-1)!.capacityT;
     expect([min, max]).toEqual([55, 317.5]);
     const figure = root.querySelector('[data-why-tile="range"] h3');
     expect(figure?.querySelector('.sr-only')?.textContent).toBe('55–317.5 t');
     expect([...figure!.querySelectorAll('[data-ticker]')].map((t) => t.textContent)).toEqual(['55', '317.5']);
-    expect(root.querySelector('[data-why-tile="range"] [data-testid="draft-badge"]')).not.toBeNull();
   });
 
   it('draws one bar per visible model, smallest first, sized from the capacity', () => {
@@ -95,7 +94,7 @@ describe('WhyAtlas', () => {
     expect(primaries).toHaveLength(1);
     expect(primaries[0]?.closest('[data-why-tile]')?.getAttribute('data-ground')).toBe('light');
     expect(root.querySelector('a[href="#request"]')?.textContent).toBe('Fill in the request form');
-    expect(root.querySelector('a[href="mailto:atlasalsahralibya@gmail.com"]')?.textContent).toBe('Email');
+    expect(root.querySelector('a[href="mailto:info@atlas-alshraa.com.ly"]')?.textContent).toBe('Email');
     expect(root.querySelector('a[href="#crane-list"]')?.textContent).toBe('the crane list');
   });
 

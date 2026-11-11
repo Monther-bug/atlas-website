@@ -34,6 +34,27 @@ export function WhatsAppIcon(props: IconProps) {
   );
 }
 
+/** The Facebook mark in the set's line: the "f" rising from the foot of its circle. */
+export function FacebookIcon(props: IconProps) {
+  return (
+    <Svg strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 7.5H14a2 2 0 0 0-2 2V21" />
+      <path d="M9 12.5h6" />
+    </Svg>
+  );
+}
+
+/** The TikTok mark in the set's line: the note, its flag curling away from the stem. */
+export function TikTokIcon(props: IconProps) {
+  return (
+    <Svg strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M13.5 3v12.5a4.5 4.5 0 1 1-4.5-4.5" />
+      <path d="M13.5 3c.6 3.2 3.1 5.5 6.5 5.5" />
+    </Svg>
+  );
+}
+
 export function PhoneIcon(props: IconProps) {
   return (
     <Svg {...props}>

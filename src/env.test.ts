@@ -67,24 +67,3 @@ describe('env', () => {
     expect(env.phone).toBe('+218900000000');
   });
 });
-
-describe('isDraft (staging)', () => {
-  it('is true for an unverified value', async () => {
-    const { isDraft } = await freshEnv();
-    expect(isDraft(false)).toBe(true);
-  });
-
-  it('is false for a verified value', async () => {
-    const { isDraft } = await freshEnv();
-    expect(isDraft(true)).toBe(false);
-  });
-});
-
-describe('isDraft (production)', () => {
-  it('is false even for an unverified value', async () => {
-    vi.stubGlobal('__BUILD_TARGET__', 'production');
-    const { isDraft, env } = await freshEnv();
-    expect(env.target).toBe('production');
-    expect(isDraft(false)).toBe(false);
-  });
-});

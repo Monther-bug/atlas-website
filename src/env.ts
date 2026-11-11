@@ -8,5 +8,3 @@ export const env = {
   formEndpoint: (import.meta.env.VITE_FORM_ENDPOINT as string | undefined) || null,
   ga4Id: (import.meta.env.VITE_GA4_ID as string | undefined) || null,
 } as const;
-/** True when an unverified value must show the DraftBadge (staging only). */
-export const isDraft = (verified: boolean) => !verified && env.target !== 'production';

@@ -7,12 +7,13 @@
   /* The statement: one paragraph in large type (the H2 is its first sentence, both inline), lit word by word in
      brand navy by src/motion/about.ts (13.5:1 on white). Rendered lit: the quiet start colour exists only while
      motion runs.
-     28 -> 52 px Latin (Poppins 600), 30 -> 56 px Arabic (Tajawal 700, which draws smaller per em). */
+     22 -> 38 px Latin (Poppins 600), 24 -> 40 px Arabic (Cairo 700, which draws smaller per em). */
   .about-statement {
     max-inline-size: 64rem;
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: clamp(1.75rem, 1.25rem + 2.222vw, 3.5rem);
+    /* Client, 11 Nov 2026: a step smaller (was 28–56 px): 22–38 px, full size from about 1440 px. */
+    font-size: clamp(1.375rem, 1.1rem + 1.4vw, 2.375rem);
     line-height: 1.14;
     letter-spacing: -0.028em;
     --about-lit: var(--surface-accent);
@@ -29,7 +30,7 @@
   }
   .about-statement:lang(ar) {
     font-weight: 700;
-    font-size: clamp(1.875rem, 1.333rem + 2.407vw, 3.625rem);
+    font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.5rem); /* was 30–58 px */
     line-height: 1.45;
   }
   /* The logo badge sits in the line like a word, sized to the type. */

@@ -1,5 +1,4 @@
 import { Button } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { HookIcon } from '@/components/Icons';
 import { fill } from '@/components/ui';
 import type { Crane } from '@/content/types';
@@ -27,7 +26,6 @@ export function LoadTag({ crane, className = '' }: { crane: Crane; className?: s
         <div className="basis-full">
           <dt className="t-tag flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span>{copy.hoist.capacity}</span>
-            <DraftBadge verified={crane.verified} />
           </dt>
           {/* Poppins figures; 26cqi keeps "317.5 t" on one line in any column. */}
           <dd data-readout="" className="t-readout m-0 mt-2 text-[length:clamp(4rem,26cqi,9rem)] whitespace-nowrap">

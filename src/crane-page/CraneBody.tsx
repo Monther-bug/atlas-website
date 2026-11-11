@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Button, NewTabNote } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { ArrowIcon, HookIcon, WhatsAppIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
 import { reveal } from '@/components/ui/Reveal';
@@ -129,7 +128,6 @@ function Hero({ crane }: { crane: Crane }) {
             </p>
             <p className="t-small cp-hero__label">
               <span>{r.label}</span>
-              <DraftBadge verified={crane.verified} />
             </p>
             {r.note ? (
               <p className="t-small cp-hero__note">
@@ -224,7 +222,6 @@ function Highlights({ crane }: { crane: Crane }) {
             </p>
             <p className="t-small cp-muted cp-tile__rating">
               <span>{r.sub}</span>
-              <DraftBadge verified={crane.verified} />
             </p>
           </div>
           <Bars crane={crane} />
@@ -323,7 +320,6 @@ function Specs({ crane }: { crane: Crane }) {
         <h2 id="cp-specs-title" className="t-headline">
           {copy.specs.heading}
         </h2>
-        <DraftBadge verified={crane.verified} />
         <p className="t-sub cp-specs__lead">{copy.specs.disclaimer}</p>
       </header>
       <div className="cp-specs__groups" {...reveal('stagger')}>

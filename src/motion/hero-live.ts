@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 import { getImage, type PhotoId } from '@/generated/images';
 import type { GlLayer, GlState } from './hero-gl';
-import { noop, type Dispose, type MotionEnv } from './shared';
+import type { Dispose, MotionEnv } from './shared';
 
 /** Top of the hoist rope (the boom-tip sheave) in source pixels, read off each photo like assets-src/hook-points.json. */
 export const ROPE_TOP: Partial<Record<PhotoId, { x: number; y: number }>> = {
@@ -17,13 +17,11 @@ const MAX_SWING = 0.03;
 
 /**
  * The live hook (desktop, fine pointer, motion allowed; started after the intro). A damped pendulum that the cursor's
- * speed near the load can kick. With the WebGL layer (hero-gl.ts, a separate chunk fetched on idle) it is the REAL
- * rope swinging about the boom tip, and the rig (pin, legs, WhatsApp load) moves to the hook's new place and turns with
- * it; without WebGL it swings the rig about the hook. The ticker runs only while something moves.
+ * speed near the hook can kick. With the WebGL layer (hero-gl.ts, a separate chunk fetched on idle) it is the REAL
+ * rope swinging about the boom tip, and the rig (an empty box on the hook: nothing hangs from it since 11 Nov 2026)
+ * follows the hook to its new place. The ticker runs only while something moves.
  */
 export function startLiveHook(hero: HTMLElement, rig: HTMLElement, env: MotionEnv): Dispose {
-  const load = rig.querySelector<HTMLElement>('[data-hero-load]');
-  if (!load) return noop;
   const photo = getImage(LIVE_PHOTO[env.lang], 'desktop_16x9');
   const tip = ROPE_TOP[photo.photo];
   const st: GlState = { px: 0, py: 0, theta: 0 };
@@ -81,9 +79,9 @@ export function startLiveHook(hero: HTMLElement, rig: HTMLElement, env: MotionEn
     const now = performance.now();
     if (last && now - last.t < 80) {
       const vx = (event.clientX - last.x) / Math.max(now - last.t, 1); // px per ms
-      const b = load.getBoundingClientRect();
+      const b = rig.getBoundingClientRect(); // the hook point (a zero-size box)
       const reach = Math.exp(-((Math.hypot(event.clientX - (b.left + b.width / 2), event.clientY - (b.top + b.height / 2)) / 320) ** 2));
-      omega += vx * 0.35 * reach; // pushing right swings the load right
+      omega += vx * 0.35 * reach; // pushing right swings the hook right
     }
     last = { x: event.clientX, t: now };
     wake();

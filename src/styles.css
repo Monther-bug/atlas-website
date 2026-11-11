@@ -73,12 +73,12 @@
   --ease-swap: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-exit: cubic-bezier(0.5, 0, 0.75, 0);
 
-  /* v2 (user decision, 5 Nov 2026): Poppins for Latin and every numeral, Tajawal for Arabic, one stack for
+  /* v2 (user decision, 5 Nov 2026): Poppins for Latin and every numeral, Cairo for Arabic (client, 11 Nov 2026), one stack for
      display and body (weights carry the hierarchy). Each family is split by unicode-range (src/fonts.css), so a
      mixed Arabic/Latin line picks the right face per character. Mono = model codes and machine formulas only. */
-  --font-display: 'Poppins Atlas', 'Tajawal Atlas', 'Poppins Fallback', 'Tajawal Fallback', system-ui, sans-serif;
-  --font-body: 'Poppins Atlas', 'Tajawal Atlas', 'Poppins Fallback', 'Tajawal Fallback', system-ui, sans-serif;
-  --font-mono: 'Plex Mono Atlas', 'Poppins Atlas', 'Tajawal Atlas', ui-monospace, monospace;
+  --font-display: 'Poppins Atlas', 'Cairo Atlas', 'Poppins Fallback', 'Cairo Fallback', system-ui, sans-serif;
+  --font-body: 'Poppins Atlas', 'Cairo Atlas', 'Poppins Fallback', 'Cairo Fallback', system-ui, sans-serif;
+  --font-mono: 'Plex Mono Atlas', 'Poppins Atlas', 'Cairo Atlas', ui-monospace, monospace;
 
   /* Elevation (v2 floor §16.6): navy-tinted, every level has an offset and a soft blur; no halos, no hard offsets.
      Neutral black at low alpha (v2 palette). e1 resting card · e2 raised/hover · e3 floating control or popover ·
@@ -326,7 +326,7 @@ html[data-theme='dark'] {
   }
 
   /* RequestBar waits while the hero is on screen (RequestBar.tsx useOverHero): invisible but still laid out, so the
-     sling can dock into it (Part D). Needs `html.js`: without scripts the bar is always shown. */
+     ride can land in it (Part D). Needs `html.js`: without scripts the bar is always shown. */
   .js [data-request-bar][data-over-hero] {
     visibility: hidden;
     opacity: 0;

@@ -9,14 +9,13 @@ import { useLang } from '@/lib/lang';
 import { setRequestedCrane, useRequestedCrane } from '@/lib/request';
 import { fillTemplate, telHref, whatsappHref } from '@/lib/whatsapp';
 
-/** The dock line (spec §5.2, motion D.4): the sling button docks into the bar once the hero's bottom edge rises
- *  above 65 % of the viewport height. The bar appears at that same moment, so the dock always lands on a visible bar. */
+/** The dock line (spec §5.2): the bar appears once the hero's bottom edge rises above 65 % of the viewport height. */
 const DOCK_LINE = '-65% 0px 0px 0px';
 
 /**
  * True while the hero (#top) still reaches below the dock line (65 % of the viewport). The bar then waits (invisible,
- * still laid out) so it never covers the hero's H1, its band button or the sling button, which is the bar's WhatsApp
- * on its way down. Above that line the hero sits clear of the bar (bottom 64–88 px), so the bar can show.
+ * still laid out) so it never covers the hero's H1 or its lead. Above that line the hero sits clear of the bar
+ * (bottom 64–88 px), so the bar can show.
  * Server render and first client render say true; without JS the CSS rule never applies (it needs `html.js`).
  */
 function useOverHero(): boolean {
@@ -39,8 +38,8 @@ function useOverHero(): boolean {
 /**
  * v2 request bar: a glass-dark pill that floats above the safe area on phones (inset 12 px from the sides) and sits
  * compact at the inline end on desktop. The crane on the hook is a solid chip, so the ride ghost (a clone that keeps
- * its classes) looks the same in flight. Opacity and visibility only: the dock and the ride measure this bar's
- * buttons, so nothing here may move with a transform while they land.
+ * its classes) looks the same in flight. Opacity and visibility only: the ride measures this bar's
+ * buttons, so nothing here may move with a transform while it lands.
  */
 export function RequestBar({ defaultCrane = null }: { defaultCrane?: CraneId | null } = {}) {
   const { copy } = useLang();

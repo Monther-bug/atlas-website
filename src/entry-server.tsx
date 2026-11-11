@@ -37,6 +37,7 @@ export function head(lang: Lang): string {
       siteUrl: env.siteUrl.replace(/\/+$/, ''),
       email: siteInfo.email,
       facebook: siteInfo.facebook,
+      tiktok: siteInfo.tiktok,
       phone: env.phone,
       address: siteInfo.address,
     }),

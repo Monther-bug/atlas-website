@@ -5,7 +5,6 @@
  */
 import { useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { ArrowIcon, DerrickIcon, HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
 import {
@@ -391,7 +390,7 @@ export function Kitchen() {
             </figcaption>
           </figure>
           <Card tone="raised" padding="lg" className="lg:col-span-5">
-            <Stat value={crane.capacityT} unit={copy.hoist.unit} label={copy.hoist.capacity} verified={crane.verified} from={0} decimals={1} />
+            <Stat value={crane.capacityT} unit={copy.hoist.unit} label={copy.hoist.capacity} from={0} decimals={1} />
             <Tabs
               className="mt-8"
               label={fullName}
@@ -414,7 +413,6 @@ export function Kitchen() {
                     <div className="pt-6">
                       <h3 className="t-tag m-0 flex flex-wrap items-center gap-2">
                         {copy.specs.heading}
-                        <DraftBadge verified={false} />
                       </h3>
                       <SpecList className="mt-4" items={rows.slice(0, 6)} />
                     </div>
@@ -469,7 +467,6 @@ export function Kitchen() {
           <p className="t-body mt-5 text-ink-2">{copy.craneTypes[crane.type].explainer}</p>
           <h3 className="t-title mt-8 flex flex-wrap items-center gap-3">
             {copy.specs.heading}
-            <DraftBadge verified={false} />
           </h3>
           <p className="t-small mt-2 text-ink-3">{copy.specs.disclaimer}</p>
           <SpecList className="mt-4" items={rows} />
@@ -497,7 +494,6 @@ export function Kitchen() {
             caption={
               <span className="inline-flex flex-wrap items-center gap-2">
                 {copy.specs.heading}
-                <DraftBadge verified={false} />
               </span>
             }
             columns={cranes.map((c) => ({
@@ -558,9 +554,9 @@ export function Kitchen() {
               {k.range}
             </h3>
             <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-2">
-              <Stat value={min} unit={copy.hoist.unit} label={cranes[0]?.model ?? ''} from={0} verified={false} />
+              <Stat value={min} unit={copy.hoist.unit} label={cranes[0]?.model ?? ''} from={0} />
               <ArrowIcon className="mb-10 size-6 t-accent" />
-              <Stat value={max} unit={copy.hoist.unit} label={cranes[cranes.length - 1]?.model ?? ''} from={0} decimals={1} verified={false} />
+              <Stat value={max} unit={copy.hoist.unit} label={cranes[cranes.length - 1]?.model ?? ''} from={0} decimals={1} />
             </div>
             <ol className="relative mt-10 flex list-none justify-between border-t border-white/24 p-0 pt-3" aria-label={k.range}>
               {cranes.map((c) => (

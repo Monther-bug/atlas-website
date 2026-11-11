@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom';
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { Fill } from '@/components/Fill';
 import { HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
+import { SocialLinks } from '@/components/SocialLinks';
 import { Chip } from '@/components/ui/Chip';
 import { fieldClass } from '@/components/ui/Field';
 import { Reveal, reveal } from '@/components/ui/Reveal';
@@ -114,10 +115,7 @@ function Channels() {
         </ContactRow>
         {siteInfo.address && <ContactRow label={c.address}>{siteInfo.address[lang]}</ContactRow>}
       </dl>
-      <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={TEXT_LINK}>
-        {c.facebook}
-        <NewTabNote />
-      </a>
+      <SocialLinks labels={c} className="mt-2" />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { startWhyBars, startWhyStepsDesktop, startWhyStepsTouch } from './why';
 import { startBackToTop, startProgressRope } from './rope';
 import { startLenis } from './lenis';
 import { noop, runAll, safely, whenNear, type Dispose, type MotionEnv, type MotionModule } from './shared';
-import { heroDock, heroIntro } from './hero';
+import { heroIntro } from './hero';
 import { afterLoader, loaderShowing } from './loader';
 import { startMagnetic, startParallax, startRevealsDesktop, startRevealsTouch, startTickers } from './reveals';
 import { startAboutDesktop, startAboutTouch } from './about';
@@ -92,7 +92,6 @@ const heroIntroAfterLoader = afterLoader(heroIntro);
 const DESKTOP: MotionModule[] = [
   startLenis,
   heroIntroAfterLoader,
-  heroDock,
   startProgressRope,
   // Services + Why Atlas (v2): line drawings, capacity bars, the scrubbed process line.
   startServiceArt,
@@ -116,7 +115,6 @@ const DESKTOP: MotionModule[] = [
 /** Touch context: no Lenis, no sticky stage, one-shot reveals. */
 const TOUCH: MotionModule[] = [
   heroIntroAfterLoader,
-  heroDock,
   startServiceArt,
   startWhyBars,
   startWhyStepsTouch,

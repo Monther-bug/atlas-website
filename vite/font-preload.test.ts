@@ -5,15 +5,14 @@ import { fontPreloadTags } from './font-preload';
 const BUNDLE = [
   'assets/main-CoU9e-14.js',
   'assets/main-DJFV_b92.css',
-  'assets/tajawal-ar-400-DPfaHKGf.woff2',
-  'assets/tajawal-ar-500-Aa1b2c3d.woff2',
-  'assets/tajawal-ar-700--Q2n8xaD.woff2',
-  'assets/tajawal-ar-800-Bf_xsutm.woff2',
+  'assets/cairo-ar-400-DPfaHKGf.woff2',
+  'assets/cairo-ar-500-Aa1b2c3d.woff2',
+  'assets/cairo-ar-700--Q2n8xaD.woff2',
+  'assets/cairo-ar-800-Bf_xsutm.woff2',
   'assets/poppins-400-BA30v0Pd.woff2',
   'assets/poppins-500-Ee5f6g7h.woff2',
   'assets/poppins-600-DyUes8Yx.woff2',
   'assets/poppins-700-BJLyxoHe.woff2',
-  'assets/fill-ar-Zz9y8x7w.woff2',
   'assets/fill-la-Yy8x7w6v.woff2',
   'assets/plex-mono-500-cj9RCqy4.woff2',
 ];
@@ -21,11 +20,11 @@ const BUNDLE = [
 const hrefs = (path: string) => fontPreloadTags(path, BUNDLE).map((t) => t.attrs?.href);
 
 describe('fontPreloadTags', () => {
-  it('preloads Tajawal 800, 700 and 400 on the Arabic page', () => {
+  it('preloads Cairo 800, 700 and 400 on the Arabic page', () => {
     expect(hrefs('/index.html')).toEqual([
-      '/assets/tajawal-ar-800-Bf_xsutm.woff2',
-      '/assets/tajawal-ar-700--Q2n8xaD.woff2',
-      '/assets/tajawal-ar-400-DPfaHKGf.woff2',
+      '/assets/cairo-ar-800-Bf_xsutm.woff2',
+      '/assets/cairo-ar-700--Q2n8xaD.woff2',
+      '/assets/cairo-ar-400-DPfaHKGf.woff2',
     ]);
   });
 
@@ -41,7 +40,7 @@ describe('fontPreloadTags', () => {
     const [tag] = fontPreloadTags('/index.html', BUNDLE);
     expect(tag).toEqual({
       tag: 'link',
-      attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: '/assets/tajawal-ar-800-Bf_xsutm.woff2', crossorigin: true },
+      attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: '/assets/cairo-ar-800-Bf_xsutm.woff2', crossorigin: true },
       injectTo: 'head-prepend',
     });
   });
@@ -53,17 +52,17 @@ describe('fontPreloadTags', () => {
   });
 
   it('fails the build when a wanted font is missing from the bundle', () => {
-    const withoutDisplay = BUNDLE.filter((f) => !f.includes('tajawal-ar-800'));
-    expect(() => fontPreloadTags('/index.html', withoutDisplay)).toThrow(/tajawal-ar-800/);
+    const withoutDisplay = BUNDLE.filter((f) => !f.includes('cairo-ar-800'));
+    expect(() => fontPreloadTags('/index.html', withoutDisplay)).toThrow(/cairo-ar-800/);
   });
 
   it('preloads the crane pages\' first-screen faces: Plex Mono (the code), Poppins 700 (the readout), body 400', () => {
-    expect(hrefs('/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/tajawal-ar-400-DPfaHKGf.woff2']);
+    expect(hrefs('/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/cairo-ar-400-DPfaHKGf.woff2']);
     expect(hrefs('/en/cranes/index.html')).toEqual(['/assets/plex-mono-500-cj9RCqy4.woff2', '/assets/poppins-700-BJLyxoHe.woff2', '/assets/poppins-400-BA30v0Pd.woff2']);
   });
 
-  it('preloads the 404 page\'s faces: Tajawal 800 and 700, Poppins 700', () => {
-    const files = ['assets/tajawal-ar-800-a.woff2', 'assets/tajawal-ar-700-b.woff2', 'assets/poppins-700-c.woff2'];
+  it('preloads the 404 page\'s faces: Cairo 800 and 700, Poppins 700', () => {
+    const files = ['assets/cairo-ar-800-a.woff2', 'assets/cairo-ar-700-b.woff2', 'assets/poppins-700-c.woff2'];
     expect(fontPreloadTags('/404.html', files).map((t) => t.attrs?.href)).toEqual(files.map((f) => `/${f}`));
   });
 });

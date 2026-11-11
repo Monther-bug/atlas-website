@@ -24,9 +24,9 @@ describe('Hero (direction B, "The Luff")', () => {
     }
   });
 
-  it('reads H1 → WhatsApp → lead → Browse, in that order (WCAG 2.4.3)', () => {
+  it('reads H1 → lead → Browse, in that order (WCAG 2.4.3)', () => {
     const html = renderHtml(<Hero />, 'ar');
-    const order = ['h1#hero-title', '[data-sling-button]', 'p.hero-sub', 'a[href="#cranes"]'].map((s) => html.querySelector(s)!);
+    const order = ['h1#hero-title', 'p.hero-sub', 'a[href="#cranes"]'].map((s) => html.querySelector(s)!);
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
@@ -45,18 +45,18 @@ describe('Hero (direction B, "The Luff")', () => {
     }
   });
 
-  it('pins the rig on the real hook of both crops, in container units (no JS needed)', () => {
+  it('maps the real hook of both crops in container units (no JS needed); nothing hangs from it', () => {
     for (const lang of ['ar', 'en'] as const) {
       const section = renderHtml(<Hero />, lang).querySelector<HTMLElement>('#top')!;
       for (const [crop, key] of [['desktop_16x9', 'd'], ['mobile_9x16', 'm']] as const) {
         const css = hookCss(getImage(HERO_PHOTO[lang], crop))!;
         expect(section.style.getPropertyValue(`--hx-${key}`)).toBe(css.x);
         expect(section.style.getPropertyValue(`--hy-${key}`)).toBe(css.y);
-        expect(section.hasAttribute(`data-sling-${key}`)).toBe(true);
       }
+      // Nothing hangs from the hook (client, 11 Nov 2026): the rig is an empty box, and the only link is Browse cranes.
+      expect(section.querySelector('[data-hero-rig]')?.childElementCount).toBe(0);
+      expect([...section.querySelectorAll('a, button')].map((el) => el.getAttribute('href'))).toEqual(['#cranes']);
     }
-    expect(renderHtml(<Hero />, 'ar').querySelectorAll('[data-sling-leg]')).toHaveLength(2);
-    expect(renderHtml(<Hero />, 'ar').querySelector('[data-testid="hero-whatsapp"]')).toBeNull(); // both crops have a hook
   });
 
   it('maps the hook for a bottom-anchored cover image filling the first screen (6398 desktop: dx 1106, dy 1085)', () => {
@@ -79,11 +79,8 @@ describe('Hero (direction B, "The Luff")', () => {
     expect(en.dataset.cutM).toBe('end');
   });
 
-  it('names the WhatsApp load for the dock and the tests, and links Browse cranes to the Hoist', () => {
+  it('links Browse cranes to the Hoist', () => {
     const html = renderHtml(<Hero />, 'en');
-    const button = html.querySelector('[data-sling-button]');
-    expect(button?.getAttribute('data-testid')).toBe('sling-whatsapp');
-    expect(button?.className).toContain('hero-whatsapp'); // focus ring drawn inside the red (hero.css)
     const browse = [...html.querySelectorAll('a')].find((a) => a.textContent === 'Browse cranes');
     expect(browse?.getAttribute('href')).toBe('#cranes');
   });

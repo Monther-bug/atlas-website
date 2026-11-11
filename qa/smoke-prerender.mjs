@@ -133,7 +133,7 @@ for (const p of PAGES) {
 // ── The crane pages ──────────────────────────────────────────────────────────
 // Their first screen is set in other faces than the home page's (vite/font-preload.ts CRANE_PRELOADS): the H1 is the
 // model code in Plex Mono, the capacity the Poppins 700 readout, the rest body text. Still three files.
-const CRANE_FONTS = { ar: ['plex-mono-500', 'poppins-700', 'tajawal-ar-400'], en: ['plex-mono-500', 'poppins-700', 'poppins-400'] };
+const CRANE_FONTS = { ar: ['plex-mono-500', 'poppins-700', 'cairo-ar-400'], en: ['plex-mono-500', 'poppins-700', 'poppins-400'] };
 // Markup and data only the static body has (src/crane-page/CraneBody.tsx): a crane page's scripts must carry none.
 const BODY_MARKERS = ['cp-specs__groups', 'cp-story__steps', 'cp-tile__value', 'cp-load__panel'];
 const SMOKE_CRANES = (process.env.SMOKE_CRANES ?? '').split(',').map((s) => s.trim()).filter(Boolean);

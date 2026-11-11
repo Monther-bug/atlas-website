@@ -9,7 +9,7 @@ const mockEnv = vi.hoisted(() => ({
   formEndpoint: null as string | null,
   ga4Id: null as string | null,
 }));
-vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified }));
+vi.mock('@/env', () => ({ env: mockEnv }));
 
 // A fresh module per test, because loadAnalytics() runs only once per page.
 const load = () => import('./analytics');

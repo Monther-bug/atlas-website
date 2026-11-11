@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { DraftBadge } from '@/components/DraftBadge';
 import { useLang } from '@/lib/lang';
 import { formatNumber } from '@/lib/numbers';
 import { cx } from './util';
@@ -11,8 +10,6 @@ export interface StatProps {
   /** Ticker start value (the motion layer counts from here to `value` once, when it enters view). Omit for no ticker. */
   from?: number;
   decimals?: number;
-  /** false = unverified: shows the DraftBadge (staging) next to the label. */
-  verified?: boolean;
   size?: 'figure' | 'readout';
   className?: string;
 }
@@ -25,7 +22,7 @@ export interface StatProps {
  * Accessibility (D-notes #2): the visible digits are aria-hidden so the ticker can animate them; the final value is
  * an sr-only twin. The prerendered HTML already shows the final value.
  */
-export function Stat({ value, unit, label, from, decimals = 2, verified = true, size = 'figure', className }: StatProps) {
+export function Stat({ value, unit, label, from, decimals = 2, size = 'figure', className }: StatProps) {
   const { lang } = useLang();
   const shown = formatNumber(value, lang, { maximumFractionDigits: decimals });
   return (
@@ -51,7 +48,6 @@ export function Stat({ value, unit, label, from, decimals = 2, verified = true, 
       </p>
       <p className="t-small m-0 flex flex-wrap items-center gap-2 text-(--surface-fg-2)">
         {label}
-        <DraftBadge verified={verified} />
       </p>
     </div>
   );

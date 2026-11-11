@@ -28,8 +28,9 @@ export interface DocumentFile {
 }
 
 export interface SiteInfo {
-  email: string; // 'atlasalsahralibya@gmail.com'
+  email: string; // 'info@atlas-alshraa.com.ly'
   facebook: string; // the share URL from the brief
+  tiktok: string; // the profile URL from Atlas (11 Nov 2026), without share-tracking parameters
   address: { ar: string; en: string } | null;
   documents: DocumentFile[]; // [] until real files exist
 }
@@ -220,6 +221,7 @@ export interface Copy {
     fieldsLead: string; // bridge from the legal name to the four lines of work (service chips)
     channelsLabel: string;
     facebook: string;
+    tiktok: string;
     email: string; // label before the address
     photosLink: string; // link to #sites
     /** HIDDEN UNTIL DATA: mission, vision, values. Empty until Atlas supplies them; each item renders as one fact. */
@@ -259,7 +261,7 @@ export interface Copy {
     title: string; // the dialect question (spec §5.8)
     lead: string; // the dialect line, BELOW the title (deck "Eyebrow"; spec §15.1)
     next: { title: string; steps: [string, string, string] }; // what happens after sending: no times promised
-    contact: { email: string; phone: string; whatsapp: string; address: string; facebook: string };
+    contact: { email: string; phone: string; whatsapp: string; address: string; facebook: string; tiktok: string };
     more: string; // the one disclosure holding the optional fields
     required: string;
     optional: string;
@@ -318,6 +320,7 @@ export interface Copy {
     contactHeading: string;
     followHeading: string;
     facebook: string;
+    tiktok: string;
     copyright: string; // {year}
     /** Studio credit before the Core link, e.g. "Designed and built by". */
     credit: string;
@@ -328,7 +331,6 @@ export interface Copy {
   alt: Record<PhotoId, string>;
 
   misc: {
-    draftBadge: string; // spec §4.3
     newTab: string;
   };
 

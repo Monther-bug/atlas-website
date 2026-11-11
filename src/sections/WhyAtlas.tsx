@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { HookIcon, PhoneIcon, WhatsAppIcon } from '@/components/Icons';
 import { Section, SectionHeader, cx, fill, reveal } from '@/components/ui';
 import { cranes, siteInfo, visibleCranes } from '@/content';
@@ -21,8 +20,8 @@ import { KeptShell, useTrackedClicks } from './island';
  * which crane type suits which ground → how a hire runs (four steps) → how to ask. It says only what Services and the
  * Hoist do not: no second list of the four services, no repeated capacity footnote.
  *
- * Truth: only facts on hand (PRODUCT.md "Evidence on Hand"). The capacities are manufacturer ratings (DraftBadge until
- * Atlas confirms); anything Atlas has not confirmed stays a [[CONFIRM]] token. No years, counts of cranes, clients or
+ * Truth: only facts on hand (PRODUCT.md "Evidence on Hand"). The capacities are manufacturer ratings, labelled as
+ * such; anything Atlas has not confirmed stays a [[CONFIRM]] token. No years, counts of cranes, clients or
  * certificates: those stay HIDDEN UNTIL DATA (copy deck §8a). Channels show only what is configured (Call needs a
  * phone number); email is the one confirmed contact.
  *
@@ -171,7 +170,6 @@ function RangePanel() {
   const { lang } = useLang();
   const min = visibleCranes[0]?.capacityT ?? 0;
   const max = visibleCranes[visibleCranes.length - 1]?.capacityT ?? 0;
-  const verified = visibleCranes.every((c) => c.verified);
   return (
     <div data-why-tile="range" className="@container rounded-xl border border-white/10 bg-white/[0.06] p-(--space-tile)">
       <div className="grid gap-8 @min-[56rem]:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @min-[56rem]:items-center @min-[56rem]:gap-14">
@@ -180,7 +178,6 @@ function RangePanel() {
             <RangeFigure min={min} max={max} />
           </h3>
           <p className="t-small mt-4 max-w-[30rem] text-(--surface-fg-2)">{whyCopy[lang].range.label}</p>
-          <DraftBadge verified={verified} className="mt-3" />
         </div>
         <CapacityBars list={visibleCranes} />
       </div>
@@ -191,12 +188,10 @@ function RangePanel() {
 /** Which crane type suits which ground (copy deck §4 class names and explainers), with the make and model of each. */
 function GroundTypes() {
   const { copy, lang } = useLang();
-  const verified = visibleCranes.every((c) => c.verified);
   return (
     <div data-why-tile="types" className="mt-(--space-head)">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h3 className="t-title">{whyCopy[lang].types.title}</h3>
-        <DraftBadge verified={verified} />
       </div>
       <ul role="list" {...reveal('stagger')} className="m-0 mt-6 grid list-none gap-x-10 p-0 md:grid-cols-3">
         {TYPES.map((type) => {
@@ -343,7 +338,7 @@ export function WhyAtlasContent() {
   const why = whyCopy[lang];
   return (
     <div className="shell">
-      <SectionHeader id="why-title" title={why.title} continuation={why.continuation} lead={why.lead} />
+      <SectionHeader id="why-title" className="ui-head--compact" title={why.title} continuation={why.continuation} lead={why.lead} />
       <RangePanel />
       <GroundTypes />
       <Steps />

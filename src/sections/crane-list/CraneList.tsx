@@ -66,6 +66,7 @@ export function CraneListBody({ cranes, keptCompare }: { cranes: readonly Crane[
       <div className="shell lineup-top">
         <SectionHeader
           id="grid-title"
+          className="ui-head--compact"
           title={`${copy.grid.title}.`}
           continuation={copy.grid.continuation}
           lead={`${copy.grid.intro} ${copy.grid.availability}`}

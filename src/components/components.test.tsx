@@ -4,7 +4,6 @@ import { renderHtml } from '@/test/render';
 import { vi } from 'vitest';
 import { click, mount } from '@/test/render';
 import { Button } from './Button';
-import { DraftBadge } from './DraftBadge';
 import { Fill } from './Fill';
 import { ArrowIcon, CloseIcon } from './Icons';
 import { Logo } from './Logo';
@@ -18,7 +17,7 @@ describe('Button', () => {
   });
 
   it('keeps mailto and tel links in the same tab', () => {
-    const a = renderHtml(<Button href="mailto:atlasalsahralibya@gmail.com" external>Email</Button>, 'en').querySelector('a');
+    const a = renderHtml(<Button href="mailto:info@atlas-alshraa.com.ly" external>Email</Button>, 'en').querySelector('a');
     expect(a?.hasAttribute('target')).toBe(false);
     expect(a?.textContent).toBe('Email');
   });
@@ -171,16 +170,5 @@ describe('Logo', () => {
     const html = renderHtml(<Logo variant="footer" />, 'en');
     expect(html.querySelector('img')?.getAttribute('width')).toBe('64');
     expect(html.textContent).toBe('Atlas Alshraa · For oil services');
-  });
-});
-
-describe('DraftBadge', () => {
-  it('marks an unverified value in staging', () => {
-    const badge = renderHtml(<DraftBadge verified={false} />, 'en').querySelector('[data-testid="draft-badge"]');
-    expect(badge?.textContent).toBe('DRAFT · unverified');
-  });
-
-  it('renders nothing for a verified value', () => {
-    expect(renderHtml(<DraftBadge verified />, 'en').innerHTML).toBe('');
   });
 });

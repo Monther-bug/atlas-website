@@ -60,7 +60,7 @@ export function truthGate({ target, env }: TruthGateOptions): Plugin {
         );
       }
       this.warn(
-        `Truth gate: ${problems.length} unverified item(s). Staging shows them with DraftBadges; ` +
+        `Truth gate: ${problems.length} unverified item(s). Staging builds anyway; ` +
           '`npm run build:production` lists them.',
       );
     },

@@ -172,7 +172,6 @@ describe('CraneGridView', () => {
     expect(gmk?.querySelector('[data-lineup-ticker]')?.textContent).toBe('317.5');
     expect(gmk?.textContent).toContain('على نصف قطر 2.44\u00A0م');
     expect(gmk?.textContent).toContain('تصنيف الشركة المصنّعة');
-    expect(gmk?.querySelector('[data-testid="draft-badge"]')).not.toBeNull();
     expect([...(gmk?.querySelectorAll('dl dd') ?? [])].map((dd) => dd.textContent)).toEqual(['60\u00A0م', '61\u00A0م', '100\u00A0طن']);
     // QUY250: two key specs come from a spec database, so they carry the * mark and the card says what it means.
     const quy = html.querySelector('[data-testid="crane-card"][data-crane="quy250"]');
@@ -256,10 +255,10 @@ describe('CraneGridView', () => {
     expect(compare.querySelectorAll('td')).toHaveLength(21);
     expect(compare.querySelector('#crane-compare-more table')).toBeNull();
     expect(compare.textContent).not.toContain('Track width');
-    // A missing figure says so to screen readers; the legend explains the dash; the badge appears once.
+    // A missing figure says so to screen readers; the legend explains the dash; no draft badge.
     expect(compare.querySelector('td[data-empty] .sr-only')?.textContent).toBe('Not stated by the manufacturer');
     expect(compare.textContent).toContain(craneListCopy.en.compare.missingNote);
-    expect(compare.querySelectorAll('[data-testid="draft-badge"]')).toHaveLength(1);
+    expect(compare.querySelectorAll('[data-testid="draft-badge"]')).toHaveLength(0);
     expect(status()).toBe(''); // nothing to say before a change
 
     await changeValue(selects()[0] ?? null, 'quy250');

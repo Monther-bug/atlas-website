@@ -160,6 +160,7 @@ export const en: Copy = {
     fieldsLead: 'The name covers four lines of work:',
     channelsLabel: 'Contact',
     facebook: 'Our Facebook page',
+    tiktok: 'Our TikTok',
     email: 'Email',
     photosLink: 'See the site photos',
     values: [],
@@ -228,6 +229,7 @@ export const en: Copy = {
       whatsapp: 'WhatsApp',
       address: 'Address',
       facebook: 'Our Facebook page',
+      tiktok: 'Our TikTok',
     },
     more: 'Add more details (optional)',
     required: 'Required',
@@ -367,6 +369,7 @@ export const en: Copy = {
     contactHeading: 'Contact',
     followHeading: 'Follow us',
     facebook: 'Facebook',
+    tiktok: 'TikTok',
     copyright: '© {year} Atlas Alshraa. All rights reserved.',
     credit: 'Designed and built by',
     backToTop: 'Back to top',
@@ -396,7 +399,6 @@ export const en: Copy = {
   },
 
   misc: {
-    draftBadge: 'DRAFT · unverified',
     newTab: 'opens in a new tab',
   },
 

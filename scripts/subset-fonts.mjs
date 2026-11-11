@@ -96,28 +96,24 @@ async function assertCoverage(name, woff2, chars) {
   }
 }
 
-// v2 type system (user decision, 5 Nov 2026): Tajawal for Arabic, Poppins for Latin and every numeral.
-// Measured gaps (cmap of the Fontsource files): Tajawal has no U+066B U+066C (Arabic decimal/thousands
-// separators), U+0671 (alef wasla) or U+06F0-06F9 (Eastern Arabic-Indic digits, typed into the form); Poppins has
-// no U+2191/U+2193. Those code points come from IBM Plex Sans Arabic in two tiny "fill" faces that share the
-// family name and load only when such a character is on screen (unicode-range in src/fonts.css).
+// v2 type system: Cairo for Arabic (client, 11 Nov 2026; Tajawal before), Poppins for Latin and every numeral.
+// Measured gaps (cmap of the Fontsource files): Cairo covers the whole Arabic set, separators, alef wasla and
+// Eastern Arabic-Indic digits included. Poppins has no U+2191/U+2193: those come from IBM Plex Sans Arabic in a tiny
+// "fill" face that shares the family name and loads only when one is on screen (unicode-range in src/fonts.css).
 const without = (set, gaps) => [...set].filter((ch) => !gaps.includes(ch)).join('');
-const TAJAWAL_GAPS = '\u066B\u066C\u0671' + range(0x06f0, 0x06f9);
 const POPPINS_GAPS = '\u2191\u2193';
-const TAJAWAL = without(ARABIC, TAJAWAL_GAPS);
 const POPPINS = without(LATIN, POPPINS_GAPS);
 
 /** [output file, Fontsource file, character set] */
 const JOBS = [
-  ['tajawal-ar-400.woff2', '@fontsource/tajawal/files/tajawal-arabic-400-normal.woff2', TAJAWAL],
-  ['tajawal-ar-500.woff2', '@fontsource/tajawal/files/tajawal-arabic-500-normal.woff2', TAJAWAL],
-  ['tajawal-ar-700.woff2', '@fontsource/tajawal/files/tajawal-arabic-700-normal.woff2', TAJAWAL],
-  ['tajawal-ar-800.woff2', '@fontsource/tajawal/files/tajawal-arabic-800-normal.woff2', TAJAWAL],
+  ['cairo-ar-400.woff2', '@fontsource/cairo/files/cairo-arabic-400-normal.woff2', ARABIC],
+  ['cairo-ar-500.woff2', '@fontsource/cairo/files/cairo-arabic-500-normal.woff2', ARABIC],
+  ['cairo-ar-700.woff2', '@fontsource/cairo/files/cairo-arabic-700-normal.woff2', ARABIC],
+  ['cairo-ar-800.woff2', '@fontsource/cairo/files/cairo-arabic-800-normal.woff2', ARABIC],
   ['poppins-400.woff2', '@fontsource/poppins/files/poppins-latin-400-normal.woff2', POPPINS],
   ['poppins-500.woff2', '@fontsource/poppins/files/poppins-latin-500-normal.woff2', POPPINS],
   ['poppins-600.woff2', '@fontsource/poppins/files/poppins-latin-600-normal.woff2', POPPINS],
   ['poppins-700.woff2', '@fontsource/poppins/files/poppins-latin-700-normal.woff2', POPPINS],
-  ['fill-ar.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2', TAJAWAL_GAPS],
   ['fill-la.woff2', '@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-latin-400-normal.woff2', POPPINS_GAPS],
   // Model codes and machine formulas only (Poppins has no tabular/mono figures in these files).
   ['plex-mono-500.woff2', '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2', LATIN],
@@ -125,7 +121,7 @@ const JOBS = [
 
 /** Every script's full set must be covered by its family (main faces plus the fill face). */
 const FAMILIES = [
-  ['Tajawal Atlas', ARABIC, ['tajawal-ar-400.woff2', 'fill-ar.woff2']],
+  ['Cairo Atlas', ARABIC, ['cairo-ar-400.woff2']],
   ['Poppins Atlas', LATIN, ['poppins-400.woff2', 'fill-la.woff2']],
 ];
 

@@ -66,7 +66,7 @@ const CONCURRENCY = Math.max(1, Number(process.env.QA_CONCURRENCY ?? 3));
 const ROOT = new URL('..', import.meta.url).pathname;
 const OUT = new URL('./reports/', import.meta.url).pathname;
 const SCREENS = `${OUT}screens/`;
-const EMAIL = 'atlasalsahralibya@gmail.com';
+const EMAIL = 'info@atlas-alshraa.com.ly';
 const want = (section) => !ONLY.length || ONLY.includes(section);
 
 const PAGES = [
@@ -180,7 +180,7 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
   page.on('request', async (req) => {
     const url = req.url();
     try {
-      if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(url) || /^https:\/\/(www\.)?facebook\.com\//.test(url)) {
+      if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(url) || /^https:\/\/(www\.)?(facebook|tiktok)\.com\//.test(url)) {
         problems.external.push(url);
         return req.respond({ status: 204, body: '' });
       }
@@ -237,7 +237,7 @@ async function open(urlPath, { width = 1440, height = 900, touch = false, reduce
         const a = e.target instanceof Element ? e.target.closest('a[href]') : null;
         if (!a) return;
         const href = a.getAttribute('href') ?? '';
-        if (/^(mailto:|tel:|https?:\/\/(wa\.me|api\.whatsapp\.com|(www\.)?facebook\.com)\/)/.test(href)) {
+        if (/^(mailto:|tel:|https?:\/\/(wa\.me|api\.whatsapp\.com|(www\.)?(facebook|tiktok)\.com)\/)/.test(href)) {
           e.preventDefault();
           window.__opened.push(a.href);
         }
@@ -422,15 +422,10 @@ async function matrixCase(p, vp, mode) {
     rec('motion', `motion context is "${want}"`, motion === want, `data-motion=${motion}`);
 
     const hero = await page.evaluate(() => {
-      const b = document.querySelector('[data-testid="sling-whatsapp"]') ?? document.querySelector('[data-testid="hero-whatsapp"]');
       const hero = document.querySelector('[data-hero]');
-      if (!b || !hero) return { ok: false, detail: 'no hero WhatsApp button' };
-      const r = b.getBoundingClientRect();
-      const h = hero.getBoundingClientRect();
-      const inHero = r.top >= h.top - 1 && r.bottom <= h.bottom + 1 && r.left >= h.left - 1 && r.right <= h.right + 1;
-      const inView = r.top >= 0 && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth;
-      const big = r.width >= 44 && r.height >= 44;
-      const shown = b.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+      if (!hero) return { ok: false, detail: 'no hero' };
+      // Nothing hangs from the hook (client, 11 Nov 2026): the hero has no WhatsApp button on any screen.
+      const whatsapp = hero.querySelectorAll('a[href*="wa.me"], [data-sling-button], [data-testid="hero-whatsapp"]').length;
       // The H1 lines must sit inside the viewport too (not clipped by its edges), and the lead under them (it may
       // continue below the first screen on short phones, never sideways past it or up into the headline).
       const lines = [...hero.querySelectorAll('h1 .hero-line')].map((l) => l.getBoundingClientRect());
@@ -438,11 +433,11 @@ async function matrixCase(p, vp, mode) {
       const lead = hero.querySelector('.hero-sub')?.getBoundingClientRect();
       const leadOk = !!lead && lead.left >= -1 && lead.right <= window.innerWidth + 1 && lead.top >= Math.max(...lines.map((l) => l.bottom)) - 1;
       return {
-        ok: shown && inHero && inView && big && clipped === 0 && leadOk,
-        detail: `${b.dataset.testid} ${Math.round(r.width)}×${Math.round(r.height)} inHero=${inHero} inView=${inView} shown=${shown} h1 lines past the viewport edge=${clipped} lead under the H1 and inside the width=${leadOk}`,
+        ok: whatsapp === 0 && clipped === 0 && leadOk,
+        detail: `hero WhatsApp buttons=${whatsapp} h1 lines past the viewport edge=${clipped} lead under the H1 and inside the width=${leadOk}`,
       };
     });
-    rec('hero', 'hero WhatsApp button on screen, ≥ 44 px; H1 inside the viewport, the lead under it', hero.ok, hero.detail);
+    rec('hero', 'no WhatsApp button in the hero; H1 inside the viewport, the lead under it', hero.ok, hero.detail);
 
     const loadShifts = await page.evaluate(() => window.__shifts);
     const loadCls = sessionCls(loadShifts);
@@ -466,7 +461,8 @@ async function matrixCase(p, vp, mode) {
     const small = smallTargets(m.targets);
     rec('a11y', 'interactive targets ≥ 44 px', small.length === 0, small.slice(0, 12).map((t) => `${t.name} ${t.width}×${t.height}`).join('; '));
     rec('data', 'Western digits only (text and data attributes)', m.eastern.length === 0 && !m.easternData, m.eastern.join(' '));
-    if (TARGET === 'staging') rec('truth', 'draft badges and [[CONFIRM]] tokens shown (staging)', m.badges > 0 && m.tokens > 0, `${m.badges} badges, ${m.tokens} tokens`);
+    // The draft badge is gone from the site (client, 11 Nov 2026): no build may show one.
+    if (TARGET === 'staging') rec('truth', 'no draft badge; [[CONFIRM]] tokens shown (staging)', m.badges === 0 && m.tokens > 0, `${m.badges} badges, ${m.tokens} tokens`);
     else rec('truth', 'no draft badge, no [[CONFIRM]] token (production)', m.badges === 0 && m.tokens === 0, `${m.badges} badges, ${m.tokens} tokens`);
     if (reduced) rec('motion', 'reduced: all content visible, no smooth scroll', m.hiddenReveal === 0 && !m.lenis, `hidden=${m.hiddenReveal} lenis=${m.lenis}`);
     else rec('motion', 'reveals have finished after scrolling through; no ghost left', m.hiddenReveal === 0 && m.ghosts === 0, `hidden=${m.hiddenReveal} ghosts=${m.ghosts}`);
@@ -512,23 +508,6 @@ async function skipLinkCheck(page) {
   return { pass: f.href === '#main' && f.inView && main === 'main', detail: `first Tab ${JSON.stringify(f)}; Enter → focus #${main}` };
 }
 
-async function heroWhatsAppCheck(page) {
-  const el = (await page.$('[data-testid="sling-whatsapp"]')) ?? (await page.$('[data-testid="hero-whatsapp"]'));
-  if (!el) return { pass: false, detail: 'no hero WhatsApp button' };
-  const info = await el.evaluate((a) => ({ href: a.getAttribute('href') ?? '', target: a.getAttribute('target'), rel: a.getAttribute('rel') ?? '' }));
-  const expected = PROFILE.whatsapp ? /^https:\/\/wa\.me\/\d+\?text=/ : new RegExp(`^mailto:${EMAIL}\\?subject=`);
-  const external = !PROFILE.whatsapp || (info.target === '_blank' && /noopener/.test(info.rel));
-  const ga = await gaOn(page);
-  const before = await eventCount(page);
-  await el.evaluate((a) => a.scrollIntoView({ block: 'center', behavior: 'instant' }));
-  await wait(300);
-  await el.click();
-  await wait(300);
-  const opened = await page.evaluate(() => window.__opened.at(-1) ?? '');
-  const ev = ga ? await eventAfter(page, before, 'whatsapp_click', { location: 'hero' }) : null;
-  const pass = expected.test(info.href) && isEncodedHref(info.href) && external && opened.length > 0 && (!ga || !!ev);
-  return { pass, detail: `${decodedHref(info.href).slice(0, 70).replace(/\n/g, ' / ')} target=${info.target} rel=${info.rel} opened=${!!opened} analytics=${ga ? JSON.stringify(ev) : 'off'}` };
-}
 
 /** Desktop nav: each link scrolls to its section and becomes aria-current="location" (scroll spy). */
 async function navCheck(page) {
@@ -592,18 +571,14 @@ async function menuCheck(page, p) {
   return { pass, detail: `open=${JSON.stringify(opened)} focusTrapped=${trapped} esc=${JSON.stringify(afterEsc)} link→#services ${JSON.stringify(landed)}` };
 }
 
-/** The sling button docks into the bar past the hero, and comes back on the way up (motion); reduced: no flight. */
-async function dockCheck(page, reduced) {
+/** The bar waits while the hero fills the screen, appears past it, and hides again back at the top. Nothing flies
+ *  into it any more (the hero's WhatsApp load is gone, 11 Nov 2026). */
+async function dockCheck(page) {
   const read = () =>
     page.evaluate(() => {
       const bar = document.querySelector('[data-request-bar]');
-      const sling = document.querySelector('[data-testid="sling-whatsapp"]');
       const cs = bar ? getComputedStyle(bar) : null;
-      return {
-        bar: !!cs && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.9,
-        sling: sling ? Number(getComputedStyle(sling).opacity) : null,
-        ghosts: document.querySelectorAll('.motion-ghost').length,
-      };
+      return { bar: !!cs && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.9, ghosts: document.querySelectorAll('.motion-ghost').length };
     });
   await scrollToY(page, 0);
   await wait(1200);
@@ -611,17 +586,13 @@ async function dockCheck(page, reduced) {
   const heroBottom = await page.evaluate(() => document.getElementById('top').getBoundingClientRect().bottom + window.scrollY);
   const vh = await page.evaluate(() => window.innerHeight);
   await scrollToY(page, Math.max(0, heroBottom - vh * 0.4));
-  await wait(250);
-  const midFlight = await read();
   await wait(1500);
-  const docked = await read();
+  const past = await read();
   await scrollToY(page, 0);
   await wait(1800);
   const back = await read();
-  const pass = reduced
-    ? !top.bar && docked.bar && !back.bar && midFlight.ghosts === 0
-    : !top.bar && top.sling === 1 && docked.bar && docked.sling === 0 && docked.ghosts === 0 && !back.bar && back.sling === 1 && back.ghosts === 0;
-  return { pass, detail: `top ${JSON.stringify(top)} · in flight ghosts=${midFlight.ghosts} · past hero ${JSON.stringify(docked)} · back ${JSON.stringify(back)}` };
+  const pass = !top.bar && past.bar && !back.bar && past.ghosts === 0;
+  return { pass, detail: `top ${JSON.stringify(top)} · past hero ${JSON.stringify(past)} · back ${JSON.stringify(back)}` };
 }
 
 async function browseCheck(page) {
@@ -1447,10 +1418,9 @@ async function controlsFor(p, c) {
   };
   await group('chrome', async ({ page }) => {
     await step('keyboard', `${tag} skip link is the first Tab stop and moves focus to #main`, () => skipLinkCheck(page));
-    await step('hero', `${tag} hero WhatsApp: encoded message, safe new tab, tracked`, () => heroWhatsAppCheck(page));
     if (c.width >= 1024) await step('nav', `${tag} header nav scrolls to each section; scroll spy sets aria-current`, () => navCheck(page));
     else await step('menu', `${tag} menu: modal, focus trapped, Esc returns focus, a link lands on its section`, () => menuCheck(page, p));
-    await step('dock', `${tag} ${motion ? 'sling WhatsApp docks into the bar past the hero and returns' : 'bar appears past the hero (no flight)'}`, () => dockCheck(page, c.reduced));
+    await step('dock', `${tag} bar appears past the hero and hides back at the top`, () => dockCheck(page));
     await step('hero', `${tag} Browse cranes lands on the Hoist`, () => browseCheck(page));
   });
   await group('hoist, why, services', async ({ page }) => {
@@ -1700,6 +1670,7 @@ async function seoChecks() {
         if (!types.includes('Organization') || types.includes('LocalBusiness') !== !!ld.address) bad.push(`@type ${types.join(',')} address=${!!ld.address}`);
         if (ld.email !== EMAIL) bad.push(`email ${ld.email}`);
         if (!Array.isArray(ld.sameAs) || !ld.sameAs.some((u) => /facebook\.com|fb\.com/.test(u))) bad.push('sameAs has no Facebook URL');
+        if (!Array.isArray(ld.sameAs) || !ld.sameAs.some((u) => /tiktok\.com/.test(u))) bad.push('sameAs has no TikTok URL');
         if (ld.url !== `${SITE}/`) bad.push(`url ${ld.url}`);
         if (EASTERN_DIGITS.test(JSON.stringify(ld))) bad.push('Eastern digits in JSON-LD');
       }
@@ -2057,11 +2028,11 @@ async function craneSeoChecks() {
     return { pass: bad.length === 0, detail: bad.join('; ') };
   });
   for (const p of CRANE_PAGES) {
-    await step('crane-truth', `${p.id} served HTML: ${TARGET === 'staging' ? 'manufacturer figures carry draft badges (staging)' : 'no draft badge, no [[CONFIRM]] token (production)'}`, async () => {
+    await step('crane-truth', `${p.id} served HTML: ${TARGET === 'staging' ? 'no draft badge (staging)' : 'no draft badge, no [[CONFIRM]] token (production)'}`, async () => {
       const { html } = await served(p.path);
       const badges = (html.match(/data-testid="draft-badge"/g) ?? []).length;
       const tokens = (html.match(/\[\[[A-Z]+[:\]]/g) ?? []).length;
-      return { pass: TARGET === 'staging' ? badges > 0 : badges === 0 && tokens === 0 && !hasDraftToken(html), detail: `${badges} badge(s), ${tokens} token(s)` };
+      return { pass: TARGET === 'staging' ? badges === 0 : badges === 0 && tokens === 0 && !hasDraftToken(html), detail: `${badges} badge(s), ${tokens} token(s)` };
     });
   }
 }
@@ -2258,7 +2229,7 @@ async function craneMatrixCase(p, vp, mode) {
     const small = smallTargets(m.targets);
     rec('a11y', 'interactive targets ≥ 44 px', small.length === 0, small.slice(0, 12).map((t) => `${t.name} ${t.width}×${t.height}`).join('; '));
     rec('data', 'Western digits only (text and data attributes)', m.eastern.length === 0 && !m.easternData, m.eastern.join(' '));
-    if (TARGET === 'staging') rec('truth', 'manufacturer figures carry draft badges (staging)', m.badges > 0, `${m.badges} badges, ${m.tokens} tokens`);
+    if (TARGET === 'staging') rec('truth', 'no draft badge (staging)', m.badges === 0, `${m.badges} badges, ${m.tokens} tokens`);
     else rec('truth', 'no draft badge, no [[CONFIRM]] token (production)', m.badges === 0 && m.tokens === 0, `${m.badges} badges, ${m.tokens} tokens`);
     if (reduced) rec('motion', 'reduced: all content visible, no smooth scroll', m.hiddenReveal === 0 && !m.lenis, `hidden=${m.hiddenReveal} lenis=${m.lenis}`);
     else rec('motion', 'reveals have finished after scrolling through; no ghost left', m.hiddenReveal === 0 && m.ghosts === 0, `hidden=${m.hiddenReveal} ghosts=${m.ghosts}`);

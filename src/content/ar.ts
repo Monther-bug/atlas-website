@@ -159,6 +159,7 @@ export const ar: Copy = {
     fieldsLead: 'ويجمع الاسم أربعة مجالات عمل:',
     channelsLabel: 'تواصل معنا',
     facebook: 'صفحتنا على فيسبوك',
+    tiktok: 'حسابنا على تيك توك',
     email: 'البريد الإلكتروني',
     photosLink: 'شاهد صور مواقع العمل',
     values: [],
@@ -227,6 +228,7 @@ export const ar: Copy = {
       whatsapp: 'واتساب',
       address: 'العنوان',
       facebook: 'صفحتنا على فيسبوك',
+      tiktok: 'حسابنا على تيك توك',
     },
     more: 'أضف تفاصيل أكثر (اختياري)',
     required: 'مطلوب',
@@ -365,6 +367,7 @@ export const ar: Copy = {
     contactHeading: 'تواصل معنا',
     followHeading: 'تابعنا',
     facebook: 'فيسبوك',
+    tiktok: 'تيك توك',
     copyright: '© {year} أطلس الصحراء. جميع الحقوق محفوظة.',
     credit: 'تصميم وتطوير',
     backToTop: 'العودة إلى الأعلى',
@@ -394,7 +397,6 @@ export const ar: Copy = {
   },
 
   misc: {
-    draftBadge: 'مسودة · غير مؤكد',
     newTab: 'يفتح في علامة تبويب جديدة',
   },
 
