@@ -8,7 +8,7 @@ const mockEnv = vi.hoisted(() => ({
   formEndpoint: null as string | null,
   ga4Id: null as string | null,
 }));
-vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified }));
+vi.mock('@/env', () => ({ env: mockEnv }));
 
 import { fillTemplate, mailtoHref, telHref, whatsappHref } from './whatsapp';
 
@@ -64,7 +64,7 @@ describe('whatsappHref', () => {
 
   it('falls back to mailto when there is no WhatsApp number', () => {
     const href = whatsappHref(message);
-    expect(href.startsWith('mailto:atlasalsahralibya@gmail.com?subject=')).toBe(true);
+    expect(href.startsWith('mailto:info@atlas-alshraa.com.ly?subject=')).toBe(true);
     const query = new URLSearchParams(href.slice(href.indexOf('?') + 1));
     expect(query.get('subject')).toBe('السلام عليكم، أطلس الصحراء.');
     expect(query.get('body')).toBe(message);
@@ -83,7 +83,7 @@ describe('whatsappHref CRLF', () => {
 describe('mailtoHref', () => {
   it('encodes subject and body', () => {
     expect(mailtoHref('Crane request: Grove GMK6350', 'a b\nc')).toBe(
-      'mailto:atlasalsahralibya@gmail.com?subject=Crane%20request%3A%20Grove%20GMK6350&body=a%20b%0Ac',
+      'mailto:info@atlas-alshraa.com.ly?subject=Crane%20request%3A%20Grove%20GMK6350&body=a%20b%0Ac',
     );
   });
 });

@@ -608,10 +608,6 @@
     text-align: start;
     color: var(--surface-fg-2);
   }
-  .cmp-caption > [data-testid='draft-badge'] {
-    margin-inline-start: 0.625rem;
-    vertical-align: middle;
-  }
   .cmp-head th {
     block-size: 0;
     padding: 0;

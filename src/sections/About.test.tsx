@@ -39,11 +39,15 @@ describe('About', () => {
         expect(chips).toEqual(copy.services.items.map((s) => s.title));
       });
 
-      it('links only the confirmed channels: the Facebook page (new tab) and the email', () => {
-        const fb = html.querySelector(`a[href="${siteInfo.facebook}"]`);
-        expect(fb?.getAttribute('target')).toBe('_blank');
-        expect(fb?.getAttribute('rel')).toBe('noopener noreferrer');
-        expect(fb?.textContent).toContain(copy.misc.newTab);
+      it('links only the confirmed channels: Facebook and TikTok (icon only, new tab) and the email', () => {
+        for (const [href, name] of [[siteInfo.facebook, copy.about.facebook], [siteInfo.tiktok, copy.about.tiktok]]) {
+          const link = html.querySelector(`a[href="${href}"]`);
+          expect(link?.getAttribute('target')).toBe('_blank');
+          expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+          expect(link?.querySelectorAll('svg')).toHaveLength(1); // the brand icon, no visible text
+          expect(link?.querySelector('.sr-only')?.textContent).toBe(name); // its name, for screen readers
+          expect(link?.textContent).toContain(copy.misc.newTab);
+        }
         expect(html.querySelector(`a[href="mailto:${siteInfo.email}"]`)?.textContent).toBe(siteInfo.email);
         expect(html.querySelector('a[href^="tel:"], a[href*="wa.me"]')).toBeNull();
       });

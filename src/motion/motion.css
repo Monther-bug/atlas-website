@@ -3,35 +3,17 @@
    when JS runs and prefers-reduced-motion is not "reduce". No JS → nothing is hidden.
    The hero <img> is never hidden (LCP). */
 
-/* 1. Before core.ts sets html[data-motion]: the hero's from-states (direction B, src/motion/hero.ts), so the intro
-      starts without a jump when JS arrives: the cut half-raked, the sling legs short, the load up under the hook.
-      Nothing is hidden and the H1 never moves (it is the LCP element). The 3 s fallback settles everything if motion
-      never starts. */
+/* 1. Before core.ts sets html[data-motion]: the hero's from-state (direction B, src/motion/hero.ts), so the intro
+      starts without a jump when JS arrives: the cut half-raked. Nothing is hidden and the H1 never moves (it is the
+      LCP element). The 3 s fallback settles it if motion never starts. */
 html.motion-ok:not([data-motion]) [data-hero-field] {
-  --luff: 0.8; /* an estimate of hero.ts's start luff (computed so the cut stays under the raised load) */
+  --luff: 0.5; /* hero.ts's start luff */
   animation: atlas-hero-luff 0.01s linear 3s forwards;
-}
-html.motion-ok:not([data-motion]) [data-hero] svg[data-sling] {
-  transform: scaleY(0.15);
-  animation: atlas-motion-settle 0.01s linear 3s forwards;
-}
-html.motion-ok:not([data-motion]) [data-hero-load] {
-  transform: translateY(calc(var(--drop) * -0.85));
-  animation: atlas-motion-settle 0.01s linear 3s forwards;
 }
 @keyframes atlas-hero-luff {
   to {
     --luff: 1;
   }
-}
-@keyframes atlas-motion-settle {
-  to {
-    transform: none;
-  }
-}
-/* The docked WhatsApp button (transparent while the ghost sits in the bar) is never invisible while focused. */
-html.motion-ok [data-sling-button]:focus-within {
-  opacity: 1 !important;
 }
 
 /* 2. Lenis (desktop only; rules from lenis/dist/lenis.css, v1.3). */

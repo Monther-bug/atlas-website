@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { Button, NewTabNote } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { ArrowIcon, HookIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
 import { fill } from '@/components/ui/util';
@@ -363,7 +362,6 @@ export function CompareModels({ cranes }: { cranes: readonly Crane[] }) {
             <caption className="t-small cmp-caption">
               <span className="sr-only">{text.tableName}: </span>
               {copy.specs.heading}
-              <DraftBadge verified={cranes.every((c) => c.verified)} />
             </caption>,
             'crane-compare-legend',
           )}

@@ -9,7 +9,7 @@ const mockEnv = vi.hoisted(() => ({
   formEndpoint: null as string | null,
   ga4Id: null as string | null,
 }));
-vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified && mockEnv.target !== 'production' }));
+vi.mock('@/env', () => ({ env: mockEnv }));
 
 import { renderHtml } from '@/test/render';
 import { Footer } from './Footer';
@@ -51,10 +51,13 @@ describe('Footer', () => {
   });
 
   it('shows only confirmed contact facts', () => {
-    expect(html.querySelector('a[href="mailto:atlasalsahralibya@gmail.com"]')).not.toBeNull();
+    expect(html.querySelector('a[href="mailto:info@atlas-alshraa.com.ly"]')).not.toBeNull();
     expect(html.querySelector('a[href^="tel:"]')).toBeNull();
-    const facebook = html.querySelector('a[href="https://www.facebook.com/share/19qKUy2hxg/"]');
-    expect(facebook?.getAttribute('target')).toBe('_blank');
+    for (const href of ['https://www.facebook.com/share/19qKUy2hxg/', 'https://www.tiktok.com/@atlasalsahraa']) {
+      const link = html.querySelector(`a[href="${href}"]`);
+      expect(link?.getAttribute('target')).toBe('_blank');
+      expect(link?.querySelector('svg')).not.toBeNull(); // its brand icon
+    }
   });
 
   it('prints the copyright with the current year', () => {

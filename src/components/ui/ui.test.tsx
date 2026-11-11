@@ -295,14 +295,13 @@ describe('Marquee', () => {
 });
 
 describe('Stat, Chip, Field, Reveal', () => {
-  it('Stat: aria-hidden digits, sr-only final value, ticker attributes only when asked, draft badge when unverified', () => {
-    const html = renderHtml(<Stat value={317.5} unit="t" label="Max capacity" from={0} decimals={1} verified={false} />, 'en');
+  it('Stat: aria-hidden digits, sr-only final value, ticker attributes only when asked', () => {
+    const html = renderHtml(<Stat value={317.5} unit="t" label="Max capacity" from={0} decimals={1} />, 'en');
     const digits = html.querySelector('[data-ticker]');
     expect(digits?.getAttribute('aria-hidden')).toBe('true');
     expect(digits?.textContent).toBe('317.5');
     expect(digits?.getAttribute('data-ticker-from')).toBe('0');
     expect(html.querySelector('.sr-only')?.textContent).toBe('317.5 t');
-    expect(html.querySelector('[data-testid="draft-badge"]')).not.toBeNull();
     expect(renderHtml(<Stat value={3} label="Types" />).querySelector('[data-ticker]')).toBeNull();
   });
 

@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DocumentFile } from '@/content/types';
 
 const mockSite = vi.hoisted(() => ({
-  email: 'atlasalsahralibya@gmail.com',
+  email: 'info@atlas-alshraa.com.ly',
   facebook: 'https://www.facebook.com/share/19qKUy2hxg/',
+  tiktok: 'https://www.tiktok.com/@atlasalsahraa',
   address: null,
   documents: [] as DocumentFile[],
 }));

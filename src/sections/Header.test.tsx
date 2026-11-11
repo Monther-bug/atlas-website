@@ -11,7 +11,7 @@ const mockEnv = vi.hoisted(() => ({
   ga4Id: null as string | null,
 }));
 vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
-vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified && mockEnv.target !== 'production' }));
+vi.mock('@/env', () => ({ env: mockEnv }));
 
 import { track } from '@/lib/analytics';
 import { click, mount, renderHtml } from '@/test/render';

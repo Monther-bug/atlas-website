@@ -67,8 +67,9 @@ describe('sites', () => {
 describe('site info and copy', () => {
   it('holds only confirmed contact facts', () => {
     expect(siteInfo).toEqual({
-      email: 'atlasalsahralibya@gmail.com',
+      email: 'info@atlas-alshraa.com.ly',
       facebook: 'https://www.facebook.com/share/19qKUy2hxg/',
+      tiktok: 'https://www.tiktok.com/@atlasalsahraa',
       address: null,
       documents: [],
     });

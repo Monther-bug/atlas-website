@@ -145,7 +145,7 @@ The approved wording is in [`docs/03-copy-deck.md`](docs/03-copy-deck.md). Chang
 
 ```ts
 export const siteInfo: SiteInfo = {
-  email: 'atlasalsahralibya@gmail.com',
+  email: 'info@atlas-alshraa.com.ly',
   facebook: 'https://www.facebook.com/share/19qKUy2hxg/',
   address: null,        // or { ar: '...', en: '...' } : appears in the footer and contact panel
   documents: [],        // empty = the Documents section is not on the page at all
@@ -189,11 +189,11 @@ Placeholders (tiny blurred previews) are only used in the prerender; never impor
 
 ## Fonts
 
-Self-hosted, subset, never inlined into CSS: **Tajawal** (Arabic: 400, 500, 700, 800), **Poppins** (Latin and all numerals: 400, 500, 600, 700), **IBM Plex Mono** (500, only for model codes like GMK6350), plus two tiny "fill" faces (IBM Plex Sans Arabic for a few Arabic symbols Tajawal lacks; arrows for Poppins) that load only when one of their characters is on screen. Total about 61 KB.
+Self-hosted, subset, never inlined into CSS: **Cairo** (Arabic: 400, 500, 700, 800), **Poppins** (Latin and all numerals: 400, 500, 600, 700), **IBM Plex Mono** (500, only for model codes like GMK6350), plus a tiny "fill" face (IBM Plex Sans Arabic, for the two arrows Poppins lacks) that loads only when one is on screen. Total about 61 KB.
 
 - `npm run fonts` subsets the `@fontsource/*` packages into `src/assets/fonts/`. The character sets are at the top of `scripts/subset-fonts.mjs` and **must match the `unicode-range` lists in `src/fonts.css`**; the script fails if a family does not cover its set.
 - `src/font-coverage.test.tsx` renders both pages, the component kitchen, the copy and the crane specs, and fails if any character falls outside the subsets (it has caught a wrong space character before). **If you add text with a new symbol, this test fails first: add the character to the set, run `npm run fonts`, commit the new files.**
-- `vite/font-preload.ts` adds the preload links for the fonts each page needs first (Arabic: Tajawal 800/700/400; English: Poppins 700/600/400).
+- `vite/font-preload.ts` adds the preload links for the fonts each page needs first (Arabic: Cairo 800/700/400; English: Poppins 700/600/400).
 
 ## Motion
 
@@ -213,7 +213,7 @@ Read [`docs/superpowers/specs/2026-11-05-atlas-v2-design.md`](docs/superpowers/s
 - **Templates and prerender.** `cranes/index.html` and `en/cranes/index.html` are build inputs (`vite.config.ts`). `scripts/prerender.mjs` renders each crane with `renderCrane()` / `headCrane()` from `src/entry-server.tsx`, writes `dist[/en]/cranes/<id>/index.html`, then deletes the two templates. The dev server serves `/cranes/<id>/` from the template (`vite/crane-pages-dev.ts`).
 - **Static island.** The page body (`src/crane-page/CraneBody.tsx`) is rendered only at build time (and by the dev server and tests, through `src/crane-page/register.ts`). In the browser it stays the prerendered HTML (`CraneIsland.tsx`), so the page ships only React, the header, footer and request bar (about 87 KB gz; home 105 KB). The photo story, click tracking and the view-transition name work on that HTML from `src/crane-page/CraneApp.tsx`; motion (`src/motion/crane.ts`: tickers, meters, reveals, Lenis on desktop) loads on idle. The hero's entrance is CSS.
 - **Head.** `src/crane-page/head.ts`: title, description, canonical, hreflang (ar, en, x-default = Arabic), Open Graph and Twitter with the crane's own photo (`public/og/cranes/<id>.jpg`, made by `npm run og:cranes` from the processed card photo; rerun it after `npm run assets`), one preload for the hero photo (from 768 px), and a `BreadcrumbList`. No `Product` or `Offer` schema: there is no price, and no rating is invented. `sitemap.xml` lists all twelve pages with their hreflang pairs.
-- **Fonts.** Three preloads per crane page, chosen for its first screen (`vite/font-preload.ts`): Plex Mono 500 (the model code), Poppins 700 (the number) and Tajawal 400 / Poppins 400.
+- **Fonts.** Three preloads per crane page, chosen for its first screen (`vite/font-preload.ts`): Plex Mono 500 (the model code), Poppins 700 (the number) and Cairo 400 / Poppins 400.
 - **No first-visit intro** on a crane page: it is a deep link like a `#section` link (the visitor came for that crane, and the curtain would hold back its first paint). It does not use up the intro either, so a later visit to the home page still gets it once.
 - **Phones** open on the name, the number and the actions; the photo starts at the fold. That keeps the largest paint text (Lighthouse mobile LCP about 0.9 s).
 - **Links from the home page.** Each lineup card's model name links to its page (prerendered, so crawlers find all ten), and the quick view (Details) has "Open the full page". On a crane page the header and footer section links go to `/#section` (or `/en/#section`), the logo to the home page, and the language switch to the same crane in the other language.

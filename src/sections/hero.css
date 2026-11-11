@@ -24,8 +24,8 @@
   /* the first screen: the photo's box, and the height the hook is mapped into (Hero.tsx hookCss) */
   --stage: max(100svh, 34rem);
   --edge: clamp(1rem, 4vw, 3.5rem);
-  /* the load */
-  --spread: clamp(1.5rem, 3vw, 3rem);
+  /* the load's footprint: nothing hangs from the hook any more (client, 11 Nov 2026), but the cut keeps the place it
+     had just under the load (--yc, --xc), so taking the load off moved nothing else */
   --drop: clamp(2rem, 6svh, 6.5rem);
   --loadh: 3.25rem;
   --bw: 12.5rem;
@@ -35,14 +35,14 @@
   --m: clamp(0.75rem, 1.6vw, 1.5rem);
   --padb: clamp(1rem, 3svh, 2.5rem);
   /* the headline: size F (.hero-text sets it from F0), every line metric in units of F. Client note of 11 Nov 2026:
-     a bit smaller than before. --w1 / --w2: the two lines' widths in F, measured for that headline (Tajawal 800 and
-     Poppins 700, −0.03em, plus 1–2 %); re-measure them if the headline changes. Phones: line 2 fits 100vw − 2 rem
-     with a few per cent to spare down to 280 px (7.6vw Arabic, 7.2vw English). */
-  --F0: clamp(1.25rem, min(7.6vw, 4.6svh), 2.75rem);
+     a bit smaller than before. --w1 / --w2: the two lines' widths in F, measured for that headline (Cairo 800 and
+     Poppins 700, −0.03em, plus 1–2 %); re-measure them if the headline or its font changes. Phones: line 2 fits
+     100vw − 2 rem with a few per cent to spare down to 280 px (7.5vw Arabic, 7.2vw English). */
+  --F0: clamp(1.25rem, min(7.5vw, 4.6svh), 2.75rem);
   --lh: 1.25;
-  --w1: 6.8;
-  --w2: 11.5;
-  /* the lead: thin and small; Tajawal draws smaller per em than Poppins, so Arabic is a step larger */
+  --w1: 6.65;
+  --w2: 11.6;
+  /* the lead: thin and small; Cairo draws smaller per em than Poppins, so Arabic is a step larger */
   --subsize: clamp(0.95rem, 0.9rem + 0.25vw, 1.125rem);
   --sublh: 1.7;
   --footgap: 0.25rem;
@@ -86,7 +86,7 @@
     --hy: var(--hy-d);
     --k: 0.36;
     --drop: clamp(2.75rem, 9svh, 6.5rem);
-    /* room for the live swing (±1.7°, about 15 px) between the load and the navy plane */
+    /* the room the load kept above the navy plane for its swing; kept so the cut does not move */
     --clear: clamp(1.5rem, 2.6svh + 0.75rem, 3rem);
     --loadh: 3.5rem;
     --F0: clamp(2.25rem, min(4.4vw, 6.4svh), 4.5rem);
@@ -303,7 +303,8 @@
   --d: var(--lh);
 }
 
-/* ── The load ──────────────────────────────────────────────────────── */
+/* ── The hook point: an empty, zero-size box on the real hook. Nothing hangs from it (client, 11 Nov 2026); the
+   desktop live hook (src/motion/hero-live.ts) measures the cursor's reach from it. ── */
 .hero-rig {
   position: absolute;
   left: var(--hx);
@@ -311,55 +312,7 @@
   width: 0;
   height: 0;
   z-index: 4;
-}
-.hero:not([data-sling-m]) .hero-rig {
-  display: none;
-}
-@media (min-aspect-ratio: 1001/1000) {
-  .hero[data-sling-d] .hero-rig {
-    display: block;
-  }
-  .hero:not([data-sling-d]) .hero-rig {
-    display: none;
-  }
-}
-.hero-pin {
-  position: absolute;
-  left: -0.4375rem;
-  top: -0.4375rem;
-  width: 0.875rem;
-  height: 0.875rem;
-  border-radius: 50%;
-  background: var(--color-red);
-  box-shadow: 0 0 0 2px var(--color-white);
-  z-index: 2;
-}
-.hero-legs {
-  position: absolute;
-  left: calc(var(--spread) * -1);
-  top: 0;
-  width: calc(var(--spread) * 2);
-  height: var(--drop);
-  overflow: visible;
-  transform-origin: 50% 0;
-}
-.hero-legs path {
-  fill: none;
-  stroke: var(--color-red);
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-.hero-load {
-  position: absolute;
-  left: 0;
-  top: var(--drop);
-  width: max-content;
-  /* centred under the hook, but kept 1 rem inside the screen (the legs then meet it off-centre) */
-  translate: clamp(calc(1rem - var(--hx)), -50%, calc(100cqw - 1rem - var(--hx) - 100%)) 0;
-}
-/* The global focus ring would sit outside the button, on the sky: draw it inside the red (white on red 5.6 : 1). */
-.hero-whatsapp:focus-visible {
-  outline-offset: -6px;
+  pointer-events: none;
 }
 
 /* ── The foot: the lead and "Browse cranes" on its own row, inside the field too ── */
@@ -416,14 +369,11 @@
 .hero-browse:hover {
   text-decoration-color: currentColor;
 }
-.hero-foot-whatsapp {
-  display: contents;
-}
 
 /* ── Portrait: the headline and the foot are one column in flow, bottom-anchored as before, so no estimate of the
    lead's height is needed. The column never starts above the cut: padding-top is the cut's lowest point (its near
    edge, --near; the text spans the width) plus --gapc. Where the photo leaves less field than the column needs (short
-   phones; the English lead wraps to 4–5 lines), the hero grows past the first screen instead: the photo, the load and
+   phones; the English lead wraps to 4–5 lines), the hero grows past the first screen instead: the photo and
    the cut keep the first screen (--stage), the H1 stays on it, and the lead and "Browse" continue below on the black.
    The size container becomes inline-size so the hero can take its content's height; the hook is mapped into --stage,
    not 100cqh. In .hero's own padding, cqw falls back to the viewport's width (the hero is full width).

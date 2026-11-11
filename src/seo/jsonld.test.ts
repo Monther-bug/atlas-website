@@ -4,8 +4,9 @@ import { buildJsonLd, jsonLdScript } from './jsonld';
 // Test fixtures only: none of these values is an Atlas fact.
 const base = {
   siteUrl: 'https://atlas.example',
-  email: 'atlasalsahralibya@gmail.com',
+  email: 'info@atlas-alshraa.com.ly',
   facebook: 'https://www.facebook.com/example-page',
+  tiktok: 'https://www.tiktok.com/@example',
   phone: null,
   address: null,
 };
@@ -19,8 +20,8 @@ describe('buildJsonLd', () => {
     expect(ld.alternateName).toBe('Atlas Alshraa');
     expect(ld.url).toBe('https://atlas.example/');
     expect(ld.logo).toBe('https://atlas.example/brand/badge.png');
-    expect(ld.email).toBe('atlasalsahralibya@gmail.com');
-    expect(ld.sameAs).toEqual(['https://www.facebook.com/example-page']);
+    expect(ld.email).toBe('info@atlas-alshraa.com.ly');
+    expect(ld.sameAs).toEqual(['https://www.facebook.com/example-page', 'https://www.tiktok.com/@example']);
   });
   it('names the English page in English first', () => {
     const ld = buildJsonLd({ ...base, lang: 'en' });

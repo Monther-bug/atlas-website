@@ -46,10 +46,6 @@ describe('Hoist', () => {
     expect(tag?.querySelector('bdi')?.textContent).toBe('Grove GMK6350');
   });
 
-  it('shows a draft badge on every unverified crane in staging', () => {
-    expect(html.querySelectorAll('[data-hoist-item] [data-testid="draft-badge"]')).toHaveLength(5);
-  });
-
   it('puts nothing above the heading and offers a skip link to the full list', () => {
     expect(html.querySelector('h2#hoist-title')?.previousElementSibling).toBeNull();
     expect(html.querySelector('a[href="#crane-list"]')?.textContent).toBe('اعرض كل الرافعات');

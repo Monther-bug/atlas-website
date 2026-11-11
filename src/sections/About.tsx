@@ -1,8 +1,9 @@
 import { Fragment } from 'react';
-import { NewTabNote, buttonClass, externalProps } from '@/components/Button';
+import { buttonClass } from '@/components/Button';
 import { ArrowIcon } from '@/components/Icons';
 import { BADGE_MEDIUM } from '@/components/Logo';
 import { Picture } from '@/components/Picture';
+import { SocialLinks } from '@/components/SocialLinks';
 import { Chip, Section, parallax, reveal } from '@/components/ui';
 import { siteInfo } from '@/content';
 import type { GalleryPhotoId, SiteGalleryId } from '@/content/types';
@@ -39,7 +40,7 @@ const LINK = 'ui-link';
 /**
  * About Atlas (v2 spec §10, new). An editorial statement in large type that the motion layer highlights word by
  * word as it is read (src/motion/about.ts), two real photos from the two shoot sites, and the confirmed facts: the
- * Arabic legal name, the four lines of work it names, the Facebook page and the email. Nothing else is claimed:
+ * Arabic legal name, the four lines of work it names, the Facebook page, the TikTok profile and the email. Nothing else is claimed:
  * no years, numbers, clients or ownership. Mission, vision and values render only once Atlas supplies them
  * (`copy.about.values`, empty until then).
  */
@@ -138,15 +139,7 @@ export function About() {
           <dd className="mt-3">
             <ul className="t-body flex flex-col gap-4">
               <li>
-                <a
-                  href={siteInfo.facebook}
-                  {...externalProps(siteInfo.facebook)}
-                  className={`${LINK} inline-flex min-h-11 items-center gap-2`}
-                >
-                  {a.facebook}
-                  <ArrowIcon className="size-4 -rotate-45 rtl:rotate-45" />
-                  <NewTabNote />
-                </a>
+                <SocialLinks labels={a} />
               </li>
               <li className="flex flex-col">
                 <span className="about-term t-caption">{a.email}</span>

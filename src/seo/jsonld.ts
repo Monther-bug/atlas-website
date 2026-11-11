@@ -8,6 +8,7 @@ export interface JsonLdInput {
   siteUrl: string; // no trailing slash
   email: string; // siteInfo.email (confirmed)
   facebook: string; // siteInfo.facebook (confirmed)
+  tiktok: string; // siteInfo.tiktok (confirmed)
   phone: string | null; // env.phone: set only once Atlas supplies it (production requires it)
   address: { ar: string; en: string } | null; // siteInfo.address: null until verified
 }
@@ -25,7 +26,7 @@ export function buildJsonLd(input: JsonLdInput): Record<string, unknown> {
     url: `${input.siteUrl}/`,
     logo: `${input.siteUrl}/brand/badge.png`,
     email: input.email,
-    sameAs: [input.facebook],
+    sameAs: [input.facebook, input.tiktok],
   };
   if (input.phone) data.telephone = input.phone;
   if (input.address) data.address = { '@type': 'PostalAddress', streetAddress: input.address[input.lang], addressCountry: 'LY' };

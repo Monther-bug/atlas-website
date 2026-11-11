@@ -1,6 +1,7 @@
 import { Button, NewTabNote, externalProps } from '@/components/Button';
 import { ArrowUpIcon, WhatsAppIcon } from '@/components/Icons';
 import { Logo } from '@/components/Logo';
+import { SocialLinks } from '@/components/SocialLinks';
 import { reveal } from '@/components/ui/Reveal';
 import { Section } from '@/components/ui/Section';
 import { siteInfo } from '@/content';
@@ -129,14 +130,7 @@ export function Footer() {
 
           <div className="lg:col-span-2">
             <h2 className={HEADING}>{copy.footer.followHeading}</h2>
-            <ul className="mt-3">
-              <li>
-                <a href={siteInfo.facebook} {...externalProps(siteInfo.facebook)} className={LINK}>
-                  {copy.footer.facebook}
-                  <NewTabNote />
-                </a>
-              </li>
-            </ul>
+            <SocialLinks labels={copy.footer} tone="dark" className="mt-3" />
           </div>
         </div>
 

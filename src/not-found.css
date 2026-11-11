@@ -40,7 +40,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Poppins Atlas', 'Tajawal Atlas', 'Poppins Fallback', 'Tajawal Fallback', system-ui, sans-serif;
+  font-family: 'Poppins Atlas', 'Cairo Atlas', 'Poppins Fallback', 'Cairo Fallback', system-ui, sans-serif;
   font-size: 1.0625rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

@@ -116,7 +116,7 @@
     color: var(--surface-fg-2);
   }
   /* Faces the page preloads, so the line never reflows when the fonts arrive (layout shift 0): Poppins 700 on the
-     English page; on the Arabic page Tajawal 400 throughout, the class name told apart by colour. */
+     English page; on the Arabic page Cairo 400 throughout, the class name told apart by colour. */
   .cp-hero__type strong {
     color: var(--surface-fg);
     font-weight: 700;

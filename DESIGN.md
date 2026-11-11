@@ -30,24 +30,24 @@ colors:
   ok-bright: "#5FD394"
 typography:
   display:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Cairo Atlas, Poppins Fallback, Cairo Fallback, system-ui, sans-serif"
     fontSize: "clamp(2.5rem, 5vw, 5rem)"
     fontWeight: 700
     lineHeight: 1.04
     letterSpacing: "-0.03em"
   headline:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Cairo Atlas, Poppins Fallback, Cairo Fallback, system-ui, sans-serif"
     fontSize: "clamp(2rem, 3.6vw, 3.25rem)"
     fontWeight: 600
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Cairo Atlas, Poppins Fallback, Cairo Fallback, system-ui, sans-serif"
     fontSize: "clamp(1.25rem, 2vw, 1.75rem)"
     fontWeight: 600
     lineHeight: 1.25
   body:
-    fontFamily: "Poppins Atlas, Tajawal Atlas, Poppins Fallback, Tajawal Fallback, system-ui, sans-serif"
+    fontFamily: "Poppins Atlas, Cairo Atlas, Poppins Fallback, Cairo Fallback, system-ui, sans-serif"
     fontSize: "clamp(1rem, 1.1vw, 1.0625rem)"
     fontWeight: 400
     lineHeight: 1.7
@@ -125,7 +125,7 @@ Roughly **80 % black and white grounds, 10 to 15 % brand navy, about 5 % red** (
 | Dark ground | `black` #0A0A0A, raised `neutral-900` #171717 | Chart sections, footer, request bar. On black, depth comes from `neutral-900` fills, not shadows. |
 | Light ground | `mist` #F5F5F5, `white`, `neutral-100` tint | Yard sections. Tiles are white on mist. |
 | Text | `ink` #111 / `ink-2` #4A4A4A / `ink-3` #6B6B6B on light; white / `neutral-300` / `neutral-400` on black | Body never lighter than `ink-3`. |
-| **Action** | `red` #C9221C (hover `red-600`) | Primary buttons, the sling, hook and rope, key highlights. Fills only on black (3.5:1), `red-bright` #FF5A4F for red text on black. Never decorative. |
+| **Action** | `red` #C9221C (hover `red-600`) | Primary buttons, the hook and rope, key highlights. Fills only on black (3.5:1), `red-bright` #FF5A4F for red text on black. Never decorative. |
 | **Secondary accent** | `brand` #23207A on light, **`brand-300` #A5A3F5 on dark** | Links, focus ring on light, selected segment/tab/chip, step numbers, icons, `.t-tag` data labels, Stat units, one `brand` section per page. Navy on black is 1.5:1: never. |
 | Brand ground | `brand` to `brand-950` gradient (`--grad-brand`) | One signature section per page (Why Atlas). Never the hero, never behind a photo's sky. Secondary text tinted from navy (`brand-100`, `brand-200`), never grey. |
 | Status | `ok` / `ok-bright`, `red-50` wash | Success and error states only. |
@@ -151,7 +151,7 @@ Dark grounds (`dark`, `night`, `navy`, `brand`) are the same in both themes: the
 
 ## Typography
 
-**Poppins** (Latin and every numeral) and **Tajawal** (Arabic), self-hosted subsets, one stack for display and body. **IBM Plex Mono** only for model codes and machine formulas (GMK6350, 12x6x12) (§4).
+**Poppins** (Latin and every numeral) and **Cairo** (Arabic; Tajawal until 11 Nov 2026), self-hosted subsets, one stack for display and body. **IBM Plex Mono** only for model codes and machine formulas (GMK6350, 12x6x12) (§4).
 
 | Role | Class | Notes |
 |---|---|---|
@@ -163,7 +163,7 @@ Dark grounds (`dark`, `night`, `navy`, `brand`) are the same in both themes: the
 | Code | `.t-spec` | Plex Mono. |
 | Two-tone | `.t-muted` | A heading's continuation in the third text tone. |
 
-Arabic rules: Tajawal draws small for its size, so Arabic is set larger and looser than Latin; tracking 0; no caps tricks; never justified; Latin codes inside `<bdi lang="en">`; **Western digits** (as on manufacturer load charts); units after U+00A0. A test (`src/font-coverage.test.tsx`) fails if any character falls outside the subset fonts.
+Arabic rules: Cairo draws smaller per em than Poppins, so Arabic is set larger and looser than Latin; tracking 0; no caps tricks; never justified; Latin codes inside `<bdi lang="en">`; **Western digits** (as on manufacturer load charts); units after U+00A0. A test (`src/font-coverage.test.tsx`) fails if any character falls outside the subset fonts.
 
 ## Layout
 
@@ -186,7 +186,7 @@ Concentric radii: `xs` 6, `sm` 10, `md` 14 (inputs), `lg` 20 (cards, table), `xl
 
 ## Components
 
-All primitives are in `src/components/ui/` (plus `Button`, `DraftBadge`, `Picture`, `Lightbox` in `src/components/`). The table of keyboard, accessibility and motion behaviour for each is §8 of the spec. Summary:
+All primitives are in `src/components/ui/` (plus `Button`, `Picture`, `Lightbox` in `src/components/`). The table of keyboard, accessibility and motion behaviour for each is §8 of the spec. Summary:
 
 - **Button:** pill; `primary` (red), `secondary` (black), `inverse` (white on dark), `ghost-light`, `ghost-dark`, `glass` (over photos), `plain` (accent text with an arrow). Sizes 56/52, 48, 44 px. `magnetic` for primary CTAs only.
 - **Section / SectionHeader:** surface shell; heading first, two-tone continuation, lead, actions. **No eyebrow slot.**
@@ -197,7 +197,6 @@ All primitives are in `src/components/ui/` (plus `Button`, `DraftBadge`, `Pictur
 - **SpecList / CompareTable:** real `<dl>` and `<table>`; empty cell shows "—" with a screen-reader "Not stated".
 - **Carousel, Marquee, StickyStory, Stat:** snap carousel with RTL-aware paddles; a strip that moves only while scrolling (no loop); sticky story with an inline fallback; a fact with a counting number.
 - **Field, IconButton:** 52 px controls with borders at least 3:1; 44 px round icon buttons with a required label.
-- **DraftBadge:** red/white chevron tag on every unverified value. Staging only.
 
 Every control has hover, focus, active, disabled, loading, error, empty and success states (§16.11). Interactive previews of all of them: run `npm run dev` and open `/?v2=kitchen` (dev only; the kitchen is not in the production build).
 
@@ -217,7 +216,7 @@ The **Impeccable floor v2** (spec §16; a ban cannot be overruled). Every sectio
 
 **Do**
 - Use only Atlas's real photos, in `.frame`, never flipped. Put text over a photo on a glass or solid band, never over sky.
-- Show the DraftBadge on every unverified value and label specs "Manufacturer specification"; leave missing fields out.
+- Label specs "Manufacturer specification"; leave missing fields out.
 - Take depth only from `shadow-e1` to `e4` and `shadow-bar`; radius only from the scale.
 - Give every reduced-motion visitor the final state, and every no-JavaScript visitor the full content.
 - Use `brand-300`, not `brand`, for the accent on dark grounds.

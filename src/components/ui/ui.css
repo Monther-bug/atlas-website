@@ -143,7 +143,7 @@ html[data-theme='dark'] .surface-brand .surface-white {
 
   /* ── v2 type roles (Latin first, Arabic overrides). v1 .t-* classes stay valid until sections migrate. ── */
   /* Poppins (Latin, numerals) is wide with a tall x-height: sizes sit below Archivo's and tracking is tighter.
-     Tajawal (Arabic) draws small for its em (x-height 0.45): Arabic sizes are larger and lines looser. */
+     Cairo (Arabic) draws smaller per em than Poppins: Arabic sizes are larger and lines looser. */
   .t-display {
     font-family: var(--font-display);
     font-weight: 700;
@@ -195,6 +195,21 @@ html[data-theme='dark'] .surface-brand .surface-white {
     font-weight: 500;
     font-size: clamp(1.25rem, 1.125rem + 0.556vw, 1.625rem);
     line-height: 1.65;
+  }
+  /* A SectionHeader a step smaller (client, 11 Nov 2026: «اعثر على رافعتك», «لماذا أطلس الصحراء؟»). Heading 24–36 px
+     Latin, 26–40 px Arabic (t-headline is 32–52 / 34–60); lead 16–20 / 18–22 px (t-sub is 18–24 / 20–26). Full size
+     from 1440 px. */
+  .ui-head--compact .t-headline {
+    font-size: clamp(1.5rem, 1.25rem + 1.111vw, 2.25rem);
+  }
+  .ui-head--compact .t-headline:lang(ar) {
+    font-size: clamp(1.625rem, 1.333rem + 1.296vw, 2.5rem);
+  }
+  .ui-head--compact .t-sub {
+    font-size: clamp(1rem, 0.917rem + 0.37vw, 1.25rem);
+  }
+  .ui-head--compact .t-sub:lang(ar) {
+    font-size: clamp(1.125rem, 1.042rem + 0.37vw, 1.375rem);
   }
   /* Mid-size numerals: stat values, spec emphasis. Poppins figures are proportional (no tnum in these files):
      tickers reserve the final width (Stat), tables align numbers per cell, not per column. */

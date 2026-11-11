@@ -70,8 +70,8 @@ export default defineConfig(({ mode }) => {
           'not-found': path('./404.html'),
         },
       },
-      // Never inline fonts as base64: the tiny unicode-range fill faces (fill-ar, fill-la) must stay separate files
-      // that load only when one of their characters is on screen, not ride in the CSS for every visitor.
+      // Never inline fonts as base64: the tiny unicode-range fill face (fill-la) must stay a separate file
+      // that loads only when one of its characters is on screen, not ride in the CSS for every visitor.
       assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),
     },
   };

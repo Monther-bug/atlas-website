@@ -499,7 +499,7 @@ Document slots. List only the files Atlas actually has:
 
 | Element | العربية | English |
 |---|---|---|
-| Email label + value | البريد الإلكتروني: atlasalsahralibya@gmail.com | Email: atlasalsahralibya@gmail.com |
+| Email label + value | البريد الإلكتروني: info@atlas-alshraa.com.ly | Email: info@atlas-alshraa.com.ly |
 | Phone | الهاتف: [[PHONE]] | Phone: [[PHONE]] |
 | WhatsApp | واتساب: [[WHATSAPP]] | WhatsApp: [[WHATSAPP]] |
 | Address | العنوان: [[ADDRESS]]، [[CITY]] | Address: [[ADDRESS]], [[CITY]] |
@@ -744,7 +744,7 @@ I just sent a request through your website. Name: {name}, phone: {phone}.
 | Column heading | في هذه الصفحة | On this page |
 | Links | الرافعات / مواقع العمل / اطلب رافعة | Cranes / On site / Request a crane |
 | Column heading | تواصل معنا | Contact |
-| Lines | atlasalsahralibya@gmail.com / [[PHONE]] / [[WHATSAPP]] / [[ADDRESS]]، [[CITY]] / [[HOURS]] | atlasalsahralibya@gmail.com / [[PHONE]] / [[WHATSAPP]] / [[ADDRESS]], [[CITY]] / [[HOURS]] |
+| Lines | info@atlas-alshraa.com.ly / [[PHONE]] / [[WHATSAPP]] / [[ADDRESS]]، [[CITY]] / [[HOURS]] | info@atlas-alshraa.com.ly / [[PHONE]] / [[WHATSAPP]] / [[ADDRESS]], [[CITY]] / [[HOURS]] |
 | Column heading | تابعنا | Follow us |
 | Link | فيسبوك | Facebook |
 | Registration (optional, HIDDEN UNTIL DATA) | السجل التجاري: [[CR_NUMBER]] | Commercial registration: [[CR_NUMBER]] |

@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { Button } from '@/components/Button';
-import { DraftBadge } from '@/components/DraftBadge';
 import { ArrowIcon, HookIcon } from '@/components/Icons';
 import { Picture } from '@/components/Picture';
 import type { Crane } from '@/content/types';
@@ -102,7 +101,6 @@ export function LineupCard({ crane }: { crane: Crane }) {
             {/* QUY250: the figure is not the manufacturer's listed maximum, so it is not called the manufacturer rating. */}
             {ratingDiffers(crane) ? craneListCopy[lang].conflict.label : copy.grid.card.rating}
           </span>
-          <DraftBadge verified={crane.verified} />
         </p>
 
         {specs.length > 0 ? (

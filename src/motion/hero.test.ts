@@ -7,15 +7,13 @@ import type { MotionEnv } from './shared';
 
 const ENV: MotionEnv = { lang: 'ar', rtl: true, late: false };
 
+// As Hero.tsx renders it: nothing hangs from the hook, the rig is an empty box on it.
 const HERO = `
   <section id="top" data-hero>
     <div data-hero-photo><picture><img alt="crane" src="x.webp"></picture></div>
     <div data-hero-field></div>
     <h1 id="hero-title"><span class="hero-line hero-line-1">Line one</span> <span class="hero-line hero-line-2">Line two</span></h1>
-    <div data-hero-rig>
-      <svg data-sling><path data-sling-leg></path><path data-sling-leg></path></svg>
-      <div><div data-hero-load><a href="https://wa.me/1" data-sling-button>WhatsApp</a></div></div>
-    </div>
+    <div data-hero-rig aria-hidden="true"></div>
   </section>`;
 
 const q = (selector: string) => document.querySelector<HTMLElement>(selector)!;
@@ -26,8 +24,6 @@ const inlineStyles = () =>
 
 beforeEach(() => {
   document.body.innerHTML = HERO;
-  // jsdom has no layout: give the legs their drop so the intro has something to pay out.
-  q('svg[data-sling]').getBoundingClientRect = () => new DOMRect(0, 0, 60, 80);
 });
 
 afterEach(() => {
@@ -40,15 +36,13 @@ describe('heroIntro (direction B)', () => {
     expect(() => heroIntro(ENV)()).not.toThrow();
   });
 
-  it('sets its from-states synchronously, and never touches the photo or the H1 (the LCP element)', () => {
+  it('luffs the cut from half-raked, and never touches the photo, the H1 (the LCP element) or the hook point', () => {
     const dispose = heroIntro(ENV);
     expect(q('[data-hero-field]').style.getPropertyValue('--luff')).toBe('0.5');
-    expect(q('svg[data-sling]').style.transform).toContain('scale');
-    expect(q('[data-hero-load]').style.transform).toContain('translate');
     expect(q('[data-hero-photo] img').getAttribute('style')).toBeNull();
     expect(q('[data-hero-photo] picture').getAttribute('style')).toBeNull();
     expect(q('h1').getAttribute('style')).toBeNull();
-    expect(q('[data-sling-button]').getAttribute('style')).toBeNull(); // tappable from the first frame
+    expect(q('[data-hero-rig]').getAttribute('style')).toBeNull();
     dispose();
   });
 
@@ -75,5 +69,4 @@ describe('heroIntro (direction B)', () => {
     expect(LIVE_PHOTO).toEqual(HERO_PHOTO);
     for (const photo of Object.values(HERO_PHOTO)) expect(ROPE_TOP[photo]).toBeDefined();
   });
-
 });

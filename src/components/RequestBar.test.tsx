@@ -10,7 +10,7 @@ const mockEnv = vi.hoisted(() => ({
   formEndpoint: null as string | null,
   ga4Id: null as string | null,
 }));
-vi.mock('@/env', () => ({ env: mockEnv, isDraft: (verified: boolean) => !verified && mockEnv.target !== 'production' }));
+vi.mock('@/env', () => ({ env: mockEnv }));
 
 import { getRequestedCrane, setRequestedCrane } from '@/lib/request';
 import { click, mount, renderHtml } from '@/test/render';
