@@ -5,15 +5,18 @@ import { renderHtml } from '@/test/render';
 import { HERO_PHOTO, Hero, PORTRAIT, hookCss, hookSide } from './Hero';
 
 describe('Hero (direction B, "The Luff")', () => {
-  it('is #top with one H1 that holds both clauses, and nothing above the heading (spec §16.1)', () => {
+  it('is #top with one H1 of two lines (Atlas, 11 Nov 2026), and nothing above the heading (spec §16.1)', () => {
     for (const lang of ['ar', 'en'] as const) {
       const html = renderHtml(<Hero />, lang);
       expect(html.querySelector('section#top[data-hero][data-ground="dark"]')).not.toBeNull();
       const h1 = html.querySelector('h1#hero-title');
       expect(h1?.textContent?.replace(/\s+/g, ' ')).toBe(
+        lang === 'ar' ? 'شريك تشغيلي يواكب احتياجات المشاريع' : 'An operating partner for every project’s needs',
+      );
+      expect([...h1!.children].map((line) => [line.className, line.textContent])).toEqual(
         lang === 'ar'
-          ? 'من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة'
-          : 'From smaller cranes to the largest ones, every project has the right crane.',
+          ? [['hero-line hero-line-1', 'شريك تشغيلي'], ['hero-line hero-line-2', 'يواكب احتياجات المشاريع']]
+          : [['hero-line hero-line-1', 'An operating partner'], ['hero-line hero-line-2', 'for every project’s needs']],
       );
       expect(h1?.parentElement?.previousElementSibling?.matches('.hero-fields')).toBe(true);
       // The H1 is the LCP element: nothing in the hero is a reveal or pre-hidden by the motion layer.
@@ -21,9 +24,9 @@ describe('Hero (direction B, "The Luff")', () => {
     }
   });
 
-  it('reads H1 → WhatsApp → services → Browse, in that order (WCAG 2.4.3)', () => {
+  it('reads H1 → WhatsApp → lead → Browse, in that order (WCAG 2.4.3)', () => {
     const html = renderHtml(<Hero />, 'ar');
-    const order = ['h1#hero-title', '[data-sling-button]', '.hero-services', 'a[href="#cranes"]'].map((s) => html.querySelector(s)!);
+    const order = ['h1#hero-title', '[data-sling-button]', 'p.hero-sub', 'a[href="#cranes"]'].map((s) => html.querySelector(s)!);
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
@@ -56,10 +59,10 @@ describe('Hero (direction B, "The Luff")', () => {
     expect(renderHtml(<Hero />, 'ar').querySelector('[data-testid="hero-whatsapp"]')).toBeNull(); // both crops have a hook
   });
 
-  it('maps the hook for a bottom-anchored cover image (6398 desktop: dx 1106, dy 1085)', () => {
+  it('maps the hook for a bottom-anchored cover image filling the first screen (6398 desktop: dx 1106, dy 1085)', () => {
     expect(hookCss(getImage('6398', 'desktop_16x9'))).toEqual({
-      x: 'calc(50cqw + 1106 * max(100cqw / 4240, 100cqh / 2385))',
-      y: 'calc(100cqh - 1085 * max(100cqw / 4240, 100cqh / 2385))',
+      x: 'calc(50cqw + 1106 * max(100cqw / 4240, var(--stage) / 2385))',
+      y: 'calc(var(--stage) - 1085 * max(100cqw / 4240, var(--stage) / 2385))',
     });
   });
 
@@ -85,11 +88,16 @@ describe('Hero (direction B, "The Luff")', () => {
     expect(browse?.getAttribute('href')).toBe('#cranes');
   });
 
-  it('never splits "Oil services" across lines, and gives screen readers commas, not dots', () => {
-    const html = renderHtml(<Hero />, 'ar');
-    const items = [...html.querySelectorAll('.hero-service')];
-    expect(items.map((el) => el.firstChild?.textContent)).toEqual(['تأجير الرافعات', 'النقل الثقيل', 'المناولة', 'الخدمات النفطية']);
-    expect(html.querySelectorAll('.hero-services .sr-only')).toHaveLength(3);
-    expect(html.querySelectorAll('.hero-dot[aria-hidden="true"]')).toHaveLength(3);
+  it('sets Atlas’s lead as one plain paragraph in the foot, then Browse cranes on its own row', () => {
+    for (const lang of ['ar', 'en'] as const) {
+      const foot = renderHtml(<Hero />, lang).querySelector('.hero-foot')!;
+      expect([...foot.children].map((el) => el.matches('p.hero-sub') || el.matches('a.hero-browse[href="#cranes"]'))).toEqual([true, true]);
+      expect(foot.querySelector('p.hero-sub')?.textContent).toBe(
+        lang === 'ar'
+          ? 'من الرافعات والنقل الثقيل إلى المناولة والخدمات النفطية، توفّر أطلس الصحراء خدمات تدعم احتياجات مواقع العمل وتسهم في إنجاز المهام بكفاءة وانسيابية.'
+          : 'From cranes and heavy transport to handling and oil services, Atlas Alshraa provides services that support worksite needs and help get the work done efficiently and smoothly.',
+      );
+      expect(foot.querySelector('.hero-services, .hero-dot, h2, h3')).toBeNull(); // the old services line is gone
+    }
   });
 });

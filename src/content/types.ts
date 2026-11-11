@@ -138,9 +138,9 @@ export interface Copy {
 
   /** Copy deck §3 + spec §5.2 and §15.1. */
   hero: {
-    h1Lead: string; // first clause, set smaller
-    h1Main: string; // second clause, set large
-    servicesLine: string; // renders BELOW the H1 (deck "Eyebrow"; spec §15.1)
+    /** The headline, two lines, short then long (they climb the rake). Atlas's direction of 11 Nov 2026. */
+    h1: readonly [string, string];
+    lead: string; // the thin, small line under the H1 (after the WhatsApp load in reading order)
     whatsapp: string; // the button on the sling
     browse: string; // secondary button → #cranes (spec §5.2)
   };

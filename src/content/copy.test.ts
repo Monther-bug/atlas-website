@@ -70,9 +70,22 @@ describe('copy', () => {
     }
   });
 
-  it('uses Atlas’s own tagline as the H1', () => {
-    expect(`${ar.hero.h1Lead} ${ar.hero.h1Main}`).toBe('من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة');
-    expect(`${en.hero.h1Lead} ${en.hero.h1Main}`).toBe('From smaller cranes to the largest ones, every project has the right crane.');
+  it('uses Atlas’s headline of 11 Nov 2026 as the H1 (two lines, short then long) and its lead under it', () => {
+    expect(ar.hero.h1).toEqual(['شريك تشغيلي', 'يواكب احتياجات المشاريع']);
+    expect(en.hero.h1).toEqual(['An operating partner', 'for every project’s needs']);
+    for (const copy of [ar, en]) expect(copy.hero.h1[0].length).toBeLessThan(copy.hero.h1[1].length);
+    expect(ar.hero.lead).toBe(
+      'من الرافعات والنقل الثقيل إلى المناولة والخدمات النفطية، توفّر أطلس الصحراء خدمات تدعم احتياجات مواقع العمل وتسهم في إنجاز المهام بكفاءة وانسيابية.',
+    );
+    expect(en.hero.lead).toBe(
+      'From cranes and heavy transport to handling and oil services, Atlas Alshraa provides services that support worksite needs and help get the work done efficiently and smoothly.',
+    );
+  });
+
+  it('closes the footer with the same line, not the old crane-only slogan', () => {
+    expect(ar.footer.tagline).toBe('شريك تشغيلي يواكب احتياجات المشاريع.');
+    expect(en.footer.tagline).toBe('An operating partner for every project’s needs.');
+    for (const copy of [ar, en]) expect(copy.footer.tagline).toBe(`${copy.hero.h1.join(' ')}.`);
   });
 
   it('uses the same {placeholders} in both languages', () => {

@@ -80,8 +80,8 @@ Also in the code (not visible on the page): `cranes.ts` has a `[[CAPACITY:CKE250
 
 | # | Item | Where it appears | What changes when you supply it |
 |---|---|---|---|
-| B1 | [ ] **Phone number** (international format, e.g. +218 9X XXX XXXX) | Header "Call" button, contact panel, footer, call link next to WhatsApp | The Call button and phone line appear. Required for production. |
-| B2 | [ ] **WhatsApp number** (digits only, with country code) | Every WhatsApp button, the floating request bar, the form's WhatsApp option | Messages open a chat with this number, with the chosen crane already written in. Required for production. |
+| B1 | [x] **Phone number** (international format, e.g. +218 9X XXX XXXX). **Supplied 11 Nov 2026: 0926367570, +218 92 636 7570.** | Header "Call" button, contact panel, footer, call link next to WhatsApp | The Call button and phone line appear. Required for production. Done: the build uses it by default (`VITE_PHONE`). |
+| B2 | [x] **WhatsApp number** (digits only, with country code). **Supplied 11 Nov 2026: the same number, 218926367570.** | Every WhatsApp button, the floating request bar, the form's WhatsApp option, the not-found page | Messages open a chat with this number, with the chosen crane already written in. Required for production. Done: the build uses it by default (`VITE_WHATSAPP`). |
 | B3 | [ ] **Address** (city and street, in Arabic and English) and opening hours, if any | Contact panel and footer | The address line appears in both. Until then none is shown. |
 | B4 | [ ] **Domain name** (for example atlasalsahra.ly) | Page addresses, social previews, sitemap, search results | Canonical links, sitemap and previews use your domain. Required for production. |
 | B5 | [ ] **Who receives form requests**: an email inbox or a form service account | The request form | With a form endpoint the form sends directly and shows a success message. Without one, the form opens WhatsApp with the request written out. Either works; tell us which you prefer. |

@@ -11,7 +11,7 @@ const HERO = `
   <section id="top" data-hero>
     <div data-hero-photo><picture><img alt="crane" src="x.webp"></picture></div>
     <div data-hero-field></div>
-    <h1 id="hero-title"><span class="hero-line">Lead,</span> <span class="hero-line">Main line</span></h1>
+    <h1 id="hero-title"><span class="hero-line hero-line-1">Line one</span> <span class="hero-line hero-line-2">Line two</span></h1>
     <div data-hero-rig>
       <svg data-sling><path data-sling-leg></path><path data-sling-leg></path></svg>
       <div><div data-hero-load><a href="https://wa.me/1" data-sling-button>WhatsApp</a></div></div>

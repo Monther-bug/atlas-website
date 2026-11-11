@@ -6,7 +6,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build, loadEnv } from 'vite';
-import { buildSitemap, fillSiteUrl, normalizeSiteUrl } from './lib/seo.mjs';
+import { buildSitemap, fillSiteUrl, normalizeSiteUrl, siteUrlFromEnv } from './lib/seo.mjs';
 import { dropDuplicateLinks, extractLeadingLinks, fillNotFound, findTokens, injectApp, injectHead, resolveBuildTarget } from './lib/prerender-helpers.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -17,7 +17,9 @@ const MODE = 'production';
 // BUILD_TARGET may come from the shell or from .env files, exactly as in vite.config.ts.
 const TARGET = resolveBuildTarget(process.env, loadEnv(MODE, ROOT, ''));
 const FILE_ENV = loadEnv(MODE, ROOT, '');
-const SITE_URL = normalizeSiteUrl(process.env.VITE_SITE_URL || process.env.SITE_URL || FILE_ENV.VITE_SITE_URL || FILE_ENV.SITE_URL);
+// Resolved here, before the SSR build below runs vite.config.ts: the same order as there (shell, then .env files, then
+// the Vercel production domain), so sitemap.xml and robots.txt match the pages' canonical links.
+const SITE_URL = normalizeSiteUrl(siteUrlFromEnv(process.env, FILE_ENV));
 const LASTMOD = process.env.SITEMAP_LASTMOD ?? new Date().toISOString().slice(0, 10);
 const PAGES = [
   { lang: 'ar', file: 'index.html' },
@@ -70,7 +72,8 @@ try {
   }
   // The templates themselves are not pages.
   for (const rel of Object.values(CRANE_TEMPLATES)) await rm(path.join(DIST, rel), { force: true });
-  // The 404 page: no React, only its two contact markers (WhatsApp when configured, else email).
+  // The 404 page: no React, only its two contact markers (WhatsApp when configured, else email). VITE_WHATSAPP is set
+  // by now even with no .env: the SSR build above ran vite.config.ts, whose syncEnv defaults it to Atlas's number.
   const notFound = path.join(DIST, '404.html');
   const nfHtml = fillNotFound(await readFile(notFound, 'utf8'), {
     whatsapp: process.env.VITE_WHATSAPP || FILE_ENV.VITE_WHATSAPP,

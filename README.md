@@ -68,9 +68,9 @@ Set them in the shell, in a git-ignored `.env.local` / `.env.production`, or in 
 | Variable | What it does | When unset |
 |---|---|---|
 | `BUILD_TARGET` | `staging` or `production`. Production turns the **truth gate** on and hides the draft tags. | `staging` (also for any other value, with a warning). |
-| `SITE_URL` (or `VITE_SITE_URL`) | Public address, e.g. `https://atlasalsahra.ly`, no trailing path. Used for canonical and `hreflang` links, Open Graph, the structured data, `sitemap.xml` and `robots.txt`. | Falls back to `http://localhost:4173`, which is wrong for any real deployment. **Production build fails** without a public `https` URL. |
-| `VITE_WHATSAPP` | Atlas's WhatsApp number, **digits only with country code** (e.g. `2189XXXXXXXX`). Drives every WhatsApp button and the pre-filled messages (`https://wa.me/<number>?text=...`). | WhatsApp links open without a number and the form hand-off uses email. **Production build fails.** |
-| `VITE_PHONE` | Phone for the Call button, with `+` (e.g. `+2189XXXXXXXX`). | No Call button or phone line. **Production build fails.** |
+| `SITE_URL` (or `VITE_SITE_URL`) | Public address, e.g. `https://atlasalsahra.ly`, no trailing path. Used for canonical and `hreflang` links, Open Graph, the structured data, `sitemap.xml` and `robots.txt`. | On Vercel: `https://` + the project's production domain (Vercel's system variable `VERCEL_PROJECT_PRODUCTION_URL`, e.g. `https://atlas-websitely.vercel.app`). Elsewhere: `http://localhost:4173`, which is wrong for any real deployment. **Production build fails** without a public `https` URL. Set it once Atlas's own domain is live. |
+| `VITE_WHATSAPP` | Atlas's WhatsApp number, **digits only with country code** (e.g. `2189XXXXXXXX`). Drives every WhatsApp button, the 404 page's contact button and the pre-filled messages (`https://wa.me/<number>?text=...`). | `218926367570`: the number Atlas confirmed on 11 Nov 2026 (`vite.config.ts`, `syncEnv`). Set the variable only to use a different number. |
+| `VITE_PHONE` | Phone for the Call button, with `+` (e.g. `+2189XXXXXXXX`; spaces are fine). | `+218 92 636 7570`, the same confirmed number. |
 | `VITE_FORM_ENDPOINT` | URL the request form POSTs JSON to (a form service or Atlas's own endpoint). Must answer 2xx. | No backend: the form validates, then opens WhatsApp (or an email in staging) with the request written out. This is a supported setup. If you set it, **add its origin to `connect-src` in `vercel.json`** or the browser will block the POST. |
 | `VITE_GA4_ID` | Google Analytics 4 measurement ID (`G-XXXXXXXXXX`). | No analytics script loads and no event is sent. |
 
@@ -96,7 +96,7 @@ The site must never publish an unconfirmed fact. Two build targets enforce that:
   1. a crane that is shown but has `verified: false` in `src/content/cranes.ts`;
   2. any `[[...]]` token left in `ar.ts`, `en.ts` (and, at prerender, in `why.ts` text);
   3. `SITE_URL` missing or not a public `https` address;
-  4. `VITE_WHATSAPP` or `VITE_PHONE` missing.
+  4. `VITE_WHATSAPP` or `VITE_PHONE` missing (they default to Atlas's confirmed number, so only an override can empty them).
 
 Try it any time: `npm run build:production`. The error is the to-do list.
 
@@ -152,7 +152,7 @@ export const siteInfo: SiteInfo = {
 };
 ```
 
-Phone and WhatsApp come from the environment, not from this file.
+Phone and WhatsApp come from the environment, not from this file (with Atlas's confirmed number as the default; see "Environment variables").
 
 **To publish documents:** put the PDFs in `public/docs/` (create it) and add one entry each. The section appears (Arabic and English) as soon as the array has one entry; nothing else to change.
 
@@ -251,7 +251,7 @@ The build output is `dist/`: `index.html` (Arabic), `en/index.html`, `cranes/<id
 `vercel.json` already sets: build `npm run build`, output `dist`, clean URLs with trailing slash (`/en/`), cache headers and security headers.
 
 1. Import the repository in Vercel. Framework preset: Other (the file already says so).
-2. Project Settings > Environment Variables: set `SITE_URL`, `VITE_WHATSAPP`, `VITE_PHONE`, `VITE_FORM_ENDPOINT`, `VITE_GA4_ID`. **For the Production environment also set `BUILD_TARGET=production`.** Leave `BUILD_TARGET` unset (or `staging`) for Preview.
+2. Project Settings > Environment Variables: set `SITE_URL` (once the real domain exists; until then the build uses the project's `*.vercel.app` production domain), `VITE_FORM_ENDPOINT`, `VITE_GA4_ID` (`VITE_WHATSAPP` and `VITE_PHONE` only to replace Atlas's number). **For the Production environment also set `BUILD_TARGET=production`.** Leave `BUILD_TARGET` unset (or `staging`) for Preview. Keep "Automatically expose System Environment Variables" on (the default) so the build can read `VERCEL_PROJECT_PRODUCTION_URL`.
 3. Project Settings > Deployment Protection: password-protect **Preview** deployments (they are indexable drafts).
 4. Add the real domain to the Production environment only.
 5. Before pointing the domain, run `npm run build:production` locally or read the Production build log: it must pass the truth gate.

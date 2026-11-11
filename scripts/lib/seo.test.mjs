@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { buildSitemap, fillSiteUrl, normalizeSiteUrl } from './seo.mjs';
+import { buildSitemap, fillSiteUrl, normalizeSiteUrl, siteUrlFromEnv } from './seo.mjs';
 
 const EXPECTED_SITEMAP =
   [
@@ -33,6 +33,25 @@ describe('normalizeSiteUrl', () => {
   });
   it('rejects a value without a scheme', () => {
     expect(() => normalizeSiteUrl('atlas.example')).toThrow(/http/);
+  });
+});
+
+describe('siteUrlFromEnv', () => {
+  it('uses VITE_SITE_URL, then SITE_URL, from the shell before the .env files', () => {
+    expect(siteUrlFromEnv({ VITE_SITE_URL: 'https://a.example', SITE_URL: 'https://b.example' })).toBe('https://a.example');
+    expect(siteUrlFromEnv({ SITE_URL: 'https://b.example' }, { VITE_SITE_URL: 'https://file.example' })).toBe('https://b.example');
+    expect(siteUrlFromEnv({}, { SITE_URL: 'https://file.example' })).toBe('https://file.example');
+  });
+  it('falls back to the Vercel production domain when no address is set', () => {
+    expect(siteUrlFromEnv({ VERCEL_PROJECT_PRODUCTION_URL: 'atlas-websitely.vercel.app' })).toBe('https://atlas-websitely.vercel.app');
+    expect(siteUrlFromEnv({ SITE_URL: ' ', VERCEL_PROJECT_PRODUCTION_URL: 'atlas-websitely.vercel.app' })).toBe('https://atlas-websitely.vercel.app');
+  });
+  it('never lets the Vercel domain override a set address', () => {
+    expect(siteUrlFromEnv({ SITE_URL: 'https://atlas.example', VERCEL_PROJECT_PRODUCTION_URL: 'atlas-websitely.vercel.app' })).toBe('https://atlas.example');
+  });
+  it('is undefined locally, so normalizeSiteUrl keeps the localhost default', () => {
+    expect(siteUrlFromEnv({}, {})).toBeUndefined();
+    expect(normalizeSiteUrl(siteUrlFromEnv({ VERCEL_PROJECT_PRODUCTION_URL: '' }))).toBe('http://localhost:4173');
   });
 });
 

@@ -14,6 +14,27 @@ export function normalizeSiteUrl(raw) {
   return value.replace(/\/+$/, '');
 }
 
+/**
+ * The site address from the environment, before normalizeSiteUrl: VITE_SITE_URL, then SITE_URL (the shell first, then
+ * the .env files). With neither set, on Vercel, the project's production domain: the system variable
+ * VERCEL_PROJECT_PRODUCTION_URL (a bare host, e.g. atlas-websitely.vercel.app), so a Vercel build never ships
+ * canonical, hreflang, Open Graph and sitemap links to localhost. Undefined otherwise (normalizeSiteUrl then uses the
+ * local preview address). Used by vite.config.ts and scripts/prerender.mjs.
+ */
+export function siteUrlFromEnv(env, fileEnv = {}) {
+  for (const source of [env, fileEnv]) {
+    for (const key of ['VITE_SITE_URL', 'SITE_URL']) {
+      const value = String(source?.[key] ?? '').trim();
+      if (value) return value;
+    }
+  }
+  const host = String(env?.VERCEL_PROJECT_PRODUCTION_URL || fileEnv?.VERCEL_PROJECT_PRODUCTION_URL || '')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '');
+  return host ? `https://${host}` : undefined;
+}
+
 /** Replaces every %SITE_URL% placeholder (index.html heads, public/robots.txt). */
 export function fillSiteUrl(text, siteUrl) {
   return text.replaceAll('%SITE_URL%', siteUrl);

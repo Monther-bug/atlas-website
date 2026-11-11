@@ -34,7 +34,7 @@ describe('Footer', () => {
   });
 
   it('closes with the positioning line and the one action', () => {
-    expect(html.querySelector('footer p.t-headline')?.textContent).toBe('لكل مشروع رافعته المناسبة.'); // headline size: never louder than the hero H1
+    expect(html.querySelector('footer p.t-headline')?.textContent).toBe('شريك تشغيلي يواكب احتياجات المشاريع.'); // headline size: never louder than the hero H1
     const request = html.querySelector('footer a[href="#request"]');
     expect(request?.textContent).toBe('اطلب رافعة');
     expect(request?.className).toContain('bg-red');

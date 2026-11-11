@@ -70,11 +70,16 @@ Character counts were checked (limit 155 per language): title 52 AR / 55 EN; met
 
 ## 3. Hero
 
+**Atlas's direction of 11 Nov 2026** (notes on the live site): the headline was a bit big, and Atlas is not only cranes, so the crane-only line leaves the hero. A new two-line H1, set a little smaller, and a thin, small line under it. This **supersedes** the earlier H1 «من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة» / "From smaller cranes to the largest ones, every project has the right crane.", the services eyebrow and the sub-line, which are no longer used in the hero.
+
 | Element | العربية | English |
 |---|---|---|
-| Eyebrow | تأجير الرافعات · النقل الثقيل · المناولة · الخدمات النفطية | Crane hire · Heavy transport · Handling · Oil services |
-| H1 (Atlas's own line, verbatim) | من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة | From smaller cranes to the largest ones, every project has the right crane. |
-| Sub-line | أرسل لنا وزن الحمولة وموقع العمل، ونخبرك بالرافعة التي تناسب عملك. | Send us the load weight and the site location. We will tell you which crane fits the job. |
+| H1, line 1 (`hero.h1[0]`; Atlas, 11 Nov 2026) | شريك تشغيلي | An operating partner |
+| H1, line 2 (`hero.h1[1]`) | يواكب احتياجات المشاريع | for every project’s needs |
+| Lead under the H1, thin and small (`hero.lead`; Atlas, 11 Nov 2026; read after the WhatsApp button) | من الرافعات والنقل الثقيل إلى المناولة والخدمات النفطية، توفّر أطلس الصحراء خدمات تدعم احتياجات مواقع العمل وتسهم في إنجاز المهام بكفاءة وانسيابية. | From cranes and heavy transport to handling and oil services, Atlas Alshraa provides services that support worksite needs and help get the work done efficiently and smoothly. |
+| ~~Eyebrow~~ (superseded 11 Nov 2026) | ~~تأجير الرافعات · النقل الثقيل · المناولة · الخدمات النفطية~~ | ~~Crane hire · Heavy transport · Handling · Oil services~~ |
+| ~~H1 (Atlas's Facebook line)~~ (superseded 11 Nov 2026) | ~~من الرافعات الصغيرة للكبيرات، لكل مشروع رافعته المناسبة~~ | ~~From smaller cranes to the largest ones, every project has the right crane.~~ |
+| ~~Sub-line~~ (never built; superseded) | ~~أرسل لنا وزن الحمولة وموقع العمل، ونخبرك بالرافعة التي تناسب عملك.~~ | ~~Send us the load weight and the site location. We will tell you which crane fits the job.~~ |
 | Button 1 (primary) → WhatsApp, template A | راسلنا على واتساب | WhatsApp us |
 | Button 2 (secondary) → contact form | اطلب عرض سعر | Request a quote |
 | Readout chip label (HIDDEN UNTIL DATA) | نطاق السعة | Capacity range |
@@ -733,7 +738,7 @@ I just sent a request through your website. Name: {name}, phone: {phone}.
 |---|---|---|
 | Name (as on the logo) | أطلس الصحراء للخدمات النفطية | Atlas Alshraa · For oil services |
 | Legal name | شركة أطلس الصحراء المساهمة للخدمات النفطية والنقل الثقيل والمناولة وتأجير الرافعات (الكرينات). | Atlas Alshraa Joint-Stock Company for Oil Services, Heavy Transport, Handling and Crane Hire. [[CONFIRM: English spelling]] |
-| Tagline | لكل مشروع رافعته المناسبة. | Every project has the right crane. |
+| Tagline (the hero's H1 as one sentence; Atlas's direction of 11 Nov 2026, replacing «لكل مشروع رافعته المناسبة.» / "Every project has the right crane.") | شريك تشغيلي يواكب احتياجات المشاريع. | An operating partner for every project’s needs. |
 | Column heading | الخدمات | Services |
 | Links | تأجير الرافعات / النقل الثقيل / المناولة / الخدمات النفطية | Crane hire / Heavy transport / Handling and rigging / Oil services |
 | Column heading | في هذه الصفحة | On this page |
@@ -786,8 +791,8 @@ Every token above, grouped by what it blocks.
 
 **A. Blocks launch**
 
-- [ ] `[[PHONE]]`: header Call button, contact panel, footer, click-to-call next to WhatsApp.
-- [ ] `[[WHATSAPP]]` and `[[WHATSAPP_INTL]]` (international format, digits only): every WhatsApp button and template.
+- [x] `[[PHONE]]`: header Call button, contact panel, footer, click-to-call next to WhatsApp. **Supplied 11 Nov 2026: 0926367570 (+218 92 636 7570).**
+- [x] `[[WHATSAPP]]` and `[[WHATSAPP_INTL]]` (international format, digits only): every WhatsApp button and template. **Supplied 11 Nov 2026: 218926367570.**
 - [ ] `[[CITY]]` and `[[ADDRESS]]`: contact panel and footer.
 - [ ] `[[MAP_PIN]]`: "Open in Google Maps" link.
 - [ ] `[[HOURS]]`: contact panel and footer.
@@ -795,7 +800,7 @@ Every token above, grouped by what it blocks.
 - [ ] `[[DOMAIN]]`: canonical and `og:url`.
 - [ ] English spelling of the name: "Atlas Alshraa" (logo), "Al-Sahraa" (correct transliteration) or "alsahra" (email). The deck uses "Atlas Alshraa" for now.
 - [ ] Approval of the positioning: crane hire, heavy transport, handling and oil services (not equipment trading).
-- [ ] Approval to use the Facebook tagline as the H1, and the line «تواصلوا معانا وخلي الباقي علينا» in the contact section.
+- [ ] ~~Approval to use the Facebook tagline as the H1~~ (superseded: Atlas gave a new H1 on 11 Nov 2026, §3), and the line «تواصلوا معانا وخلي الباقي علينا» in the contact section.
 - [ ] Logo source file and approval of the badge + typeset name lockup.
 - [ ] Clean photo exports without the watermark (needed for IMG_6374, the hero on mobile and the `og:image`).
 

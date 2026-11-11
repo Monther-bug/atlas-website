@@ -39,7 +39,7 @@ Atlas's own claim, published on Facebook on 29 Oct 2026: «من الرافعات
 
 - **Services, from the legal name:** crane hire · heavy transport · handling (المناولة) · oil services.
 - **Crane models visible in Atlas's photos:** Grove RT700E, Tadano Faun ATF 60-3, Terex AC200-1, Fuwa QUY250, Grove GMK6350, and a Kobelco CKE2500 that carries another company's branding and stays hidden. **Ownership, quantities and capacities are not yet confirmed by Atlas.** The site uses manufacturer ratings behind a truth gate that blocks a production build until they are verified.
-- **Confirmed contact:** atlasalsahralibya@gmail.com and the Facebook page. **Not yet supplied:** phone, WhatsApp number, address, domain.
+- **Confirmed contact:** atlasalsahralibya@gmail.com, the Facebook page, and the phone and WhatsApp number 0926367570 (+218 92 636 7570; Atlas, 11 Nov 2026). **Not yet supplied:** address, domain.
 - **Commercial frame:** one page, Arabic + English, 10 working days (proposal PRP-ATL-2611-001).
 - **Undecided:** the English spelling of the name ("Alshraa" on the logo, "alsahra" in the email), and which documents can be published.
 

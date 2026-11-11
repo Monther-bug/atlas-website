@@ -2,7 +2,9 @@
    Everything tied to the photo uses physical left/top (photos are never mirrored, so the hook is at the same x in both
    languages); text uses logical sides. Geometry is CSS calc() in container units, so it renders in the prerender.
    Breakpoint: portrait viewports use the 9:16 crop and the "-m" values, landscape the 16:9 crop and "-d"
-   (Hero.tsx PORTRAIT); the query is shape, not width, so upright tablets keep the hook on screen. */
+   (Hero.tsx PORTRAIT); the query is shape, not width, so upright tablets keep the hook on screen.
+   Text: portrait sets the headline and the foot as one column in flow, bottom-anchored under the cut; landscape sets
+   them on the rake, absolutely, from an estimate of the foot's height (--foot). */
 
 @property --luff {
   syntax: '<number>';
@@ -19,6 +21,8 @@
   /* the real hook, per crop (Hero.tsx sets -d / -m) */
   --hx: var(--hx-m);
   --hy: var(--hy-m);
+  /* the first screen: the photo's box, and the height the hook is mapped into (Hero.tsx hookCss) */
+  --stage: max(100svh, 34rem);
   --edge: clamp(1rem, 4vw, 3.5rem);
   /* the load */
   --spread: clamp(1.5rem, 3vw, 3rem);
@@ -30,21 +34,25 @@
   --k: 0.12;
   --m: clamp(0.75rem, 1.6vw, 1.5rem);
   --padb: clamp(1rem, 3svh, 2.5rem);
-  /* the foot's height (services + "Browse" in one wrapping row): two lines in portrait, one in landscape */
-  --foot: 5.25rem;
-  /* the headline: main size F, every line metric in units of F */
-  --F: clamp(1.75rem, min(9.6vw, 5svh), 3.75rem);
+  /* the headline: size F (.hero-text sets it from F0), every line metric in units of F. Client note of 11 Nov 2026:
+     a bit smaller than before. --w1 / --w2: the two lines' widths in F, measured for that headline (Tajawal 800 and
+     Poppins 700, −0.03em, plus 1–2 %); re-measure them if the headline changes. Phones: line 2 fits 100vw − 2 rem
+     with a few per cent to spare down to 280 px (7.6vw Arabic, 7.2vw English). */
+  --F0: clamp(1.25rem, min(7.6vw, 4.6svh), 2.75rem);
   --lh: 1.25;
-  --leadsize: 0.5;
-  --leadlh: 1.5;
-  --leadlines: 1;
-  --g: 0.1;
-  /* space between the headline and the foot */
+  --w1: 6.8;
+  --w2: 11.5;
+  /* the lead: thin and small; Tajawal draws smaller per em than Poppins, so Arabic is a step larger */
+  --subsize: clamp(0.95rem, 0.9rem + 0.25vw, 1.125rem);
+  --sublh: 1.7;
+  --footgap: 0.25rem;
+  /* space between the headline and the foot; portrait: the least space between the cut and the headline */
   --gapf: clamp(0.5rem, 1.5svh, 1.25rem);
+  --gapc: clamp(1rem, 3svh, 2rem);
   --yc: calc(var(--hy) + var(--drop) + var(--loadh) + var(--clear));
   position: relative;
   /* the photo covers the whole first viewport (under the header): Chrome then treats it as background for LCP */
-  height: max(100svh, 34rem);
+  height: var(--stage);
   container-type: size;
   overflow: clip;
   isolation: isolate;
@@ -52,15 +60,25 @@
   color: var(--color-white);
 }
 .hero:lang(en) {
-  --foot: 4.5rem;
-  --F: clamp(1.75rem, min(8.4vw, 4.2svh), 3.5rem);
+  --F0: clamp(1.25rem, min(7.2vw, 4.4svh), 2.625rem);
   --lh: 1.06;
-  --leadsize: 0.5;
-  --leadlh: 1.4;
+  --w1: 10.35;
+  --w2: 12.05;
+  --subsize: clamp(0.9375rem, 0.875rem + 0.2vw, 1.0625rem);
+  --sublh: 1.6;
 }
 /* the cut sits on the text's end side (English phones, hook right of centre): nearly flat, the text below it */
 .hero[data-cut-m='end'] {
   --k: 0.04;
+}
+@media (max-aspect-ratio: 1/1) and (min-width: 600px) {
+  /* upright tablets: the headline grows with the field */
+  .hero {
+    --F0: clamp(2rem, min(6.8vw, 5svh), 3.5rem);
+  }
+  .hero:lang(en) {
+    --F0: clamp(2rem, min(6.4vw, 4.6svh), 3.25rem);
+  }
 }
 @media (min-aspect-ratio: 1001/1000) {
   .hero {
@@ -71,17 +89,30 @@
     /* room for the live swing (±1.7°, about 15 px) between the load and the navy plane */
     --clear: clamp(1.5rem, 2.6svh + 0.75rem, 3rem);
     --loadh: 3.5rem;
-    --foot: 3.5rem;
-    --F: clamp(2.5rem, min(5.4vw, 8svh), 5.375rem);
-    --leadsize: 0.5;
+    --F0: clamp(2.25rem, min(4.4vw, 6.4svh), 4.5rem);
+    /* the foot's height: the lead (--sublines lines), a gap, "Browse cranes" (44 px) on its own row. An estimate (CSS
+       cannot measure the lead): the headline sits on it, and the foot hangs from its top (--fy), where its width is
+       bounded by the cut. So the lead never reaches the headline or the cut whatever it wraps to; a lead longer than
+       the estimate pushes "Browse" down into the bottom padding (and past it, out of the hero), a shorter one leaves
+       the spare line under "Browse". Over is the safe side: count --sublines for the narrowest foot of each range. */
+    --sublines: 2;
+    --foot: calc(var(--sublines) * var(--sublh) * var(--subsize) + var(--footgap) + 2.75rem);
   }
   .hero:lang(en) {
     --k: 0.5;
-    --F: clamp(2.5rem, min(4.4vw, 7svh), 5rem);
-    --leadsize: 0.46;
+    /* English landscape is set by width: its first line steps 2.1 F along the k .5 cut and is nearly as long as the
+       second, so the pair needs 12.4 F beside the cut (and .hero-text caps F to the room there) */
+    --F0: clamp(2rem, min(3.4vw, 5.6svh), 4rem);
+    --sublines: 3;
   }
   .hero[data-cut-d='end'] {
     --k: 0.08;
+  }
+}
+@media (min-aspect-ratio: 1001/1000) and (max-width: 1279px) {
+  /* narrower landscape (iPad, small laptops): the English foot, between the k .5 cut and the edge, wraps to 4 lines */
+  .hero:lang(en) {
+    --sublines: 4;
   }
 }
 
@@ -122,7 +153,8 @@
 .hero-photo,
 .hero-gl {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto;
+  height: var(--stage);
 }
 .hero-photo {
   z-index: 0;
@@ -192,31 +224,26 @@
   clip-path: polygon(0 calc(var(--pl) - var(--lift)), 100% calc(var(--pr) - var(--lift)), 100% 100%, 0 100%);
 }
 
-/* ── The headline, set on the rake. The block sits on the foot; its last (longest) line starts on the cut and each
-   line above starts further along it by (its height ÷ k). Lines never wrap: F is sized so they fit. ── */
+/* ── The headline. Portrait: a block in the column below (flush start edge, the rake stays in the field's shape).
+   Landscape: set on the rake. The block sits on the foot; its last (longest) line starts on the cut and each line
+   above starts further along it by (its height ÷ k). Lines never wrap: F is sized so they fit. ── */
 .hero-text {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  bottom: calc(var(--padb) + var(--foot) + var(--gapf));
+  margin-inline: var(--edge);
+  --F: var(--F0);
   font-size: var(--F);
-  --ylast: calc(100cqh - var(--padb) - var(--foot) - var(--gapf) - var(--lh) * var(--F));
-  /* near right: the cut is x = (y − yl) ÷ k from the left; near left: x = xc − (y − yc) ÷ k */
-  --cut: calc((var(--ylast) - var(--yl)) / var(--k) - var(--m));
-  --slack: max(0px, var(--cut) - (100cqw - var(--edge)));
-  right: calc(100cqw - min(100cqw - var(--edge), var(--cut)));
-}
-.hero[data-near-m='left'] .hero-text {
-  --cut: calc(var(--xc) - (var(--ylast) - var(--yc)) / var(--k) + var(--m));
-  --slack: max(0px, var(--edge) - var(--cut));
-  right: auto;
-  left: max(var(--edge), var(--cut));
-}
-/* the cut is on the text's end side: no stair, the text starts at the edge, under the cut's lowest point */
-.hero[data-cut-m='end'] .hero-text {
-  inset-inline: var(--edge);
   --steps: 0;
+  --slack: 0px;
 }
-@media (min-aspect-ratio: 1001/1000) {
+@media (min-aspect-ratio: 1001/1000) and (min-height: 34rem) {
+  .hero-text {
+    position: absolute;
+    margin-inline: 0;
+    bottom: calc(var(--padb) + var(--foot) + var(--gapf));
+    --ylast: calc(100cqh - var(--padb) - var(--foot) - var(--gapf) - var(--lh) * var(--F));
+  }
+  /* near right: the cut is x = (y − yl) ÷ k from the left; near left: x = xc − (y − yc) ÷ k */
   .hero[data-near-d='right'] .hero-text {
     --cut: calc((var(--ylast) - var(--yl)) / var(--k) - var(--m));
     --slack: max(0px, var(--cut) - (100cqw - var(--edge)));
@@ -230,15 +257,25 @@
     left: max(var(--edge), var(--cut));
   }
   .hero[data-cut-d='start'] .hero-text {
-    inset-inline: auto;
     --steps: 1;
   }
+  /* Stepping along the cut, the pair needs F × (lh ÷ k + max(lh ÷ k + w1, w2)) between where the cut meets the last
+     line's top and the far edge (--room; the first term is how far that point moves as F lifts the last line). F0
+     is capped to fit, so a tall foot (which lifts the headline to where the field is narrower) never pushes a line
+     past the viewport. */
+  .hero[data-cut-d='start'] .hero-text {
+    --per-f: calc(var(--lh) / var(--k) + max(var(--lh) / var(--k) + var(--w1), var(--w2)));
+    --F: max(1.25rem, min(var(--F0), var(--room) / var(--per-f)));
+  }
   .hero[data-near-d='right'][data-cut-d='start'] .hero-text {
-    right: calc(100cqw - min(100cqw - var(--edge), var(--cut)));
+    --room: calc((100cqh - var(--padb) - var(--foot) - var(--gapf) - var(--yl)) / var(--k) - var(--m) - var(--edge));
   }
   .hero[data-near-d='left'][data-cut-d='start'] .hero-text {
-    left: max(var(--edge), var(--cut));
+    --room: calc(
+      100cqw - var(--edge) - var(--m) - var(--xc) + (100cqh - var(--padb) - var(--foot) - var(--gapf) - var(--yc)) / var(--k)
+    );
   }
+  /* the cut is on the text's end side: no stair, the text starts at the edge, under the cut's lowest point */
   .hero[data-cut-d='end'] .hero-text {
     inset-inline: var(--edge);
     --steps: 0;
@@ -258,55 +295,12 @@
   display: block;
   white-space: nowrap;
   line-height: var(--lh);
-  /* portrait: a flush start edge (the rake stays in the field's shape); in landscape the lines step along the cut */
-  margin-inline-start: max(0px, calc(var(--F) * var(--d, 0) / var(--k) * var(--steps, 0) - var(--slack)));
-}
-.hero-lead {
-  /* the first clause of the sentence, not a kicker: white, one step below the main lines */
-  color: var(--color-white);
-  font-size: calc(var(--leadsize) * 1em);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: var(--leadlh);
-  margin-bottom: calc(var(--g) * var(--F));
-  --d: calc(var(--leadsize) * var(--leadlh) * var(--leadlines) + var(--g) + var(--lh));
-}
-.hero-lead:lang(ar) {
-  font-weight: 700;
+  /* landscape with the cut on the reading-start side: each line starts on the cut (--steps 1); otherwise flush */
+  margin-inline-start: max(0px, calc(var(--F) * var(--d, 0) / var(--k) * var(--steps) - var(--slack)));
 }
 .hero-line-1 {
+  /* the top line starts one line height further up the cut */
   --d: var(--lh);
-}
-@media (max-aspect-ratio: 1/1) and (min-width: 600px) {
-  /* upright tablets: the headline grows into the field */
-  .hero {
-    --F: clamp(2.5rem, min(9vw, 6.5svh), 4.5rem);
-  }
-  .hero:lang(en) {
-    --F: clamp(2.5rem, min(8vw, 6svh), 4.25rem);
-  }
-}
-@media (max-aspect-ratio: 1/1) {
-  /* phones: the lead may wrap (two lines) */
-  .hero {
-    --leadlines: 2;
-  }
-  .hero-lead {
-    white-space: normal;
-  }
-}
-@media (min-aspect-ratio: 1001/1000) {
-  /* English landscape (the cut on the reading-start side, k .5): the lead line steps furthest along the rake, and at
-     one line it ran past the viewport's end edge from 1024 to 1440 px (Q.1). It is set as two balanced lines instead;
-     --leadlines counts both, so its first line still starts on the cut. */
-  .hero:lang(en)[data-cut-d='start'] {
-    --leadlines: 2;
-  }
-  .hero:lang(en)[data-cut-d='start'] .hero-lead {
-    white-space: normal;
-    inline-size: 12.5em;
-    text-wrap: balance;
-  }
 }
 
 /* ── The load ──────────────────────────────────────────────────────── */
@@ -368,24 +362,24 @@
   outline-offset: -6px;
 }
 
-/* ── The foot: services and "Browse cranes", inside the field too ── */
+/* ── The foot: the lead and "Browse cranes" on its own row, inside the field too ── */
 .hero-foot {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  bottom: var(--padb);
-  --fy: calc(100cqh - var(--padb) - var(--foot));
-  left: var(--edge);
-  right: max(var(--edge), calc(100cqw - (var(--fy) - var(--yl)) / var(--k) + var(--m)));
+  margin: var(--gapf) var(--edge) 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 1.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--footgap);
 }
-.hero[data-near-m='left'] .hero-foot {
-  left: max(var(--edge), calc(var(--xc) - (var(--fy) - var(--yc)) / var(--k) + var(--m)));
-  right: var(--edge);
-}
-@media (min-aspect-ratio: 1001/1000) {
+@media (min-aspect-ratio: 1001/1000) and (min-height: 34rem) {
+  .hero-foot {
+    position: absolute;
+    margin: 0;
+    /* hung from the estimate's top, not stood on the bottom (see --sublines) */
+    top: var(--fy);
+    --fy: calc(100cqh - var(--padb) - var(--foot));
+  }
   .hero[data-near-d='right'] .hero-foot {
     left: var(--edge);
     right: max(var(--edge), calc(100cqw - (var(--fy) - var(--yl)) / var(--k) + var(--m)));
@@ -395,45 +389,16 @@
     right: var(--edge);
   }
 }
-.hero-services {
+.hero-sub {
+  /* thin and small under the headline: the lead says what Atlas does; the H1 stays the dominant element */
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 1rem;
-  row-gap: 0.125rem;
+  max-inline-size: 36em;
   font-family: var(--font-body);
-  font-size: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
-  line-height: 1.6;
+  font-size: var(--subsize);
+  font-weight: 400;
+  line-height: var(--sublh);
   color: var(--color-neutral-300);
-}
-.hero-services:lang(ar) {
-  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
-}
-.hero-service {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-}
-.hero-dot {
-  display: none;
-  flex: none;
-  width: 0.3125rem;
-  height: 0.3125rem;
-  margin-inline-start: 1rem;
-  border-radius: 50%;
-  background: var(--color-neutral-500); /* red stays for actions only (floor §16.18) */
-}
-@media (min-aspect-ratio: 1001/1000) {
-  .hero-services {
-    column-gap: 0;
-  }
-  .hero-service + .hero-service {
-    margin-inline-start: 1rem;
-  }
-  /* desktop: one line, separated by small red dots (phones wrap, so no dot can dangle at a line end) */
-  .hero-dot {
-    display: inline-block;
-  }
+  text-wrap: pretty;
 }
 .hero-browse {
   display: inline-flex;
@@ -454,13 +419,24 @@
 .hero-foot-whatsapp {
   display: contents;
 }
-@media (max-aspect-ratio: 1/1) {
-  /* portrait: the services and "Browse" wrap as one sequence (two lines, not three); "Browse" is pushed to the
-     end of its row, apart from the services */
-  .hero-services {
-    display: contents;
-  }
-  .hero-browse {
-    margin-inline-start: auto;
+
+/* ── Portrait: the headline and the foot are one column in flow, bottom-anchored as before, so no estimate of the
+   lead's height is needed. The column never starts above the cut: padding-top is the cut's lowest point (its near
+   edge, --near; the text spans the width) plus --gapc. Where the photo leaves less field than the column needs (short
+   phones; the English lead wraps to 4–5 lines), the hero grows past the first screen instead: the photo, the load and
+   the cut keep the first screen (--stage), the H1 stays on it, and the lead and "Browse" continue below on the black.
+   The size container becomes inline-size so the hero can take its content's height; the hook is mapped into --stage,
+   not 100cqh. In .hero's own padding, cqw falls back to the viewport's width (the hero is full width).
+   Landscape screens lower than the stage (phones on their side) use the column too: the raked layout has no room
+   there, and the stage is taller than the screen anyway, so the text follows the photo. ── */
+@media (max-aspect-ratio: 1/1), (max-height: 33.99rem) {
+  .hero {
+    container-type: inline-size;
+    height: auto;
+    min-height: var(--stage);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-block: calc(var(--near, 50svh) + var(--gapc)) var(--padb);
   }
 }

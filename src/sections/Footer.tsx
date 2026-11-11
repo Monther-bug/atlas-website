@@ -148,7 +148,7 @@ export function Footer() {
             </p>
             <p className="t-small text-neutral-400" data-testid="footer-credit">
               {copy.footer.credit}{' '}
-              <a href={CORE_URL} {...externalProps(CORE_URL)} className={`${LINK} font-semibold`} lang="en">
+              <a href={CORE_URL} {...externalProps(CORE_URL)} className={`${LINK} min-w-11 justify-center font-semibold`} lang="en">
                 <bdi>Core</bdi>
                 <NewTabNote />
               </a>

@@ -35,9 +35,9 @@ export const en: Copy = {
 
   // §3 + spec §5.2, §15.1
   hero: {
-    h1Lead: 'From smaller cranes to the largest ones,',
-    h1Main: 'every project has the right crane.',
-    servicesLine: 'Crane hire · Heavy transport · Handling · Oil services',
+    // Atlas's direction of 11 Nov 2026: not only cranes, so the crane-only line left the hero (deck §3).
+    h1: ['An operating partner', 'for every project’s needs'],
+    lead: 'From cranes and heavy transport to handling and oil services, Atlas Alshraa provides services that support worksite needs and help get the work done efficiently and smoothly.',
     whatsapp: 'WhatsApp us',
     browse: 'Browse cranes',
   },
@@ -359,7 +359,7 @@ export const en: Copy = {
     name: 'Atlas Alshraa · For oil services',
     legalName:
       'Atlas Alshraa Joint-Stock Company for Oil Services, Heavy Transport, Handling and Crane Hire. [[CONFIRM: English spelling]]',
-    tagline: 'Every project has the right crane.',
+    tagline: 'An operating partner for every project’s needs.', // Atlas, 11 Nov 2026 (deck §11)
     servicesHeading: 'Services',
     pageHeading: 'On this page',
     homeHeading: 'On the home page',

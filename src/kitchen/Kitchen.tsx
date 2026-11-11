@@ -258,7 +258,7 @@ export function Kitchen() {
         <div className="mt-20">
           <Label>{k.blocks.type}</Label>
           <div className="flex flex-col gap-8">
-            <p className="t-display m-0">{copy.hero.h1Main}</p>
+            <p className="t-display m-0">{copy.hero.h1.join(' ')}</p>
             <p className="t-headline m-0">
               {copy.hoist.title}
               <span className="t-muted"> {copy.hoist.intro}</span>

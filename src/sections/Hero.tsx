@@ -18,17 +18,18 @@ export const PORTRAIT = '(max-aspect-ratio: 1/1)';
 export const HERO_PHOTO: Record<Lang, PhotoId> = { ar: '6398', en: '6359' };
 
 /**
- * The real hook of a crop, mapped into the hero box (`container-type: size`) for the hero's full-viewport,
- * bottom-anchored `object-fit: cover` photo (CSS Images 3: scale = max(W / w, H / h), x centred, y from the
- * bottom). Pure CSS: it renders in the prerender and stays on the hook at every size, with no JS.
+ * The real hook of a crop, mapped into the hero box for the hero's bottom-anchored `object-fit: cover` photo, which
+ * fills the first screen: the hero's width (100cqw) by its `--stage` height (hero.css; in portrait the hero itself may
+ * run taller, the photo does not). CSS Images 3: scale = max(W / w, H / h), x centred, y from the stage's bottom.
+ * Pure CSS: it renders in the prerender and stays on the hook at every size, with no JS.
  */
 export function hookCss(image: CropImage): { x: string; y: string } | null {
   const { rect, hook } = image;
   if (!hook) return null;
-  const px = `max(100cqw / ${rect.width}, 100cqh / ${rect.height})`;
+  const px = `max(100cqw / ${rect.width}, var(--stage) / ${rect.height})`;
   const dx = Math.round(hook.x - (rect.left + rect.width / 2));
   const dy = Math.round(rect.top + rect.height - hook.y);
-  return { x: `calc(50cqw + ${dx} * ${px})`, y: `calc(100cqh - ${dy} * ${px})` };
+  return { x: `calc(50cqw + ${dx} * ${px})`, y: `calc(var(--stage) - ${dy} * ${px})` };
 }
 
 /** Which physical side of the frame the hook is on: the cut passes under the load there and rises to the other side. */
@@ -44,6 +45,7 @@ export function hookSide(image: CropImage): 'left' | 'right' | null {
  * background to Chrome's LCP). A black field, with a brand-navy plane riding along its edge, is cut on one straight
  * rake that passes just under the WhatsApp load hanging from the real hook; the headline sits on the field, its lines
  * starting on the cut. Text never sits on the sky. Motion (src/motion/hero.ts) luffs the cut and pays out the load.
+ * Copy: Atlas's direction of 11 Nov 2026 (deck §3): a two-line H1, a thin lead under it, then "Browse cranes".
  */
 export function Hero() {
   const { copy, lang } = useLang();
@@ -61,10 +63,8 @@ export function Hero() {
   } as CSSProperties;
   const href = whatsappHref(copy.whatsapp.general);
   const onWhatsApp = () => track('whatsapp_click', { location: 'hero' });
-  // Two main lines, short then long, so the lines climb the rake: «لكل مشروع / رافعته المناسبة».
-  const words = copy.hero.h1Main.split(' ');
-  const services = copy.hero.servicesLine.split(' · ');
-  const sep = lang === 'ar' ? '، ' : ', ';
+  // Two lines, short then long, so the lines climb the rake: «شريك تشغيلي / يواكب احتياجات المشاريع».
+  const [line1, line2] = copy.hero.h1;
 
   return (
     <section
@@ -105,9 +105,8 @@ export function Hero() {
 
       <div className="hero-text">
         <h1 id="hero-title" className="hero-h1">
-          <span className="hero-line hero-lead">{copy.hero.h1Lead}</span>{' '}
-          <span className="hero-line hero-line-1">{words.slice(0, 2).join(' ')}</span>{' '}
-          <span className="hero-line hero-line-2">{words.slice(2).join(' ')}</span>
+          <span className="hero-line hero-line-1">{line1}</span>{' '}
+          <span className="hero-line hero-line-2">{line2}</span>
         </h1>
       </div>
 
@@ -137,20 +136,8 @@ export function Hero() {
       </div>
 
       <div className="hero-foot">
-        {/* The services and "Browse" share one wrapping row (on phones the p is display: contents). */}
-        <p className="hero-services">
-          {services.map((item, i) => (
-            <span key={item} className="hero-service">
-              {item}
-              {i < services.length - 1 ? (
-                <>
-                  <span className="sr-only">{sep}</span>
-                  <span aria-hidden="true" className="hero-dot" />
-                </>
-              ) : null}
-            </span>
-          ))}
-        </p>
+        {/* The lead (thin, small), then "Browse cranes" on its own row. */}
+        <p className="hero-sub">{copy.hero.lead}</p>
         {/* Without a hook point for this crop, the WhatsApp button sits here instead of on the sling. */}
         {(!d || !m) && (
           <div className="hero-foot-whatsapp">

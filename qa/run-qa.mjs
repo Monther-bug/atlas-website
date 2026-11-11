@@ -431,15 +431,18 @@ async function matrixCase(p, vp, mode) {
       const inView = r.top >= 0 && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth;
       const big = r.width >= 44 && r.height >= 44;
       const shown = b.checkVisibility({ opacityProperty: true, visibilityProperty: true });
-      // The H1 lines must sit inside the viewport too (not clipped by its edges).
+      // The H1 lines must sit inside the viewport too (not clipped by its edges), and the lead under them (it may
+      // continue below the first screen on short phones, never sideways past it or up into the headline).
       const lines = [...hero.querySelectorAll('h1 .hero-line')].map((l) => l.getBoundingClientRect());
       const clipped = lines.filter((l) => l.left < -1 || l.right > window.innerWidth + 1).length;
+      const lead = hero.querySelector('.hero-sub')?.getBoundingClientRect();
+      const leadOk = !!lead && lead.left >= -1 && lead.right <= window.innerWidth + 1 && lead.top >= Math.max(...lines.map((l) => l.bottom)) - 1;
       return {
-        ok: shown && inHero && inView && big && clipped === 0,
-        detail: `${b.dataset.testid} ${Math.round(r.width)}×${Math.round(r.height)} inHero=${inHero} inView=${inView} shown=${shown} h1 lines past the viewport edge=${clipped}`,
+        ok: shown && inHero && inView && big && clipped === 0 && leadOk,
+        detail: `${b.dataset.testid} ${Math.round(r.width)}×${Math.round(r.height)} inHero=${inHero} inView=${inView} shown=${shown} h1 lines past the viewport edge=${clipped} lead under the H1 and inside the width=${leadOk}`,
       };
     });
-    rec('hero', 'hero WhatsApp button on screen, ≥ 44 px; H1 inside the viewport', hero.ok, hero.detail);
+    rec('hero', 'hero WhatsApp button on screen, ≥ 44 px; H1 inside the viewport, the lead under it', hero.ok, hero.detail);
 
     const loadShifts = await page.evaluate(() => window.__shifts);
     const loadCls = sessionCls(loadShifts);
