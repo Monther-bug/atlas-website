@@ -32,8 +32,8 @@ Character counts were checked (limit 155 per language): title 52 AR / 55 EN; met
 | Element | العربية | English |
 |---|---|---|
 | `<title>` | أطلس الصحراء \| تأجير الرافعات والنقل الثقيل في ليبيا | Atlas Alshraa \| Crane Hire and Heavy Transport in Libya |
-| Meta description | تأجير الرافعات (الكرينات) من الصغيرة إلى الكبيرة، ونقل ثقيل ومناولة وخدمات نفطية في ليبيا. أرسل وزن الحمولة وموقع العمل عبر واتساب. | Crane hire from smaller cranes to the largest ones, plus heavy transport, handling and oil services in Libya. Send your load details on WhatsApp. |
-| `og:title` | أطلس الصحراء: لكل مشروع رافعته المناسبة | Atlas Alshraa: Every project has the right crane |
+| Meta description | تأجير الرافعات (الكرينات) والنقل الثقيل والمناولة والخدمات النفطية في ليبيا. أرسل وزن الحمولة وموقع العمل عبر واتساب. | Crane hire, heavy transport, handling and oil services in Libya. Send your load details on WhatsApp. |
+| `og:title` | أطلس الصحراء: شريك تشغيلي يواكب احتياجات المشاريع | Atlas Alshraa: An operating partner for every project’s needs |
 | `og:description` | تأجير الرافعات والنقل الثقيل والمناولة والخدمات النفطية. أخبرنا بحمولتك، ونخبرك بالرافعة التي تناسبها. | Crane hire, heavy transport, handling and oil services. Tell us about your load and we will tell you which crane fits. |
 | `og:site_name` | أطلس الصحراء | Atlas Alshraa |
 | `og:locale` | `ar_LY` | `en_GB` (as `og:locale:alternate` on the Arabic page, and the reverse) |

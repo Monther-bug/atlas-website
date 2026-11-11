@@ -11,8 +11,8 @@ export const en: Copy = {
   meta: {
     title: 'Atlas Alshraa | Crane Hire and Heavy Transport in Libya',
     description:
-      'Crane hire from smaller cranes to the largest ones, plus heavy transport, handling and oil services in Libya. Send your load details on WhatsApp.',
-    ogTitle: 'Atlas Alshraa: Every project has the right crane',
+      'Crane hire, heavy transport, handling and oil services in Libya. Send your load details on WhatsApp.',
+    ogTitle: 'Atlas Alshraa: An operating partner for every project’s needs',
     ogDescription:
       'Crane hire, heavy transport, handling and oil services. Tell us about your load and we will tell you which crane fits.',
     ogImageAlt: "A yellow mobile crane seen from below: the operator's cab, the telescopic boom and the hook against a blue sky with white clouds.",
